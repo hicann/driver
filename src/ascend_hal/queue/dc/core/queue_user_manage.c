@@ -116,7 +116,7 @@ static drvError_t queue_buf_get(void *mem_base, uint64_t mem_size)
 
     ret = buff_blk_get(mem_base, &pool_id, &alloc_ptr, &alloc_size, &blk_id);
     if ((ret != 0) || (alloc_ptr != mem_base) || (alloc_size < mem_size)) {
-        QUEUE_LOG_ERR("queue grp get error. (ret=%d; addr=0x%llx; baseaddr=0x%llx; size=%lu; base size=%lu)\n", ret,
+        QUEUE_LOG_ERR("queue grp get error. (ret=%d; addr=0x%llx; baseaddr=0x%llx; size=%luB; base size=%luB)\n", ret,
                       (unsigned long long)(uintptr_t)alloc_ptr, (unsigned long long)(uintptr_t)mem_base,
                       (unsigned long)alloc_size, (unsigned long)mem_size);
         return DRV_ERROR_INNER_ERR;
@@ -285,7 +285,7 @@ STATIC drvError_t queue_init_base_addr(void)
             addr = queue_alloc_buf(size, QUEUE_ALLOC_BUF_FLAG, &blk_id);
             if (addr == NULL) {
                 (void)queue_del_prop(QUE_MEM_BASE_ADDR_MASTER);
-                QUEUE_LOG_ERR("malloc buff size failed. (size=%lu)\n", size);
+                QUEUE_LOG_ERR("malloc buff size failed. (size=%luB)\n", size);
                 return DRV_ERROR_OUT_OF_MEMORY;
             }
 
@@ -391,18 +391,18 @@ static void queue_info_show(void)
     }
 }
 
-STATIC void queue_sigal_proc(signed int signum)
+STATIC void queue_signal_proc(signed int signum)
 {
-    QUEUE_RUN_LOG_INFO("******************* queue_sigal_proc start. (signum=%d) ***********************\n", signum);
+    QUEUE_RUN_LOG_INFO("******************* queue_signal_proc start. (signum=%d) ***********************\n", signum);
     queue_info_show();
-    QUEUE_RUN_LOG_INFO("******************* queue_sigal_proc end. (signum=%d) ***********************\n", signum);
+    QUEUE_RUN_LOG_INFO("******************* queue_signal_proc end. (signum=%d) ***********************\n", signum);
 }
 
-static void queue_sigal_init(void)
+static void queue_signal_init(void)
 {
     struct sigaction act;
 
-    act.sa_handler = queue_sigal_proc;
+    act.sa_handler = queue_signal_proc;
     act.sa_flags = 0;
     (void)sigemptyset(&act.sa_mask);
     (void)sigaction(SIGUSR2, &act, NULL);
@@ -445,7 +445,7 @@ drvError_t queue_dc_init(void)
         return ret;
     }
 
-    queue_sigal_init();
+    queue_signal_init();
     return DRV_ERROR_NONE;
 }
 
@@ -581,7 +581,9 @@ static drvError_t queue_entity_get(void *entity, unsigned int *depth)
 
     if ((alloc_size < (MIN_VALID_QUEUE_DEPTH * QUE_ENTITY_NODE_SIZE)) ||
         (alloc_size > (MAX_QUEUE_DEPTH * QUE_ENTITY_NODE_SIZE))) {
-        QUEUE_LOG_ERR("entity size out of range. (alloc_size=%lu)\n", (unsigned long)alloc_size);
+        QUEUE_LOG_ERR("entity size out of range. (alloc_size=%lu, valid range=[%lu, %lu])\n", (unsigned long)alloc_size,
+                      (unsigned long)(MIN_VALID_QUEUE_DEPTH * QUE_ENTITY_NODE_SIZE),
+                      (unsigned long)(MAX_QUEUE_DEPTH * QUE_ENTITY_NODE_SIZE));
         return DRV_ERROR_INNER_ERR;
     }
 

@@ -274,8 +274,8 @@ static drvError_t queue_create_local(unsigned int dev_id, const QueueAttr *que_a
 
     queue_set_local_info(*qid, &local_info);
 
-    QUEUE_RUN_LOG_INFO("create queue success. (device_id=%u; qid=%u; depth=%u; name=%s; mode=%u; freq=%llu)\n", dev_id,
-                       *qid, que_attr->depth, que_attr->name, que_attr->workMode, esched_get_sys_freq());
+    QUEUE_RUN_LOG_INFO("create queue success. (device_id=%u; qid=%u; depth=%u; name=%s; mode=%u; freq=%lluHz)\n",
+                       dev_id, *qid, que_attr->depth, que_attr->name, que_attr->workMode, esched_get_sys_freq());
     return DRV_ERROR_NONE;
 }
 
@@ -520,13 +520,13 @@ drvError_t queue_reset_local(unsigned int dev_id, unsigned int qid)
 #ifndef EMU_ST
     if (CAS(&que_manage->enque_cas, 0, 1) == false) {
         queue_put(qid);
-        QUEUE_LOG_WARN("queue is try to enque. (dev_id=%u; qid=%u)\n", dev_id, qid);
+        QUEUE_LOG_WARN("queue is trying to enqueue. (dev_id=%u; qid=%u)\n", dev_id, qid);
         return DRV_ERROR_BUSY;
     }
     if (CAS(&que_manage->deque_cas, 0, 1) == false) {
         (void)CAS(&que_manage->enque_cas, 1, 0);
         queue_put(qid);
-        QUEUE_LOG_WARN("queue is try to deque. (dev_id=%u; qid=%u)\n", dev_id, qid);
+        QUEUE_LOG_WARN("queue is trying to dequeue. (dev_id=%u; qid=%u)\n", dev_id, qid);
         return DRV_ERROR_BUSY;
     }
 #endif
@@ -863,7 +863,7 @@ static inline drvError_t queue_enqueue_para_check(unsigned int dev_id, unsigned 
     }
 
     if (queue_buff_verify(buff) != DRV_ERROR_NONE) {
-        QUEUE_LOG_ERR("enqueue muff is illegal. (qid=%u, mbuf=%p)\n", qid, buff);
+        QUEUE_LOG_ERR("enqueue mbuf is illegal. (qid=%u, mbuf=%p)\n", qid, buff);
         return DRV_ERROR_INVALID_VALUE;
     }
 
@@ -911,7 +911,7 @@ drvError_t queue_enqueue_local(unsigned int dev_id, unsigned int qid, void *mbuf
 
     if (CAS(&que_manage->enque_cas, 0, 1) == false) {
         queue_put(qid);
-        QUEUE_LOG_WARN("queue is try to enque multiple times. (qid=%u)\n", qid);
+        QUEUE_LOG_WARN("queue is trying to enqueue multiple times. (qid=%u)\n", qid);
         return DRV_ERROR_BUSY;
     }
 
@@ -1192,7 +1192,7 @@ drvError_t queue_dequeue_local(unsigned int dev_id, unsigned int qid, void **mbu
 
     if (CAS(&que_manage->deque_cas, 0, 1) == false) {
         queue_put(qid);
-        QUEUE_LOG_WARN("queue is try to deque multiple times. (qid=%u)\n", qid);
+        QUEUE_LOG_WARN("queue is trying to dequeue multiple times. (qid=%u)\n", qid);
         return DRV_ERROR_BUSY;
     }
 

@@ -26,7 +26,8 @@ struct prof_adapt_core_notifier *prof_adapt_get_notifier(void)
     return &g_adapt_core_notifier;
 }
 
-drvError_t prof_adapt_register_channel(uint32_t dev_id, uint32_t chan_id, struct prof_sample_register_para *para, bool support_host_sample)
+drvError_t prof_adapt_register_channel(uint32_t dev_id, uint32_t chan_id, struct prof_sample_register_para *para,
+                                       bool support_host_sample)
 {
     return prof_user_register_channel(dev_id, chan_id, para, support_host_sample);
 }
@@ -43,7 +44,8 @@ drvError_t __attribute__((weak)) prof_user_get_host_sample_chan_ops(struct prof_
     return (drvError_t)0;
 }
 
-drvError_t prof_adapt_get_chan_ops(uint32_t dev_id, uint32_t chan_mode, struct prof_chan_ops **ops, bool support_host_sample)
+drvError_t prof_adapt_get_chan_ops(uint32_t dev_id, uint32_t chan_mode, struct prof_chan_ops **ops,
+                                   bool support_host_sample)
 {
 #ifdef CFG_SOC_PLATFORM_CLOUD_V4
     HAL_CC_INFO cc_info = {0};
@@ -55,7 +57,7 @@ drvError_t prof_adapt_get_chan_ops(uint32_t dev_id, uint32_t chan_mode, struct p
             return PROF_ERROR;
         }
         if (cc_info.cc_cfg_info.cc_mode == HAL_CC_MODE_NORMAL) {
-            PROF_INFO("CPU is currently in confidential computing mode, and prof drv is disable.\n");
+            PROF_INFO("CPU is currently in confidential computing mode, and prof drv is disabled.\n");
             return PROF_NOT_SUPPORT;
         }
     }

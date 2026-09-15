@@ -52,7 +52,7 @@ STATIC int queue_open_dev(void)
     }
     fd = open(davinci_intf_get_dev_path(), O_RDWR | O_SYNC);
     if (fd < 0) {
-        QUEUE_LOG_ERR("open dev=%d.\n", fd);
+        QUEUE_LOG_ERR("open dev failed. (fd=%d)\n", fd);
         return fd;
     } else {
         int flags = fcntl(fd, F_GETFD);

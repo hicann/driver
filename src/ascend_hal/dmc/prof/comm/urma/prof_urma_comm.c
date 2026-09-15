@@ -202,7 +202,7 @@ drvError_t prof_urma_post_recv(struct prof_urma_chan_info *urma_chan_info, uint3
     uint64_t user_ctx = 0;
 
     user_ctx = (uint64_t)urma_chan_info->dev_id << 32, /* 32: dev_id in hign 32 bits */
-    user_ctx |= urma_chan_info->chan_id;
+        user_ctx |= urma_chan_info->chan_id;
 
     return prof_urma_post_jetty_recv_wr(urma_chan_info->jetty, urma_chan_info->user_buff_tseg, user_ctx, depth);
 }
@@ -223,9 +223,7 @@ STATIC drvError_t prof_urma_write_with_imm_post_proc(uint64_t user_ctx, uint32_t
         return ret;
     }
 
-    /* debug log need to be del before merge*/
-    PROF_INFO("Receive data success. (dev_id=%u, chan_id=%u, w_ptr=%u, overlap=%u)\n",
-        dev_id, chan_id, w_ptr);
+    PROF_INFO("Receive data success. (dev_id=%u, chan_id=%u, w_ptr=%u)\n", dev_id, chan_id, w_ptr);
 
     return DRV_ERROR_NONE;
 }
@@ -250,7 +248,7 @@ static void prof_show_jfc_ctx(urma_jfc_t *jfc)
 
 STATIC void prof_urma_recv_data(struct prof_urma_info *urma_info)
 {
-    int timeout_ms = 500;   /* 500 ms */
+    int timeout_ms = 500; /* 500 ms */
     urma_status_t urma_ret;
     urma_jfc_t *jfc = NULL;
     uint32_t ack_cnt = 1;
@@ -297,16 +295,14 @@ rearm_jfc:
     }
 }
 
-STATIC void prof_urma_local_seg_pack(uint64_t data_buff, uint64_t data_buff_len,
-    urma_seg_cfg_t *seg_cfg, struct prof_urma_info *urma_info)
+STATIC void prof_urma_local_seg_pack(uint64_t data_buff, uint64_t data_buff_len, urma_seg_cfg_t *seg_cfg,
+                                     struct prof_urma_info *urma_info)
 {
-    urma_reg_seg_flag_t flag = {
-        .bs.token_policy = URMA_TOKEN_PLAIN_TEXT,
-        .bs.cacheable = URMA_NON_CACHEABLE,
-        .bs.access = URMA_ACCESS_READ | URMA_ACCESS_WRITE | URMA_ACCESS_ATOMIC,
-        .bs.token_id_valid = 1,
-        .bs.reserved = 0
-    };
+    urma_reg_seg_flag_t flag = {.bs.token_policy = URMA_TOKEN_PLAIN_TEXT,
+                                .bs.cacheable = URMA_NON_CACHEABLE,
+                                .bs.access = URMA_ACCESS_READ | URMA_ACCESS_WRITE | URMA_ACCESS_ATOMIC,
+                                .bs.token_id_valid = 1,
+                                .bs.reserved = 0};
 
     seg_cfg->va = data_buff;
     seg_cfg->len = data_buff_len;
@@ -316,7 +312,7 @@ STATIC void prof_urma_local_seg_pack(uint64_t data_buff, uint64_t data_buff_len,
 }
 
 drvError_t prof_urma_local_seg_register(struct prof_urma_start_para *urma_start_para, struct prof_urma_info *urma_info,
-    struct prof_urma_chan_info *urma_chan_info)
+                                        struct prof_urma_chan_info *urma_chan_info)
 {
     urma_seg_cfg_t seg_cfg = {0};
     int ret;
@@ -351,7 +347,7 @@ drvError_t prof_urma_local_seg_register(struct prof_urma_start_para *urma_start_
         urma_unregister_seg(urma_chan_info->local_r_ptr_tseg);
         urma_unregister_seg(urma_chan_info->user_buff_tseg);
         PROF_ERR("Failed to post jetty. (jetty_id=%u, segment_len=%u)\n", urma_chan_info->jetty->jetty_id.id,
-            urma_chan_info->user_buff_len);
+                 urma_chan_info->user_buff_len);
         return ret;
 #endif
     }
@@ -366,12 +362,12 @@ void prof_urma_local_seg_unregister(struct prof_urma_chan_info *urma_chan_info)
 }
 
 drvError_t prof_urma_remote_info_import(struct prof_urma_info *urma_info, struct prof_urma_chan_info *urma_chan_info,
-    struct prof_start_sync_msg *sync_msg)
+                                        struct prof_start_sync_msg *sync_msg)
 {
 #ifdef SSAPI_USE_MAMI
     urma_get_tp_cfg_t tpid_cfg = {
         .trans_mode = URMA_TM_RM,
-        .local_eid = urma_info->urma_ctx->eid,  // local_eid
+        .local_eid = urma_info->urma_ctx->eid, // local_eid
         .flag.bs.ctp = true,
     };
     uint32_t tp_cnt = 1;
@@ -384,16 +380,14 @@ drvError_t prof_urma_remote_info_import(struct prof_urma_info *urma_info, struct
     uint32_t dev_id = urma_chan_info->dev_id;
     urma_rjetty_t rjetty = {0};
     urma_seg_t r_ptr_seg = {0};
-    urma_import_seg_flag_t flag = {
-        .bs.cacheable = URMA_NON_CACHEABLE,
-        .bs.access = URMA_ACCESS_READ | URMA_ACCESS_WRITE | URMA_ACCESS_ATOMIC,
-        .bs.mapping = URMA_SEG_NOMAP,
-        .bs.reserved = 0
-    };
+    urma_import_seg_flag_t flag = {.bs.cacheable = URMA_NON_CACHEABLE,
+                                   .bs.access = URMA_ACCESS_READ | URMA_ACCESS_WRITE | URMA_ACCESS_ATOMIC,
+                                   .bs.mapping = URMA_SEG_NOMAP,
+                                   .bs.reserved = 0};
 
     rjetty.jetty_id.id = sync_msg->jetty_id;
     ret = memcpy_s(&rjetty.jetty_id.eid, PROF_EID_SIZE, sync_msg->eid_raw, PROF_EID_SIZE);
-    if (ret != 0){
+    if (ret != 0) {
         PROF_ERR("Memcpy is failed. (dev_id=%u, chan_id=%u)\n", dev_id, urma_chan_info->chan_id);
         return DRV_ERROR_INNER_ERR;
     }
@@ -402,7 +396,7 @@ drvError_t prof_urma_remote_info_import(struct prof_urma_info *urma_info, struct
     rjetty.flag.bs.token_policy = URMA_TOKEN_PLAIN_TEXT;
 #ifdef SSAPI_USE_MAMI
     ret = memcpy_s(tpid_cfg.peer_eid.raw, PROF_EID_SIZE, sync_msg->eid_raw, PROF_EID_SIZE);
-    if (ret != 0){
+    if (ret != 0) {
         PROF_ERR("Memcpy is failed. (dev_id=%u, chan_id=%u)\n", dev_id, urma_chan_info->chan_id);
         return DRV_ERROR_INNER_ERR;
     }
@@ -422,8 +416,8 @@ drvError_t prof_urma_remote_info_import(struct prof_urma_info *urma_info, struct
 #endif
     if (urma_chan_info->tjetty == NULL) {
 #ifndef PROF_UNIT_TEST
-        PROF_ERR("Failed to import remote jetty. (dev_id=%u, chan_id=%u, remote_jetty_id=%u, remote_eid=%u)\n",
-            dev_id, urma_chan_info->chan_id, sync_msg->jetty_id, sync_msg->eid);
+        PROF_ERR("Failed to import remote jetty. (dev_id=%u, chan_id=%u, remote_jetty_id=%u, remote_eid=%u)\n", dev_id,
+                 urma_chan_info->chan_id, sync_msg->jetty_id, sync_msg->eid);
         return DRV_ERROR_INNER_ERR;
 #endif
     }
@@ -431,7 +425,7 @@ drvError_t prof_urma_remote_info_import(struct prof_urma_info *urma_info, struct
     r_ptr_seg.attr.bs.token_policy = URMA_TOKEN_PLAIN_TEXT;
     r_ptr_seg.ubva.va = (uint64_t)(uintptr_t)sync_msg->r_ptr;
     ret = memcpy_s(&r_ptr_seg.ubva.eid, PROF_EID_SIZE, sync_msg->eid_raw, PROF_EID_SIZE);
-    if (ret != 0){
+    if (ret != 0) {
         (void)urma_unimport_jetty(urma_chan_info->tjetty);
         urma_chan_info->tjetty = NULL;
         PROF_ERR("Memcpy is failed. (dev_id=%u, chan_id=%u)\n", dev_id, urma_chan_info->chan_id);
@@ -444,14 +438,15 @@ drvError_t prof_urma_remote_info_import(struct prof_urma_info *urma_info, struct
         (void)urma_unimport_jetty(urma_chan_info->tjetty);
         urma_chan_info->tjetty = NULL;
         PROF_ERR("Failed to import remote segment. (dev_id=%u, chan_id=%u, remote_eid=%u, "
-            "remote_token_id=%u)\n", dev_id, urma_chan_info->chan_id, sync_msg->eid, sync_msg->token_id);
+                 "remote_token_id=%u)\n",
+                 dev_id, urma_chan_info->chan_id, sync_msg->eid, sync_msg->token_id);
         return DRV_ERROR_INNER_ERR;
 #endif
     }
 
     PROF_INFO("Import remote jetty and segment success. (dev_id=%u, chan_id=%u, remote_jetty_id=%u, "
-        "remote_eid=%u, remote_token_id=%u)\n", dev_id, urma_chan_info->chan_id, sync_msg->jetty_id,
-        sync_msg->eid, sync_msg->token_id);
+              "remote_eid=%u, remote_token_id=%u)\n",
+              dev_id, urma_chan_info->chan_id, sync_msg->jetty_id, sync_msg->eid, sync_msg->token_id);
 
     return DRV_ERROR_NONE;
 }
@@ -473,8 +468,8 @@ drvError_t prof_urma_write_remote_rptr(uint32_t dev_id, uint32_t chan_id, struct
 
     wr.opcode = URMA_OPC_WRITE;
     wr.tjetty = urma_chan_info->tjetty;
-    wr.flag.bs.place_order = 2; /* 2: strong order */
-    wr.flag.bs.comp_order = 1;  /* 1: Completion order with previous WR */
+    wr.flag.bs.place_order = 2;     /* 2: strong order */
+    wr.flag.bs.comp_order = 1;      /* 1: Completion order with previous WR */
     wr.flag.bs.complete_enable = 1; /* 1: Notify local process after the task is completed */
     wr.rw.src.sge = &src_sge;
     wr.rw.src.sge->addr = (uint64_t)(uintptr_t)urma_chan_info->local_r_ptr;
@@ -516,7 +511,7 @@ void prof_urma_recv_thread_create(struct prof_urma_info *urma_info)
     urma_info->recv_thread_status = 1;
 
     (void)pthread_attr_init(&attr);
-    ret = pthread_create(&urma_info->recv_thread, &attr, prof_urma_recv_thread, (void*)urma_info);
+    ret = pthread_create(&urma_info->recv_thread, &attr, prof_urma_recv_thread, (void *)urma_info);
     if (ret != DRV_ERROR_NONE) {
         urma_info->recv_thread_status = 0;
         PROF_ERR("Failed to create the thread. (ret=%d)\n", ret);
@@ -725,7 +720,7 @@ STATIC void __attribute__((constructor)) prof_urma_init(void)
     }
 }
 
-STATIC void __attribute__((destructor))prof_urma_uninit(void)
+STATIC void __attribute__((destructor)) prof_urma_uninit(void)
 {
     int i;
 

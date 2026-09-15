@@ -49,14 +49,16 @@ struct prof_user_chan_node {
 static LIST_HEAD(g_prof_user_chan_list);
 static pthread_mutex_t g_chan_list_mutex = PTHREAD_MUTEX_INITIALIZER;
 
-STATIC drvError_t prof_user_chan_add(uint32_t dev_id, uint32_t chan_id, struct prof_sample_register_para *para, bool support_host_sample)
+STATIC drvError_t prof_user_chan_add(uint32_t dev_id, uint32_t chan_id, struct prof_sample_register_para *para,
+                                     bool support_host_sample)
 {
     struct prof_user_chan_node *node = NULL;
     struct list_head *pos = NULL, *n = NULL;
     struct prof_sample_ops *ops;
 
     (void)pthread_mutex_lock(&g_chan_list_mutex);
-    list_for_each_safe(pos, n, &g_prof_user_chan_list) {
+    list_for_each_safe(pos, n, &g_prof_user_chan_list)
+    {
         node = list_entry(pos, struct prof_user_chan_node, list_node);
         if ((node->dev_id == dev_id) && (node->chan_id == chan_id)) {
             if (support_host_sample) {
@@ -106,7 +108,8 @@ STATIC void prof_user_chan_del(uint32_t dev_id, uint32_t chan_id)
     struct list_head *pos = NULL, *n = NULL;
 
     (void)pthread_mutex_lock(&g_chan_list_mutex);
-    list_for_each_safe(pos, n, &g_prof_user_chan_list) {
+    list_for_each_safe(pos, n, &g_prof_user_chan_list)
+    {
         node = list_entry(pos, struct prof_user_chan_node, list_node);
         if ((node->dev_id == dev_id) && (node->chan_id == chan_id)) {
             drv_user_list_del(&node->list_node);
@@ -121,13 +124,15 @@ STATIC void prof_user_chan_del(uint32_t dev_id, uint32_t chan_id)
     }
 }
 
-drvError_t prof_user_chan_get(uint32_t dev_id, uint32_t chan_id, struct prof_user_chan_priv *chan_priv, sem_t **sem, bool support_host_sample)
+drvError_t prof_user_chan_get(uint32_t dev_id, uint32_t chan_id, struct prof_user_chan_priv *chan_priv, sem_t **sem,
+                              bool support_host_sample)
 {
     struct prof_user_chan_node *node = NULL;
     struct list_head *pos = NULL, *n = NULL;
 
     (void)pthread_mutex_lock(&g_chan_list_mutex);
-    list_for_each_safe(pos, n, &g_prof_user_chan_list) {
+    list_for_each_safe(pos, n, &g_prof_user_chan_list)
+    {
         node = list_entry(pos, struct prof_user_chan_node, list_node);
         if ((node->dev_id == dev_id) && (node->chan_id == chan_id)) {
             if (support_host_sample) {
@@ -170,7 +175,8 @@ STATIC bool prof_user_is_need_kernel_reg(uint32_t chan_id)
     return false;
 }
 
-drvError_t prof_user_register_channel(uint32_t dev_id, uint32_t chan_id, struct prof_sample_register_para *para, bool support_host_sample)
+drvError_t prof_user_register_channel(uint32_t dev_id, uint32_t chan_id, struct prof_sample_register_para *para,
+                                      bool support_host_sample)
 {
     struct prof_user_kernel_ops *kernel_ops = NULL;
     drvError_t ret;
@@ -193,8 +199,9 @@ drvError_t prof_user_register_channel(uint32_t dev_id, uint32_t chan_id, struct 
     if (kernel_ops->chan_register != NULL) {
         ret = kernel_ops->chan_register(dev_id, chan_id);
         if (ret != DRV_ERROR_NONE) {
-            prof_user_chan_del(dev_id, chan_id); 
-            PROF_ERR("Failed to register channel to kernel. (dev_id=%u, chan_id=%u, ret=%d)\n", dev_id, chan_id, (int)ret);
+            prof_user_chan_del(dev_id, chan_id);
+            PROF_ERR("Failed to register channel to kernel. (dev_id=%u, chan_id=%u, ret=%d)\n", dev_id, chan_id,
+                     (int)ret);
             return ret;
         }
     }
@@ -256,22 +263,21 @@ void prof_user_chan_uninit(char **priv)
     *priv = NULL;
 }
 
-drvError_t prof_user_sample_start_check(struct prof_user_chan_priv *chan_priv,
-    struct prof_user_start_para *para)
+drvError_t prof_user_sample_start_check(struct prof_user_chan_priv *chan_priv, struct prof_user_start_para *para)
 {
     if (para->sample_period == 0) {
         return DRV_ERROR_NONE;
     }
 
     if ((para->sample_period < PROF_PERIOD_MIN) || (para->sample_period > PROF_PERIOD_MAX)) {
-        PROF_ERR("Invalid sample period. (dev_id=%u, chan_id=%u, sample_period=%ums)\n",
-            chan_priv->dev_id, chan_priv->chan_id, para->sample_period);
+        PROF_ERR("Invalid sample period. (dev_id=%u, chan_id=%u, sample_period=%ums, valid range=[%u, %u])\n",
+                 chan_priv->dev_id, chan_priv->chan_id, para->sample_period, PROF_PERIOD_MIN, PROF_PERIOD_MAX);
         return DRV_ERROR_INVALID_VALUE;
     }
 
     if (chan_priv->ops.sample_func == NULL) {
-        PROF_ERR("No sample_func. (dev_id=%u, chan_id=%u, sample_period=%ums)\n",
-            chan_priv->dev_id, chan_priv->chan_id, para->sample_period);
+        PROF_ERR("No sample_func. (dev_id=%u, chan_id=%u, sample_period=%ums)\n", chan_priv->dev_id, chan_priv->chan_id,
+                 para->sample_period);
         return DRV_ERROR_INVALID_VALUE;
     }
 
@@ -294,13 +300,13 @@ drvError_t prof_user_sample_pre_start(struct prof_user_chan_priv *chan_priv, str
 
         ret = chan_priv->ops.start_func(&start_para);
         if (ret != PROF_OK) {
-            PROF_ERR("Failed to invoke pre start func. (dev_id=%u, chan_id=%u, ret=%d)\n",
-                chan_priv->dev_id, chan_priv->chan_id, ret);
+            PROF_ERR("Failed to invoke pre start func. (dev_id=%u, chan_id=%u, ret=%d)\n", chan_priv->dev_id,
+                     chan_priv->chan_id, ret);
             return DRV_ERROR_INVALID_HANDLE;
         }
         if (start_para.out_data_len > PROF_START_OUTDATA_SIZE_MAX) {
-            PROF_ERR("out_data_len exceeds the limit. (dev_id=%u, chan_id=%u, out_data_len=%u)\n",
-                chan_priv->dev_id, chan_priv->chan_id, start_para.out_data_len);
+            PROF_ERR("out_data_len exceeds the limit. (dev_id=%u, chan_id=%u, out_data_len=%u, max=%u)\n",
+                     chan_priv->dev_id, chan_priv->chan_id, start_para.out_data_len, PROF_START_OUTDATA_SIZE_MAX);
             return DRV_ERROR_INVALID_VALUE;
         }
         para->addr_data_len = start_para.out_data_len;
@@ -310,7 +316,7 @@ drvError_t prof_user_sample_pre_start(struct prof_user_chan_priv *chan_priv, str
 }
 
 drvError_t prof_user_sample_start(struct prof_user_chan_priv *chan_priv, struct prof_user_start_para *para,
-    struct prof_start_event_out_msg *outdata, bool support_host_sample)
+                                  struct prof_start_event_out_msg *outdata, bool support_host_sample)
 {
     struct prof_sample_start_para start_para = {0};
     int ret;
@@ -329,8 +335,8 @@ drvError_t prof_user_sample_start(struct prof_user_chan_priv *chan_priv, struct 
         }
         ret = chan_priv->ops.start_func(&start_para);
         if (ret != PROF_OK) {
-            PROF_ERR("Failed to invoke start func. (dev_id=%u, chan_id=%u, ret=%d)\n",
-                chan_priv->dev_id, chan_priv->chan_id, ret);
+            PROF_ERR("Failed to invoke start func. (dev_id=%u, chan_id=%u, ret=%d)\n", chan_priv->dev_id,
+                     chan_priv->chan_id, ret);
             return DRV_ERROR_INVALID_HANDLE;
         }
     }
@@ -348,8 +354,8 @@ void prof_user_sample_stop(struct prof_user_chan_priv *chan_priv, uint32_t relea
         stop_para.release_flag = release_flag;
         ret = chan_priv->ops.stop_func(&stop_para);
         if (ret != PROF_OK) {
-            PROF_ERR("Failed to invoke stop func. (dev_id=%u, chan_id=%u, ret=%d)\n",
-                chan_priv->dev_id, chan_priv->chan_id, ret);
+            PROF_ERR("Failed to invoke stop func. (dev_id=%u, chan_id=%u, ret=%d)\n", chan_priv->dev_id,
+                     chan_priv->chan_id, ret);
         }
     }
 }
@@ -362,7 +368,7 @@ STATIC void *prof_user_sample_thread(void *arg)
     struct prof_sample_para para = {0};
     uint32_t dev_id = chan_priv->dev_id;
     uint32_t chan_id = chan_priv->chan_id;
-    uint32_t buff_len = 100 * 1024;    /* 100 * 1024 Byte */
+    uint32_t buff_len = 100 * 1024; /* 100 * 1024 Byte */
     uint8_t *buff;
     int ret;
 
@@ -370,7 +376,7 @@ STATIC void *prof_user_sample_thread(void *arg)
     if (chan_priv->support_host_sample) {
         buff_len = chan_priv->sample_buff_size;
         if (buff_len == 0) {
-            PROF_ERR("Invalid buff len. (dev_id=%u, chan_id=%u)\n", dev_id, chan_id);
+            PROF_ERR("Invalid buff len. (dev_id=%u, chan_id=%u, buff_len=%u)\n", dev_id, chan_id, buff_len);
             return NULL;
         }
     }
@@ -449,7 +455,7 @@ void prof_user_sample_thread_disable(struct prof_user_chan_priv *chan_priv)
     (void)pthread_join(chan_priv->sample_thread, NULL);
 }
 
-STATIC void  prof_user_sample_timer_handle(union sigval v)
+STATIC void prof_user_sample_timer_handle(union sigval v)
 {
     sem_t *sem = (sem_t *)v.sival_ptr;
     (void)sem_post(sem);
@@ -470,7 +476,7 @@ drvError_t prof_user_sample_timer_init(struct prof_user_chan_priv *chan_priv, ui
         return DRV_ERROR_INNER_ERR;
     }
 
-    ts.it_interval.tv_sec = sample_period / 1000;   /* 1000ms = 1s */
+    ts.it_interval.tv_sec = sample_period / 1000;              /* 1000ms = 1s */
     ts.it_interval.tv_nsec = (sample_period % 1000) * 1000000; /* 1000ms = 1s 1000000ns = 1ms */
     ts.it_value.tv_sec = ts.it_interval.tv_sec;
     ts.it_value.tv_nsec = ts.it_interval.tv_nsec;
@@ -500,8 +506,7 @@ void prof_user_sample_timer_uninit(struct prof_user_chan_priv *chan_priv)
     chan_priv->timer_fd = NULL;
 }
 
-STATIC drvError_t prof_user_chan_start(uint32_t dev_id, uint32_t chan_id, struct prof_user_start_para *para,
-    char *priv)
+STATIC drvError_t prof_user_chan_start(uint32_t dev_id, uint32_t chan_id, struct prof_user_start_para *para, char *priv)
 {
     struct prof_user_chan_priv *chan_priv = (struct prof_user_chan_priv *)priv;
     drvError_t ret;
@@ -542,8 +547,7 @@ STATIC drvError_t prof_user_chan_start(uint32_t dev_id, uint32_t chan_id, struct
     return DRV_ERROR_NONE;
 }
 
-drvError_t prof_user_chan_stop(uint32_t dev_id, uint32_t chan_id, struct prof_user_stop_para *para,
-    char *priv)
+drvError_t prof_user_chan_stop(uint32_t dev_id, uint32_t chan_id, struct prof_user_stop_para *para, char *priv)
 {
     (void)para;
     struct prof_user_chan_priv *chan_priv = (struct prof_user_chan_priv *)priv;
@@ -601,8 +605,8 @@ STATIC drvError_t prof_user_chan_query(uint32_t dev_id, uint32_t chan_id, uint32
     if (kernel_ops->chan_query != NULL) {
         ret = kernel_ops->chan_query(dev_id, chan_id, avail_len);
         if (ret != DRV_ERROR_NONE) {
-            PROF_ERR("Failed to query avail_len from kernel. (dev_id=%u, chan_id=%u, ret=%d)\n",
-                dev_id, chan_id, (int)ret);
+            PROF_ERR("Failed to query avail_len from kernel. (dev_id=%u, chan_id=%u, ret=%d)\n", dev_id, chan_id,
+                     (int)ret);
             return ret;
         }
     }
@@ -610,8 +614,7 @@ STATIC drvError_t prof_user_chan_query(uint32_t dev_id, uint32_t chan_id, uint32
     return DRV_ERROR_NONE;
 }
 
-drvError_t prof_user_chan_report(uint32_t dev_id, uint32_t chan_id, void *data, uint32_t data_len,
-    char *priv)
+drvError_t prof_user_chan_report(uint32_t dev_id, uint32_t chan_id, void *data, uint32_t data_len, char *priv)
 {
     struct prof_user_chan_priv *chan_priv = (struct prof_user_chan_priv *)priv;
     struct prof_adapt_core_notifier *notifier = NULL;
@@ -621,8 +624,8 @@ drvError_t prof_user_chan_report(uint32_t dev_id, uint32_t chan_id, void *data, 
     if (chan_priv->sample_mode == PROF_SAMPLE_LOCAL_MODE) {
         ret = prof_buff_write(chan_priv->buff, data, data_len);
         if (ret != DRV_ERROR_NONE) {
-            PROF_ERR("Failed to write data to local buff. (dev_id=%u, chan_id=%u, data_len=%u, ret=%d)\n",
-                dev_id, chan_id, data_len, (int)ret);
+            PROF_ERR("Failed to write data to local buff. (dev_id=%u, chan_id=%u, data_len=%u, ret=%d)\n", dev_id,
+                     chan_id, data_len, (int)ret);
             return ret;
         }
 
@@ -635,8 +638,8 @@ drvError_t prof_user_chan_report(uint32_t dev_id, uint32_t chan_id, void *data, 
     if (kernel_ops->chan_writer != NULL) {
         ret = kernel_ops->chan_writer(dev_id, chan_id, data, data_len);
         if (ret != DRV_ERROR_NONE) {
-            PROF_ERR("Failed to write data to kernel. (dev_id=%u, chan_id=%u, data_len=%u, ret=%d)\n",
-                dev_id, chan_id, data_len, (int)ret);
+            PROF_ERR("Failed to write data to kernel. (dev_id=%u, chan_id=%u, data_len=%u, ret=%d)\n", dev_id, chan_id,
+                     data_len, (int)ret);
             return ret;
         }
     }

@@ -572,13 +572,13 @@ int halMbufSetDataLen(Mbuf *mbuf, uint64_t len)
     uint64_t offset;
 
     if ((mbuf == NULL) || (get_share_mbuf_by_mbuf(mbuf) == NULL) || (len == 0)) {
-        buff_err("Mbuf_set_date_len input parameter error! mbuf:0x%lx, len:%lu\n", (uintptr_t)mbuf, len); // lint !e507
+        buff_err("Mbuf_set_data_len input parameter error! mbuf:0x%lx, len:%lu\n", (uintptr_t)mbuf, len);
         return DRV_ERROR_INVALID_VALUE;
     }
 
     offset = (uint64_t)(uintptr_t)mbuf->data - (uint64_t)(uintptr_t)mbuf->datablock;
     if ((offset >= mbuf->total_len) || (len > (mbuf->total_len - offset))) {
-        buff_err("Mbuf_set_date_len error, offset:0x%lx, total_len:0x%lx, len:0x%lx\n", offset, mbuf->total_len, len);
+        buff_err("Mbuf_set_data_len error, offset:0x%lx, total_len:0x%lx, len:0x%lx\n", offset, mbuf->total_len, len);
         return DRV_ERROR_INVALID_VALUE;
     }
 

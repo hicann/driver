@@ -363,23 +363,23 @@ STATIC uint32_t g_run_log_status;
 int32_t drv_log_out_handle_register_inner(struct log_out_handle *handle, size_t input_size, uint32_t flag)
 {
     if (input_size != sizeof(struct log_out_handle)) {
-        (void)printf("Log_out_handle_register failed. (input_size=%zu; size_log_out_handle=%zu)\n", input_size,
-                     sizeof(struct log_out_handle)); // lint !e559
+        DRV_LOG_ERR("Log_out_handle_register failed. (input_size=%zu; size_log_out_handle=%zu)", input_size,
+                    sizeof(struct log_out_handle));
         return DRV_ERROR_INVALID_VALUE;
     }
 
     if (handle == NULL) {
-        (void)printf("Log_out_handle_register failed, handle is NULL.\n");
+        DRV_LOG_ERR("Log_out_handle_register failed, handle is NULL.");
         return DRV_ERROR_INVALID_VALUE;
     }
 
     if (handle->DlogInner == NULL) {
-        (void)printf("Log_out_handle_register failed, the member DlogInner in handle is NULL.\n");
+        DRV_LOG_ERR("Log_out_handle_register failed, the member DlogInner in handle is NULL.");
         return DRV_ERROR_INVALID_VALUE;
     }
 
     if (handle->logLevel >= (uint32_t)LOG_TOOL_LEVEL_TYPE_MAX) {
-        (void)printf("Log_out_handle_register failed. (handle->logLevel=%u)\n", handle->logLevel);
+        DRV_LOG_ERR("Log_out_handle_register failed. (handle->logLevel=%u)", handle->logLevel);
         return DRV_ERROR_INVALID_VALUE;
     }
 

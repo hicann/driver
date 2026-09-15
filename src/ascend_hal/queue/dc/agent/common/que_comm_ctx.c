@@ -219,13 +219,13 @@ static int que_jfr_jfs_create_for_pkt_recv_ack_send(struct que_ctx *ctx, unsigne
 
     pkt_recv_jetty = que_jfr_create(ctx->devid, &jfr_attr, d2d_flag);
     if (que_unlikely(pkt_recv_jetty == NULL)) {
-        QUEUE_LOG_ERR("que jfr create fail. (devid=%u; hospid=%d)\n", ctx->devid, ctx->hostpid);
+        QUEUE_LOG_ERR("que jfr create fail. (devid=%u; hostpid=%d)\n", ctx->devid, ctx->hostpid);
         return DRV_ERROR_INNER_ERR;
     }
 
     ack_send_jetty = que_jfs_create(ctx->devid, &jfs_attr, d2d_flag);
     if (que_unlikely(ack_send_jetty == NULL)) {
-        QUEUE_LOG_ERR("Que jfs create fail. (devid=%u; hospid=%d)\n", ctx->devid, ctx->hostpid);
+        QUEUE_LOG_ERR("Que jfs create fail. (devid=%u; hostpid=%d)\n", ctx->devid, ctx->hostpid);
         goto pkt_recv_jetty_free;
     }
 

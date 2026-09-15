@@ -40,7 +40,7 @@ static drvError_t prof_urma_chan_init(uint32_t dev_id, uint32_t chan_id, bool ev
     chan_priv->urma_chan_info = prof_urma_chan_info_creat(dev_id, chan_id);
     if (chan_priv->urma_chan_info == NULL) {
         free(chan_priv);
-        PROF_ERR("Failed to create urma_info. (dev_id=%u, dev_id=%u)\n", dev_id, chan_id);
+        PROF_ERR("Failed to create urma_info. (dev_id=%u, chan_id=%u)\n", dev_id, chan_id);
         return DRV_ERROR_PARA_ERROR;
     }
 
@@ -48,7 +48,7 @@ static drvError_t prof_urma_chan_init(uint32_t dev_id, uint32_t chan_id, bool ev
     if (ret != DRV_ERROR_NONE) {
         prof_urma_chan_info_destroy(chan_priv->urma_chan_info);
         free(chan_priv);
-        PROF_ERR("Failed to init buff. (dev_id=%u, dev_id=%u)\n", dev_id, chan_id);
+        PROF_ERR("Failed to init buff. (dev_id=%u, chan_id=%u)\n", dev_id, chan_id);
         return ret;
     }
 
@@ -68,8 +68,8 @@ static void prof_urma_chan_uninit(char **priv)
 
 static drvError_t prof_urma_chan_start(uint32_t dev_id, uint32_t chan_id, struct prof_user_start_para *para, char *priv)
 {
-    struct  prof_urma_chan_priv *chan_priv = (struct prof_urma_chan_priv *)priv;
-    struct  prof_urma_start_para urma_start_para = {0};
+    struct prof_urma_chan_priv *chan_priv = (struct prof_urma_chan_priv *)priv;
+    struct prof_urma_start_para urma_start_para = {0};
     struct prof_user_stop_para stop_para = {0};
     drvError_t ret;
 
@@ -99,7 +99,7 @@ static drvError_t prof_urma_chan_start(uint32_t dev_id, uint32_t chan_id, struct
 
 static drvError_t prof_urma_chan_stop(uint32_t dev_id, uint32_t chan_id, struct prof_user_stop_para *para, char *priv)
 {
-    struct  prof_urma_chan_priv *chan_priv = (struct prof_urma_chan_priv *)priv;
+    struct prof_urma_chan_priv *chan_priv = (struct prof_urma_chan_priv *)priv;
     drvError_t ret;
 
     if (para->remote_pid != 0) {
@@ -119,7 +119,7 @@ static drvError_t prof_urma_chan_stop(uint32_t dev_id, uint32_t chan_id, struct 
 
 static drvError_t prof_urma_chan_flush(uint32_t dev_id, uint32_t chan_id, uint32_t *data_len, char *priv)
 {
-    struct  prof_urma_chan_priv *chan_priv = (struct prof_urma_chan_priv *)priv;
+    struct prof_urma_chan_priv *chan_priv = (struct prof_urma_chan_priv *)priv;
     drvError_t ret;
 
     ret = prof_urma_flush(dev_id, chan_id);
@@ -133,7 +133,7 @@ static drvError_t prof_urma_chan_flush(uint32_t dev_id, uint32_t chan_id, uint32
 
 static int prof_urma_chan_read(uint32_t dev_id, uint32_t chan_id, prof_user_read_para_t *read_para, char *priv)
 {
-    struct  prof_urma_chan_priv *chan_priv = (struct prof_urma_chan_priv *)priv;
+    struct prof_urma_chan_priv *chan_priv = (struct prof_urma_chan_priv *)priv;
     drvError_t ret;
     int read_len;
 

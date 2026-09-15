@@ -610,7 +610,7 @@ int que_chan_tgt_recv(unsigned int urma_devid, struct que_jfs *qjfs, struct que_
     if ((cur_time + pkt->head.ini_base_timestamp) > (tgt_basetime + pkt->head.pkt_timestamp + NS_PER_SECOND)) {
         QUEUE_RUN_LOG_INFO_FLOWCTRL(
             "que chan pkt send over time, send_cost_time=%luns; clt_base=%lu, svr_base=%lu,"
-            "ini_send=%lu, tgt_proc=%lu. (qid=%u; devie=%u)\n",
+            "ini_send=%lu, tgt_proc=%lu. (qid=%u; devid=%u)\n",
             ((cur_time + pkt->head.ini_base_timestamp) - (tgt_basetime + pkt->head.pkt_timestamp)),
             pkt->head.ini_base_timestamp, tgt_basetime, pkt->head.pkt_timestamp, cur_time, actual_qid, devid);
     }

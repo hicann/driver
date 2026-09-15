@@ -122,7 +122,8 @@ STATIC drvError_t prof_chan_init(struct prof_chan_mng *chan_mng, uint32_t dev_id
     }
 
     if (chan_mng->ops == NULL) {
-        PROF_ERR("Ops is NULL. (dev_id=%u, chan_id=%u, support_host_sample=%d)\n", dev_id, chan_id, (int)chan_mng->support_host_sample);
+        PROF_ERR("Ops is NULL. (dev_id=%u, chan_id=%u, support_host_sample=%d)\n", dev_id, chan_id,
+                 (int)chan_mng->support_host_sample);
         return DRV_ERROR_INNER_ERR;
     }
 
@@ -154,8 +155,8 @@ drvError_t prof_chan_start(uint32_t dev_id, uint32_t chan_id, struct prof_user_s
     (void)pthread_mutex_lock(&chan_mng->state_mutex);
     if (chan_mng->channel_state != (uint32_t)CHANNEL_DISABLE) {
         (void)pthread_mutex_unlock(&chan_mng->state_mutex);
-        PROF_WARN("The channel has been started. (dev_id=%u, chan_id=%u, state=%u)\n",
-            dev_id, chan_id, chan_mng->channel_state);
+        PROF_WARN("The channel has been started. (dev_id=%u, chan_id=%u, state=%u)\n", dev_id, chan_id,
+                  chan_mng->channel_state);
         return DRV_ERROR_STATUS_FAIL;
     }
 
@@ -200,19 +201,21 @@ drvError_t prof_chan_stop(uint32_t dev_id, uint32_t chan_id, struct prof_user_st
     }
 
     (void)pthread_mutex_lock(&chan_mng->state_mutex);
-    if (((para->host_sample_release_flag == PROF_STOP_STAGE_DEFAULT) || (para->host_sample_release_flag == PROF_STOP_STAGE_PAUSE) ||
-        (para->host_sample_release_flag == PROF_STOP_STAGE_PAUSE_AND_RELEASE)) &&
+    if (((para->host_sample_release_flag == PROF_STOP_STAGE_DEFAULT) ||
+         (para->host_sample_release_flag == PROF_STOP_STAGE_PAUSE) ||
+         (para->host_sample_release_flag == PROF_STOP_STAGE_PAUSE_AND_RELEASE)) &&
         (chan_mng->channel_state != (uint32_t)CHANNEL_ENABLE)) {
         (void)pthread_mutex_unlock(&chan_mng->state_mutex);
-        PROF_WARN("The channel is disabled or busy. (dev_id=%u, chan_id=%u, state=%u)\n",
-            dev_id, chan_id, chan_mng->channel_state);
+        PROF_WARN("The channel is disabled or busy. (dev_id=%u, chan_id=%u, state=%u)\n", dev_id, chan_id,
+                  chan_mng->channel_state);
         return DRV_ERROR_STATUS_FAIL;
     }
 
-    if ((para->host_sample_release_flag == PROF_STOP_STAGE_RELEASE) && (chan_mng->channel_state != (uint32_t)CHANNEL_STOPPING)) {
+    if ((para->host_sample_release_flag == PROF_STOP_STAGE_RELEASE) &&
+        (chan_mng->channel_state != (uint32_t)CHANNEL_STOPPING)) {
         (void)pthread_mutex_unlock(&chan_mng->state_mutex);
-        PROF_WARN("The channel is disabled or busy. (dev_id=%u, chan_id=%u, state=%u)\n",
-            dev_id, chan_id, chan_mng->channel_state);
+        PROF_WARN("The channel is disabled or busy. (dev_id=%u, chan_id=%u, state=%u)\n", dev_id, chan_id,
+                  chan_mng->channel_state);
         return DRV_ERROR_STATUS_FAIL;
     }
 
@@ -228,7 +231,7 @@ drvError_t prof_chan_stop(uint32_t dev_id, uint32_t chan_id, struct prof_user_st
 
     ret = chan_mng->ops->stop(dev_id, chan_id, para, chan_mng->priv);
     if (ret != DRV_ERROR_NONE) {
-        PROF_RUN_INFO("Stop the channel unsuccessfully. (dev_id=%u, chan_id=%u, ret=%d)\n", dev_id, chan_id, (int)ret);
+        PROF_WARN("Stop the channel abnormal. (dev_id=%u, chan_id=%u, ret=%d)\n", dev_id, chan_id, (int)ret);
     }
 
     if (!para->support_host_sample || (para->host_sample_release_flag == PROF_STOP_STAGE_RELEASE) ||
@@ -296,7 +299,7 @@ drvError_t prof_chan_flush(uint32_t dev_id, uint32_t chan_id, uint32_t *data_len
 
 int prof_chan_read(uint32_t dev_id, uint32_t chan_id, char *out_buf, uint32_t buf_size)
 {
-    prof_user_read_para_t read_para = { 0 };
+    prof_user_read_para_t read_para = {0};
     struct prof_chan_mng *chan_mng = NULL;
     int ret;
 

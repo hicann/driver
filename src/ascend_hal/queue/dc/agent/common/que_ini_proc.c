@@ -614,7 +614,7 @@ wait:
     }
 
     if (que_unlikely(ret != DRV_ERROR_NONE)) {
-        QUEUE_LOG_ERR("que wait fail. (ret=%d; devid=%u; qid=%u; que_type=%d, timeout=%d)\n", ret, ini_proc->devid,
+        QUEUE_LOG_ERR("que wait fail. (ret=%d; devid=%u; qid=%u; que_type=%d, timeout=%dms)\n", ret, ini_proc->devid,
                       ini_proc->qid, (int)ini_proc->que_type, timeout);
         return ret;
     }

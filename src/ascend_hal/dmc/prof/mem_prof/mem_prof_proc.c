@@ -13,28 +13,31 @@
 #include "dpa/dpa_apm.h"
 
 #if defined CFG_FEATURE_SYSLOG
-    #include <syslog.h>
-    #define DRV_EVENT_LOG_ERR(fmt, ...)  syslog(LOG_ERR, "[%s %d] " fmt, __func__, __LINE__, ##__VA_ARGS__)
-    #define DRV_EVENT_LOG_WARN(fmt, ...) syslog(LOG_WARNING, "[%s %d] " fmt, __func__, __LINE__, ##__VA_ARGS__)
-    #define DRV_EVENT_LOG_DBG(fmt, ...)  syslog(LOG_DEBUG, "[%s %d] " fmt, __func__, __LINE__, ##__VA_ARGS__)
+#include <syslog.h>
+#define DRV_EVENT_LOG_ERR(fmt, ...) syslog(LOG_ERR, "[%s %d] " fmt, __func__, __LINE__, ##__VA_ARGS__)
+#define DRV_EVENT_LOG_WARN(fmt, ...) syslog(LOG_WARNING, "[%s %d] " fmt, __func__, __LINE__, ##__VA_ARGS__)
+#define DRV_EVENT_LOG_DBG(fmt, ...) syslog(LOG_DEBUG, "[%s %d] " fmt, __func__, __LINE__, ##__VA_ARGS__)
 #else
-    #ifndef EMU_ST
-        #include "dmc/dmc_log_user.h"
-        #include "ascend_inpackage_hal.h"
-    #else
-        #include "ascend_inpackage_hal.h"
-        #include "ut_log.h"
-    #endif
+#ifndef EMU_ST
+#include "dmc/dmc_log_user.h"
+#include "ascend_inpackage_hal.h"
+#else
+#include "ascend_inpackage_hal.h"
+#include "ut_log.h"
+#endif
 
-    #define DRV_EVENT_LOG_ERR(format, ...) do { \
+#define DRV_EVENT_LOG_ERR(format, ...)                               \
+    do {                                                             \
         DRV_ERR(HAL_MODULE_TYPE_COMMON, format "\n", ##__VA_ARGS__); \
     } while (0)
 
-    #define DRV_EVENT_LOG_WARN(format, ...) do { \
+#define DRV_EVENT_LOG_WARN(format, ...)                               \
+    do {                                                              \
         DRV_WARN(HAL_MODULE_TYPE_COMMON, format "\n", ##__VA_ARGS__); \
     } while (0)
 
-    #define DRV_EVENT_LOG_DBG(format, ...) do { \
+#define DRV_EVENT_LOG_DBG(format, ...)                                 \
+    do {                                                               \
         DRV_DEBUG(HAL_MODULE_TYPE_COMMON, format "\n", ##__VA_ARGS__); \
     } while (0)
 #endif
@@ -50,7 +53,7 @@
 #define NSEC_PER_SEC 1000000000ULL
 #endif
 
-#define MEM_PROF_MAX_DEV_NUM   65
+#define MEM_PROF_MAX_DEV_NUM 65
 #define MEM_PROF_SAMPLE_PROC_MODE 0
 
 /* This struct comes from the profile tool;
@@ -82,10 +85,10 @@ static uint64_t mem_prof_get_rdtsc(void)
     uint32_t hi = 0;
     uint32_t lo = 0;
     const int uint32_bits = 32; // 32 is uint bit count
- 
-    __asm__ __volatile__ ("rdtsc" : "=a"(lo), "=d"(hi));
+
+    __asm__ __volatile__("rdtsc" : "=a"(lo), "=d"(hi));
     cycles = ((uint64_t)lo) | ((uint64_t)hi << uint32_bits);
- 
+
     return cycles;
 }
 #endif
@@ -93,22 +96,22 @@ static uint64_t mem_prof_get_rdtsc(void)
 static uint64_t mem_prof_get_cpu_cycle_count(void)
 {
     uint64_t cycles;
- 
+
 #if defined(__aarch64__)
-    asm volatile("mrs %0, cntvct_el0" : "=r" (cycles));
+    asm volatile("mrs %0, cntvct_el0" : "=r"(cycles));
 #elif defined(__x86_64__)
     cycles = mem_prof_get_rdtsc();
 #else
     cycles = 0;
 #endif
- 
+
     return cycles;
 }
 
 static uint64_t mem_prof_get_timestamp_ns(void)
 {
     struct timespec ts = {0};
- 
+
     clock_gettime(CLOCK_MONOTONIC, &ts);
     return (uint64_t)ts.tv_sec * NSEC_PER_SEC + ts.tv_nsec;
 }
@@ -129,7 +132,8 @@ static int mem_prof_npu_app_mem_start_func(struct prof_sample_start_para *para)
     }
 
     if (para->dev_id >= MEM_PROF_MAX_DEV_NUM) {
-        DRV_EVENT_LOG_ERR("Devid is out of range. (devid=%u)\n", para->dev_id);
+        DRV_EVENT_LOG_ERR("Devid is out of range. (devid=%u, valid range=[0, %u))\n", para->dev_id,
+                          MEM_PROF_MAX_DEV_NUM);
         return DRV_ERROR_INVALID_DEVICE;
     }
 
@@ -150,7 +154,8 @@ static int mem_prof_npu_app_mem_sample_para_check(struct prof_sample_para *para)
     }
 
     if (para->dev_id >= MEM_PROF_MAX_DEV_NUM) {
-        DRV_EVENT_LOG_ERR("Devid is out of range. (devid=%u)\n", para->dev_id);
+        DRV_EVENT_LOG_ERR("Devid is out of range. (devid=%u, valid range=[0, %u))\n", para->dev_id,
+                          MEM_PROF_MAX_DEV_NUM);
         return DRV_ERROR_INVALID_DEVICE;
     }
     return 0;
@@ -188,20 +193,20 @@ static drvError_t mem_prof_npu_module_mem_para_check(struct prof_sample_para *pa
         DRV_EVENT_LOG_ERR("Prof sample para is NULL.\n");
         return DRV_ERROR_INVALID_VALUE;
     }
- 
+
     if (para->dev_id >= MEM_PROF_MAX_DEV_NUM) {
         DRV_EVENT_LOG_ERR("Invalid prof sample para devid. (devid=%u)\n", para->dev_id);
         return DRV_ERROR_INVALID_VALUE;
     }
- 
+
     if (para->buff == NULL) {
         DRV_EVENT_LOG_ERR("Prof sample para buff is NULL.\n");
         return DRV_ERROR_INVALID_VALUE;
     }
- 
+
     if (para->buff_len < sizeof(struct module_mem_info) * MAX_MODULE_ID) {
-        DRV_EVENT_LOG_ERR("Invalid prof sample para buff_len. (buff_len=%u, report_len=%u)\n",
-            para->buff_len, sizeof(struct module_mem_info) * MAX_MODULE_ID);
+        DRV_EVENT_LOG_ERR("Invalid prof sample para buff_len. (buff_len=%u, report_len=%u)\n", para->buff_len,
+                          sizeof(struct module_mem_info) * MAX_MODULE_ID);
         return DRV_ERROR_INVALID_VALUE;
     }
 
@@ -212,42 +217,43 @@ static drvError_t mem_prof_npu_module_mem_para_check(struct prof_sample_para *pa
 
     return DRV_ERROR_NONE;
 }
- 
+
 int mem_prof_npu_module_mem_sample_fun(struct prof_sample_para *para)
 {
     uint64_t timestamp = (g_timestamp_mode == 0) ? mem_prof_get_timestamp_ns() : mem_prof_get_cpu_cycle_count();
     struct module_mem_info *mem_info = NULL;
     uint32_t mem_module_id;
     int ret;
- 
+
     ret = mem_prof_npu_module_mem_para_check(para);
     if (ret != DRV_ERROR_NONE) {
         return ret;
     }
- 
+
     mem_info = (struct module_mem_info *)(para->buff);
-    memset_s(mem_info, sizeof(struct module_mem_info) * MAX_MODULE_ID,
-        0, sizeof(struct module_mem_info) * MAX_MODULE_ID);
+    memset_s(mem_info, sizeof(struct module_mem_info) * MAX_MODULE_ID, 0,
+             sizeof(struct module_mem_info) * MAX_MODULE_ID);
     for (mem_module_id = 0; mem_module_id < MAX_MODULE_ID; ++mem_module_id) {
         mem_info[mem_module_id].module_id = mem_module_id;
         mem_info[mem_module_id].timestamp = timestamp;
-        (void)g_get_module_stats_func((uint32_t)para->dev_id, (uint32_t)mem_module_id, (uint64_t *)&mem_info[mem_module_id].total_size);
+        (void)g_get_module_stats_func((uint32_t)para->dev_id, (uint32_t)mem_module_id,
+                                      (uint64_t *)&mem_info[mem_module_id].total_size);
     }
- 
+
     para->report_len = sizeof(struct module_mem_info) * MAX_MODULE_ID;
- 
+
     return DRV_ERROR_NONE;
 }
- 
+
 int mem_prof_npu_module_mem_start_fun(struct prof_sample_start_para *para)
 {
     struct msprof_config *config = NULL;
- 
+
     if (para == NULL) {
         DRV_EVENT_LOG_WARN("Prof sample start para is NULL. \n");
         return 0;
     }
- 
+
     if ((para->user_data == NULL) || (para->user_data_len < sizeof(struct msprof_config))) {
         DRV_EVENT_LOG_WARN("Prof start para invalid value. (para->user_data_len=%u)\n", para->user_data_len);
         return 0;
@@ -256,20 +262,21 @@ int mem_prof_npu_module_mem_start_fun(struct prof_sample_start_para *para)
     g_timestamp_mode = config->timestamp_mode;
     return 0;
 }
- 
+
 static void mem_prof_register_channel(uint32_t ids[], uint32_t dev_num, uint32_t chan_id,
-    int (*start_func)(struct prof_sample_start_para *para), int (*sample_func)(struct prof_sample_para *para))
+                                      int (*start_func)(struct prof_sample_start_para *para),
+                                      int (*sample_func)(struct prof_sample_para *para))
 {
     struct prof_sample_register_para prof_ops;
     drvError_t ret;
     uint32_t i;
- 
+
     prof_ops.sub_chan_num = 1;
     prof_ops.ops.start_func = start_func;
     prof_ops.ops.sample_func = sample_func;
     prof_ops.ops.flush_func = NULL;
     prof_ops.ops.stop_func = NULL;
- 
+
     for (i = 0; (i < dev_num) && (i < MEM_PROF_MAX_DEV_NUM); i++) {
         ret = halProfSampleRegister(ids[i], chan_id, &prof_ops);
         if (ret != DRV_ERROR_NONE) {
@@ -308,12 +315,13 @@ static void __attribute__((constructor)) mem_prof_sample_register(void)
         return;
     }
 
-    mem_prof_register_channel(ids, dev_num, CHANNEL_NPU_APP_MEM, mem_prof_npu_app_mem_start_func, mem_prof_npu_app_mem_sample_func);
-    mem_prof_register_channel(ids, dev_num, CHANNEL_NPU_MODULE_MEM, mem_prof_npu_module_mem_start_fun, mem_prof_npu_module_mem_sample_fun);
+    mem_prof_register_channel(ids, dev_num, CHANNEL_NPU_APP_MEM, mem_prof_npu_app_mem_start_func,
+                              mem_prof_npu_app_mem_sample_func);
+    mem_prof_register_channel(ids, dev_num, CHANNEL_NPU_MODULE_MEM, mem_prof_npu_module_mem_start_fun,
+                              mem_prof_npu_module_mem_sample_fun);
 }
 
 void mem_prof_register_get_module_stats_func(int (*func)(uint32_t devid, uint32_t module_id, uint64_t *alloced_size))
 {
     g_get_module_stats_func = func;
 }
-

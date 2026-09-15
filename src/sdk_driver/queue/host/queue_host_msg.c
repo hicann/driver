@@ -126,7 +126,7 @@ STATIC int queue_data_in(int devid, int vfid, int local_pid, struct hdcdrv_data_
 
     ctx = queue_context_get(reply_msg->dma_info.hostpid);
     if (ctx == NULL) {
-        queue_err("Pid is not exit. (pid=%d)\n", reply_msg->dma_info.hostpid);
+        queue_err("Pid does not exist. (pid=%d)\n", reply_msg->dma_info.hostpid);
         return HDCDRV_RX_FINISH;
     }
 

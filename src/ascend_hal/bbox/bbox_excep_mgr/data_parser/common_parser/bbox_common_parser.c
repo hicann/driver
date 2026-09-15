@@ -20,11 +20,12 @@
 #include "bbox_commlog_parser.h"
 #include "bbox_log_file.h"
 
-#define CHECK_TABLE_FIELD_LEN_ACT(offset, length, space, action) do { \
-    if (((space) - (offset)) < (length)) { \
-        action; \
-    } \
-} while (0)
+#define CHECK_TABLE_FIELD_LEN_ACT(offset, length, space, action) \
+    do {                                                         \
+        if (((space) - (offset)) < (length)) {                   \
+            action;                                              \
+        }                                                        \
+    } while (0)
 
 /**
  * @brief       check data offset + length in rang
@@ -43,7 +44,7 @@ STATIC bool bbox_plaintext_check_data_offset(u32 offset, u32 length, u32 space_s
 
 STATIC void bbox_plaintext_element_name(const char *log_path, const char *file_name, const char *key)
 {
-    const size_t name_len = ELEMENT_NAME_MAX_LEN;    // output element name
+    const size_t name_len = ELEMENT_NAME_MAX_LEN; // output element name
     char *name = (char *)bbox_malloc(name_len);
     BBOX_CHK_EXPR_CTRL(BBOX_ERR, name == NULL, return, "malloc failed.");
     s32 ret = snprintf_s(name, name_len, name_len - 1U, "%s:\n", key);
@@ -77,15 +78,14 @@ STATIC bbox_status bbox_plaintext_nl(const char *log_path, const char *file_name
  * @param [in]  len:        data buffer length
  * @return      0: success, other: failed
  */
-STATIC bbox_status bbox_plaintext_hex_data(const char *log_path, const char *file_name,
-    const char *key, const char *data, u32 len)
+STATIC bbox_status bbox_plaintext_hex_data(const char *log_path, const char *file_name, const char *key,
+                                           const char *data, u32 len)
 {
     BBOX_CHK_NULL_PTR(data, return BBOX_FAILURE);
     BBOX_CHK_NULL_PTR(log_path, return BBOX_FAILURE);
     BBOX_CHK_NULL_PTR(file_name, return BBOX_FAILURE);
     BBOX_CHK_NULL_PTR(key, return BBOX_FAILURE);
-    BBOX_CHK_EXPR_ACTION(len > ELEM_OUTPUT_HEX_MAX_LEN, return BBOX_FAILURE,
-        "value of %s is too lager(%u).", key, len);
+    BBOX_CHK_EXPR_ACTION(len > ELEM_OUTPUT_HEX_MAX_LEN, return BBOX_FAILURE, "value of %s is too large(%u).", key, len);
 
     struct bbox_data_info text;
     bbox_status ret = bbox_data_init(&text, (size_t)TMP_BUFF_B_LEN);
@@ -114,7 +114,8 @@ STATIC bbox_status bbox_plaintext_hex_data(const char *log_path, const char *fil
     return BBOX_SUCCESS;
 }
 
-static bbox_status bbox_plaintext_str_default(const char *log_path, const char *file_name, const struct model_element *info)
+static bbox_status bbox_plaintext_str_default(const char *log_path, const char *file_name,
+                                              const struct model_element *info)
 {
     const size_t text_len = TMP_BUFF_S_LEN;
     char *text = (char *)bbox_malloc(text_len);
@@ -166,7 +167,7 @@ STATIC bbox_status bbox_save_text_str_default(const char *log_path, const char *
  * @return      0: success, other: failed
  */
 STATIC bbox_status bbox_plaintext_str_data(const char *log_path, const char *file_name,
-                                       const struct model_element *info, const char *data, u32 len)
+                                           const struct model_element *info, const char *data, u32 len)
 {
     BBOX_CHK_NULL_PTR(log_path, return BBOX_FAILURE);
     BBOX_CHK_NULL_PTR(file_name, return BBOX_FAILURE);
@@ -241,8 +242,8 @@ STATIC bbox_status bbox_savetext_str_data(const file_hdl_t *file_hdl, const char
  * @param [in]  len:        data buffer length
  * @return      0: success, other: failed
  */
-STATIC bbox_status bbox_plaintext_int_data(const char *log_path, const char *file_name,
-                                       const char *key, const char *data, u32 len)
+STATIC bbox_status bbox_plaintext_int_data(const char *log_path, const char *file_name, const char *key,
+                                           const char *data, u32 len)
 {
     BBOX_CHK_NULL_PTR(data, return BBOX_FAILURE);
     BBOX_CHK_NULL_PTR(log_path, return BBOX_FAILURE);
@@ -276,8 +277,8 @@ STATIC bbox_status bbox_plaintext_int_data(const char *log_path, const char *fil
  * @param [in]  len:        data buffer length
  * @return      0: success, other: failed
  */
-STATIC bbox_status bbox_plaintext_char_data(const char *log_path, const char *file_name,
-                                        const char *key, const char *data, u32 len)
+STATIC bbox_status bbox_plaintext_char_data(const char *log_path, const char *file_name, const char *key,
+                                            const char *data, u32 len)
 {
     BBOX_CHK_NULL_PTR(data, return BBOX_FAILURE);
     BBOX_CHK_NULL_PTR(log_path, return BBOX_FAILURE);
@@ -312,10 +313,10 @@ STATIC bbox_status bbox_plaintext_str_constant(const char *log_path, const char 
     return BBOX_SUCCESS;
 }
 
-#define DIVIDE_FRONT_LEN    20
-#define DIVIDE_TOTAL_LEN    (DIVIDE_FRONT_LEN + ELEMENT_NAME_MAX_LEN + 1) // 1 for '\n'
-#define VISIBLE_MARK_START 33  // '!'
-#define VISIBLE_MARK_END   126 // '~'
+#define DIVIDE_FRONT_LEN 20
+#define DIVIDE_TOTAL_LEN (DIVIDE_FRONT_LEN + ELEMENT_NAME_MAX_LEN + 1) // 1 for '\n'
+#define VISIBLE_MARK_START 33                                          // '!'
+#define VISIBLE_MARK_END 126                                           // '~'
 #define UINT_TO_VISIBLE_CHAR(mark) \
     ((((mark) >= VISIBLE_MARK_START) && ((mark) <= VISIBLE_MARK_END)) ? (char)(mark) : '=')
 
@@ -374,14 +375,14 @@ STATIC bbox_status bbox_plaintext_divide(const char *log_path, const char *file_
  * @param [in]  len:        data buffer length
  * @return      0: success, other: failed
  */
-#define REG_SIZE            4U                          // register size is 4
-#define REG_MAX_NUM         1000000U                       // register max num is 1000000
-#define REG_BLOCK_MAX_BYTE  (REG_SIZE * REG_MAX_NUM)    // registers block size is 4000000 byte(1000000 * 4)
-#define REG_MAX_COL_NUM     4U                          // max has 4 columns per row, represent 4 registers
-#define REG_MAX_ROW_NUM     (REG_MAX_NUM / 4U)          // 1000000 / 4 = 250000, max row num
-#define REG_BYTE_PRE_ROW    (REG_MAX_COL_NUM * REG_SIZE)
-STATIC bbox_status bbox_plaintext_reg_data(const char *log_path, const char *file_name,
-                                       const char *key, const char *buffer, u32 len)
+#define REG_SIZE 4U                                 // register size is 4
+#define REG_MAX_NUM 1000000U                        // register max num is 1000000
+#define REG_BLOCK_MAX_BYTE (REG_SIZE * REG_MAX_NUM) // registers block size is 4000000 byte(1000000 * 4)
+#define REG_MAX_COL_NUM 4U                          // max has 4 columns per row, represent 4 registers
+#define REG_MAX_ROW_NUM (REG_MAX_NUM / 4U)          // 1000000 / 4 = 250000, max row num
+#define REG_BYTE_PRE_ROW (REG_MAX_COL_NUM * REG_SIZE)
+STATIC bbox_status bbox_plaintext_reg_data(const char *log_path, const char *file_name, const char *key,
+                                           const char *buffer, u32 len)
 {
     BBOX_CHK_NULL_PTR(buffer, return BBOX_FAILURE);
     BBOX_CHK_NULL_PTR(log_path, return BBOX_FAILURE);
@@ -427,7 +428,6 @@ STATIC bbox_status bbox_plaintext_reg_data(const char *log_path, const char *fil
     return BBOX_SUCCESS;
 }
 
-	
 /**
  * @brief       write sram bin data to file
  * @param [in]  log_path:    path to write file
@@ -437,8 +437,8 @@ STATIC bbox_status bbox_plaintext_reg_data(const char *log_path, const char *fil
  * @param [in]  len:        data buffer length
  * @return      0: success, other: failed
  */
-STATIC bbox_status bbox_plaintext_bin_data(const char *log_path, const char *file_name,
-    const char *key, const char *buffer, u32 len)
+STATIC bbox_status bbox_plaintext_bin_data(const char *log_path, const char *file_name, const char *key,
+                                           const char *buffer, u32 len)
 {
     BBOX_CHK_NULL_PTR(buffer, return BBOX_FAILURE);
     BBOX_CHK_NULL_PTR(log_path, return BBOX_FAILURE);
@@ -446,10 +446,9 @@ STATIC bbox_status bbox_plaintext_bin_data(const char *log_path, const char *fil
     BBOX_CHK_NULL_PTR(key, return BBOX_FAILURE);
 
     (void)bbox_save_buf_to_fs(log_path, file_name, (char *)(uintptr_t)buffer, len, BBOX_FALSE);
-	
+
     return BBOX_SUCCESS;
 }
-
 
 /**
  * @brief       parse item in data model table with given item table
@@ -460,14 +459,15 @@ STATIC bbox_status bbox_plaintext_bin_data(const char *log_path, const char *fil
  * @param [in]  length:     data buffer length
  * @return      0: success, other: failed
  */
-bbox_status bbox_plaintext_out_data(const file_hdl_t *file_hdl, const model_elem_t *table, u32 num, const char *data, u32 length)
+bbox_status bbox_plaintext_out_data(const file_hdl_t *file_hdl, const model_elem_t *table, u32 num, const char *data,
+                                    u32 length)
 {
     s32 ret;
     u32 len;
 
     if ((table->offset >= length) || (num != 1)) {
-        BBOX_ERR("output item: offset[%u], count[%u], out of range: length(%u) count(1), filename=%s",
-                 table->offset, num, length, file_hdl->name);
+        BBOX_ERR("output item: offset[%u], count[%u], out of range: length(%u) count(1), filename=%s", table->offset,
+                 num, length, file_hdl->name);
         return BBOX_FAILURE;
     }
 
@@ -476,7 +476,7 @@ bbox_status bbox_plaintext_out_data(const file_hdl_t *file_hdl, const model_elem
         u32 rest = length - table->offset;
         rest = RDR_MIN(rest, table->max_size);
         len = (rest > 0) ? (rest - 1U) : 0U; // get end index of string
-        str[len] = '\0'; // append string termintor to end of data block
+        str[len] = '\0';                     // append string termintor to end of data block
         u32 tmp = (u32)strlen(str);
         len = RDR_MIN(rest, tmp);
         ret = bbox_plaintext_str_data(file_hdl->path, file_hdl->name, table, data + table->offset, len);
@@ -525,9 +525,8 @@ bbox_status bbox_plaintext_out_data(const file_hdl_t *file_hdl, const model_elem
  * @param [in]  length:     data buffer length
  * @return      failed: -1, success: >=0, value of parsed item count
  */
-static s32 bbox_plaintext_ctrl_cond(const file_hdl_t *file_hdl,
-                                 const model_elem_t *table, u32 num,
-                                 const char *data, u32 length)
+static s32 bbox_plaintext_ctrl_cond(const file_hdl_t *file_hdl, const model_elem_t *table, u32 num, const char *data,
+                                    u32 length)
 {
     u64 value = 0;
     u32 condition;
@@ -578,9 +577,8 @@ static s32 bbox_plaintext_ctrl_cond(const file_hdl_t *file_hdl,
  * @param [in]  length:     data buffer length
  * @return      failed: -1, success: >=0, value of parsed item count
  */
-STATIC s32 bbox_plaintext_loop_block(const file_hdl_t *file_hdl,
-                                  const model_elem_t table[], u32 num,
-                                  const char *data, u32 length)
+STATIC s32 bbox_plaintext_loop_block(const file_hdl_t *file_hdl, const model_elem_t table[], u32 num, const char *data,
+                                     u32 length)
 {
     u32 i;
     const s32 block_step = 0;       // ELEM_CTRL_LOOP_BLOCK
@@ -589,18 +587,17 @@ STATIC s32 bbox_plaintext_loop_block(const file_hdl_t *file_hdl,
     const s32 block_elem_num = 3;   // ELEM_CTRL_LOOP_BLOCK, ELEM_CTRL_BLOCK_VALUE, ELEM_CTRL_BLOCK_TABLE
 
     // check next elemts
-    if ((num < (u32)block_elem_num) ||
-        (table[block_value_step].type != ELEM_CTRL_BLOCK_VALUE) ||
+    if ((num < (u32)block_elem_num) || (table[block_value_step].type != ELEM_CTRL_BLOCK_VALUE) ||
         (table[block_table_step].type != ELEM_CTRL_BLOCK_TABLE)) {
-        BBOX_ERR("invalid ctrl item type[%d] or item type[%d].",
-            (s32)table[block_value_step].type, (s32)table[block_table_step].type);
+        BBOX_ERR("invalid ctrl item type[%d] or item type[%d].", (s32)table[block_value_step].type,
+                 (s32)table[block_table_step].type);
         return BBOX_FAILURE;
     }
 
     // check block config
     if ((table[block_value_step].num * table[block_value_step].size) < table[block_step].size) {
-        BBOX_ERR("invalid ctrl item, block[%u * %u], but block size[%u].",
-            table[block_value_step].num, table[block_value_step].size, table[block_step].size);
+        BBOX_ERR("invalid ctrl item, block[%u * %u], but block size[%u].", table[block_value_step].num,
+                 table[block_value_step].size, table[block_step].size);
         return BBOX_FAILURE;
     }
 
@@ -656,7 +653,7 @@ STATIC s32 bbox_plaintext_switch_check(const model_elem_t table[], u32 num, u32 
  */
 STATIC bbox_status bbox_plaintext_switch_out(const file_hdl_t *file_hdl, const char *key, const char *data)
 {
-    const u32 text_len = 256;    // 256 is enough.
+    const u32 text_len = 256; // 256 is enough.
     char *text = (char *)bbox_malloc(text_len);
     if (text == NULL) {
         BBOX_ERR_CTRL(BBOX_ERR, return BBOX_FAILURE, "malloc failed.");
@@ -684,9 +681,8 @@ STATIC bbox_status bbox_plaintext_switch_out(const file_hdl_t *file_hdl, const c
  * @param [in]  length:     data buffer length
  * @return      failed: -1, success: >=0, value of parsed item count
  */
-STATIC s32 bbox_plaintext_switch(const file_hdl_t *file_hdl,
-                               const model_elem_t table[], u32 num,
-                               const char *data, u32 length)
+STATIC s32 bbox_plaintext_switch(const file_hdl_t *file_hdl, const model_elem_t table[], u32 num, const char *data,
+                                 u32 length)
 {
     const u32 case_max_num = 10; // max num is 10
     // check case type, return case num
@@ -699,8 +695,8 @@ STATIC s32 bbox_plaintext_switch(const file_hdl_t *file_hdl,
     }
     u64 value;
     s32 ret = bbox_get_val_with_size(data + table[0].offset, table[0].size, &value);
-    BBOX_CHK_EXPR_CTRL(BBOX_ERR, ret != BBOX_SUCCESS, return BBOX_FAILURE,
-        "get value with size(%u) failed.", table[0].size);
+    BBOX_CHK_EXPR_CTRL(BBOX_ERR, ret != BBOX_SUCCESS, return BBOX_FAILURE, "get value with size(%u) failed.",
+                       table[0].size);
 
     u32 i;
     for (i = 1; i < RDR_MIN(num - 1U, case_max_num); i++) {
@@ -721,9 +717,8 @@ STATIC s32 bbox_plaintext_switch(const file_hdl_t *file_hdl,
  * @param [in]  length:     data buffer length
  * @return      failed: -1, success: >=0, value of parsed item count
  */
-STATIC s32 bbox_plaintext_ctrl_data(const file_hdl_t *file_hdl,
-                                 const model_elem_t table[], u32 num,
-                                 const char *data, u32 length)
+STATIC s32 bbox_plaintext_ctrl_data(const file_hdl_t *file_hdl, const model_elem_t table[], u32 num, const char *data,
+                                    u32 length)
 {
     s32 ret;
     const s32 control_label_offset = 1;
@@ -731,14 +726,14 @@ STATIC s32 bbox_plaintext_ctrl_data(const file_hdl_t *file_hdl,
     if (table[0].type == ELEM_CTRL_TABLE_GOTO) {
         BBOX_CHK_EXPR_CTRL(BBOX_ERR, num <= 1, return BBOX_FAILURE, "invalid ctrl item num[%u].", num);
         BBOX_CHK_EXPR_CTRL(BBOX_ERR, table[1].type != ELEM_CTRL_TABLE_RANGE, return BBOX_FAILURE,
-            "invalid ctrl item type[0x%x].", (u32)table[1].type);
+                           "invalid ctrl item type[0x%x].", (u32)table[1].type);
         ret = bbox_plaintext_data(file_hdl->path, table[1].table_enum_type, data + table[0].offset, table[0].size);
         // move table index to next valid index
         ret = (ret == BBOX_FAILURE) ? ret : control_label_offset;
     } else if (table[0].type == ELEM_CTRL_COMPARE) {
         BBOX_CHK_EXPR_CTRL(BBOX_ERR, num <= 1, return BBOX_FAILURE, "invalid ctrl item num[%u].", num);
         BBOX_CHK_EXPR_CTRL(BBOX_ERR, !Compare_class(table[1].type), return BBOX_FAILURE,
-            "invalid ctrl item type[0x%x].", (u32)table[1].type);
+                           "invalid ctrl item type[0x%x].", (u32)table[1].type);
         ret = bbox_plaintext_ctrl_cond(file_hdl, &table[1], num - 1U, data + table[0].offset, table[0].size);
         // move table index to next valid index
         ret = (ret == BBOX_FAILURE) ? ret : (ret + control_label_offset);
@@ -762,14 +757,13 @@ STATIC s32 bbox_plaintext_ctrl_data(const file_hdl_t *file_hdl,
  * @param [in]  length:     data buffer length
  * @return      failed: -1, success: >=0, value of parsed item count
  */
-STATIC s32 bbox_plaintext_ftr_data(const file_hdl_t *file_hdl,
-                                const model_elem_t table[], u32 num,
-                                const char *data, u32 length)
+STATIC s32 bbox_plaintext_ftr_data(const file_hdl_t *file_hdl, const model_elem_t table[], u32 num, const char *data,
+                                   u32 length)
 {
     s32 parsed_count = 0;
     if (((u64)table->index_offset + table->index_cnt) > num) {
         BBOX_ERR_CTRL(BBOX_ERR, return BBOX_FAILURE, "feature item offset %u, count %u, out of range %u",
-            table->index_offset, table->index_cnt, num);
+                      table->index_offset, table->index_cnt, num);
     }
 
     switch (table->type) {
@@ -793,8 +787,8 @@ STATIC s32 bbox_plaintext_ftr_data(const file_hdl_t *file_hdl,
  * @param [in]  length:     data buffer length
  * @return      BBOX_SUCCESS: success, BBOX_FAILURE: failed
  */
-static bbox_status bbox_plaintext_data_recur(const file_hdl_t *file_hdl, const plaintext_map_t *map,
-                                         const char *data, u32 length)
+static bbox_status bbox_plaintext_data_recur(const file_hdl_t *file_hdl, const plaintext_map_t *map, const char *data,
+                                             u32 length)
 {
     u32 i;
     static u32 call_depth;
@@ -885,7 +879,8 @@ bbox_status bbox_savetext_data(const char *log_path, enum plain_text_table_type 
  * @param [in]  length:     data buffer length
  * @return      0: success, other: failed
  */
-bbox_status bbox_bbox_plaintext_data(const char *log_path, enum plain_text_table_type type, const void *data, u32 length)
+bbox_status bbox_bbox_plaintext_data(const char *log_path, enum plain_text_table_type type, const void *data,
+                                     u32 length)
 {
     char sub_path[DIR_MAXLEN];
 
@@ -927,7 +922,8 @@ bbox_status bbox_bbox_savetext_data(const char *log_path, enum plain_text_table_
  * @param [in]  length:     data buffer length
  * @return      0: success, other: failed
  */
-bbox_status bbox_mntn_plaintext_data(const char *log_path, enum plain_text_table_type type, const void *data, u32 length)
+bbox_status bbox_mntn_plaintext_data(const char *log_path, enum plain_text_table_type type, const void *data,
+                                     u32 length)
 {
     char sub_path[DIR_MAXLEN];
 
@@ -997,7 +993,7 @@ void bbox_plain_text_header(const char *log_path, enum plain_text_table_type typ
     }
 
     BBOX_CHK_EXPR_CTRL(BBOX_DBG, !bbox_check_excep_id(excep_id), return,
-        "check %s block[%d] data(magic: %u, exception_id: %u).", fname, block_id, magic, excep_id);
+                       "check %s block[%d] data(magic: %u, exception_id: %u).", fname, block_id, magic, excep_id);
 
     char date[DATATIME_MAXLEN] = {0};
     bbox_get_date(&tm, date, DATATIME_MAXLEN);

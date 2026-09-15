@@ -479,7 +479,7 @@ static drvError_t get_proc_init_result(int sfd, int *result)
 
     cnt = recv(sfd, result, sizeof(*result), 0);
     if (cnt != (long)sizeof(*result)) {
-        buff_err("Resv msg failed. (sfd=%d; cnt=%ld; errno=%d)\n", sfd, cnt, errno);
+        buff_err("Recv msg failed. (sfd=%d; cnt=%ld; errno=%d)\n", sfd, cnt, errno);
         return DRV_ERROR_RECV_MESG;
     }
 
@@ -647,7 +647,8 @@ static drvError_t create_grp_para_check(const char *name, GroupCfg *cfg)
     }
 
     if (buff_kb_to_b(cfg->maxMemSize) > BUFF_MEM_MAX_SIZE) {
-        buff_err("name %s max_mem_size %llxKB error\n", name, cfg->maxMemSize);
+        buff_err("name %s max_mem_size %llxKB exceeds max limit (max=%llxKB)\n", name, cfg->maxMemSize,
+                 (BUFF_MEM_MAX_SIZE / 1024));
         return DRV_ERROR_INVALID_VALUE;
     }
 
@@ -737,10 +738,10 @@ static unsigned long long get_grp_max_mem_size_from_cfg(GroupCfg *cfg)
     if (cfg->cacheAllocFlag == 0) {
         /* cache_alloc feature no support default or min mem_size */
         if (cfg->maxMemSize == 0) {
-            buff_info("max_mem_size not config, use default %llx\n", cfg->maxMemSize);
+            buff_info("max_mem_size not config, use default %llxKB\n", cfg->maxMemSize);
             return BUFF_MEM_MAX_SIZE;
         } else if (buff_kb_to_b(cfg->maxMemSize) < BUFF_MEM_MIN_SIZE) {
-            buff_info("max_mem_size is too small, use min %llx\n", cfg->maxMemSize);
+            buff_info("max_mem_size is too small, use min %llxKB\n", cfg->maxMemSize);
             return BUFF_MEM_MIN_SIZE;
         }
     }
@@ -837,7 +838,7 @@ int halGrpCreate(const char *name, GroupCfg *cfg)
         set_grp_cache_type(BUFF_CACHE);
     }
     if (ret != DRV_ERROR_NONE) {
-        buff_err("name %s register pool failed, len %llx\n", name, max_mem_size);
+        buff_err("name %s register pool failed, max_mem_size %llxKB\n", name, max_mem_size);
         goto out;
     }
 
@@ -873,7 +874,7 @@ int halGrpAddProc(const char *name, int pid, GroupShareAttr attr)
 
     pool_id = get_grp_pool_id();
     if (pool_id < 0) {
-        buff_err("name %s has not create grp\n", name);
+        buff_err("name %s has not created grp\n", name);
         return (int)DRV_ERROR_INVALID_VALUE;
     }
 

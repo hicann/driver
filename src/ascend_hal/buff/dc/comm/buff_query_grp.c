@@ -219,7 +219,7 @@ int halGrpQuery(GroupQueryCmdType cmd, void *inBuff, unsigned int inLen, void *o
     drvError_t ret;
 
     if ((outBuff == NULL) || (inBuff == NULL) || (outLen == NULL)) {
-        buff_err("point is NULL, in_buff: %pk, out_buff: %pk, out_buff: %pk.\n", inBuff, outBuff, outLen);
+        buff_err("point is NULL, in_buff: %pK, out_buff: %pK, out_len: %pK.\n", inBuff, outBuff, outLen);
         return (int)DRV_ERROR_INVALID_VALUE;
     }
 

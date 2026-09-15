@@ -156,7 +156,7 @@ static drvError_t que_inter_dev_attach_ini(unsigned int dev_id, unsigned int qid
     if ((inter_dev_state == QUEUE_STATE_EXPORTED) || (inter_dev_state == QUEUE_STATE_IMPORTED)) {
         return que_inter_dev_attach_proc(dev_id, qid, inter_dev_state, create_time);
     }
-    QUEUE_LOG_INFO("que operation not support. (inter_dev_state=%d)\n", inter_dev_state);
+    QUEUE_LOG_INFO("que operation not supported. (inter_dev_state=%d)\n", inter_dev_state);
     return DRV_ERROR_NOT_SUPPORT;
 }
 

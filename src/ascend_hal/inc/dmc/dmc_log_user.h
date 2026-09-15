@@ -217,6 +217,11 @@ static inline int drv_hex_format_line(char *buf, size_t bufsz, const unsigned ch
         }                                                                                            \
     } while (0)
 
+#define DRV_LOG_ERR(fmt, ...) DRV_ERR(HAL_MODULE_TYPE_LOG, fmt, ##__VA_ARGS__)
+#define DRV_LOG_WARN(fmt, ...) DRV_WARN(HAL_MODULE_TYPE_LOG, fmt, ##__VA_ARGS__)
+#define DRV_LOG_INFO(fmt, ...) DRV_INFO(HAL_MODULE_TYPE_LOG, fmt, ##__VA_ARGS__)
+#define DRV_LOG_DEBUG(fmt, ...) DRV_DEBUG(HAL_MODULE_TYPE_LOG, fmt, ##__VA_ARGS__)
+#define DRV_LOG_RUN_INFO(fmt, ...) DRV_RUN_INFO(HAL_MODULE_TYPE_LOG, fmt, ##__VA_ARGS__)
 #ifdef __cplusplus
 }
 #endif

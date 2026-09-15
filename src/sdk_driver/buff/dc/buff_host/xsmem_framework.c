@@ -382,7 +382,7 @@ static struct xsm_task_pool_node *task_pool_node_add(struct xsm_task *task, stru
 
     node = task_pool_node_find(task, xp);
     if (node != NULL) {
-        xsmem_err("The pool has already attach to task. (pool=%d, task=%d)\n", xp->pool_id, task->pid);
+        xsmem_err("The pool has already attached to task. (pool=%d, task=%d)\n", xp->pool_id, task->pid);
         return KA_ERR_PTR(-ESRCH);
     }
 
@@ -560,7 +560,7 @@ static int xsmem_pool_adding_task_add(struct xsm_pool *xp, int pid, GroupShareAt
     TASK_TIME_TYPE start_time;
 
     if (xsm_get_task_start_time(pid, &start_time) != 0) {
-        xsmem_err("adding task is not exist. (pid=%d)\n", pid);
+        xsmem_err("adding task does not exist. (pid=%d)\n", pid);
         return -ESRCH;
     }
 
@@ -929,7 +929,7 @@ static int xsmem_pool_attach(struct xsm_task *task, struct xsm_pool *xp, int tim
     node = task_pool_node_find(task, xp);
     ka_task_mutex_unlock(&task->mutex);
     if (node != NULL) {
-        xsmem_err("the pool %d has already attach to task %d\n", xp->pool_id, task->pid);
+        xsmem_err("the pool %d has already attached to task %d\n", xp->pool_id, task->pid);
         return -ESRCH;
     }
 

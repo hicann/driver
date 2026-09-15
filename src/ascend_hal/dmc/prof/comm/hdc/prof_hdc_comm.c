@@ -70,16 +70,16 @@ STATIC void prof_wait_epoll_client_recv_thread_exit(void)
     /* wait recv thread exit */
     (void)clock_gettime(CLOCK_MONOTONIC, &start);
     while ((g_prof_hdc_info.recv_thread_run_flag != PROF_HDC_RECEIVE_THREAD_STOP) &&
-        (cnt < 5000)) { /* wait times max 5000 */
+           (cnt < 5000)) {  /* wait times max 5000 */
         (void)usleep(1000), /* 1000 us */
-        cnt++;
+            cnt++;
     }
     (void)clock_gettime(CLOCK_MONOTONIC, &end);
     /* 1000: ms */
     timecost = (end.tv_sec - start.tv_sec) * 1000 + (end.tv_nsec - start.tv_nsec) / PROF_NSEC_PER_MSECOND;
     /* > 10 ms print warn */
     if (timecost > 10) {
-        PROF_WARN("Profiled waited for the ending of thread at the poll. (timecost=%ld)\n", timecost);
+        PROF_WARN("Profile waited for the ending of thread at the poll. (timecost=%ld)\n", timecost);
     }
     if (g_prof_hdc_info.recv_thread_run_flag == PROF_HDC_RECEIVE_THREAD_RUNNING) {
         PROF_WARN("Profile waited for the ending of thread at the poll. The thread was not over. (cnt=%d)\n", cnt);
@@ -137,7 +137,7 @@ STATIC void prof_handle_hdc_events(struct drvHdcEvent *events, int eventnum)
 
         prof_hdc_call_msg_proc_func((uint32_t)dev_id, (unsigned char *)p_buf, (uint32_t)buf_len);
 
-hdc_msg_free:
+    hdc_msg_free:
         ret = drvHdcFreeMsg(hdc_msg);
         if (ret != DRV_ERROR_NONE) {
             PROF_ERR("Failed to invoke function [drvHdcFreeMsg]. (ret=%d)\n", (int)ret);
@@ -215,20 +215,24 @@ STATIC void *prof_epoll_client_recv(void *arg)
     g_prof_hdc_info.recv_thread_run_flag = PROF_HDC_RECEIVE_THREAD_RUNNING;
     while (g_prof_hdc_info.prof_epoll_client_recv_flag == PROF_HDC_RECEIVE_THREAD_ENABLE) {
         if (wait_epoll_thread_end) {
-            // if drvHdcEpollWait returned fail, should wait epoll thread end, and then release hdc epoll and client memory
+            // if drvHdcEpollWait returned fail, should wait epoll thread end, and then release hdc epoll and client
+            // memory
             (void)usleep(PROF_EPOLL_SLEEP_TIME); // 100ms
             continue;
         }
 
         eventnum = PROF_HDC_EVENT_NUM_MAX;
-        ret = drvHdcEpollWait(epoll, &g_prof_epoll_events[0], PROF_HDC_EVENT_NUM_MAX, 1000, &eventnum); /* timeout 1000ms */
+        ret = drvHdcEpollWait(epoll, &g_prof_epoll_events[0], PROF_HDC_EVENT_NUM_MAX, 1000,
+                              &eventnum); /* timeout 1000ms */
         if ((ret != DRV_ERROR_NONE) || (eventnum < 0) || ((uint32_t)eventnum > PROF_HDC_EVENT_NUM_MAX)) {
             if (ret == DRV_ERROR_EPOLL_CLOSE) {
                 PROF_INFO("Profile HDC was closed. The client receiving thread at the poll was over."
-                    " (ret=%d)\n", ret);
+                          " (ret=%d)\n",
+                          ret);
             } else {
                 PROF_ERR("Failed to invoke function [drvHdcEpollWait] or the variable [eventnum] was invalid."
-                    " (ret=%d, eventnum=%d)\n", ret, eventnum);
+                         " (ret=%d, eventnum=%d)\n",
+                         ret, eventnum);
             }
             wait_epoll_thread_end = true;
             continue;
@@ -326,7 +330,7 @@ STATIC drvError_t prof_per_session_connect(uint32_t dev_id, uint32_t chan_id)
         return ret;
     }
 
-    PROF_INFO("The function [drvHdcSessionConnect] invoked was success. (dev_id=%u)\n", dev_id);
+    PROF_INFO("The function [drvHdcSessionConnect] was invoked successfully. (dev_id=%u)\n", dev_id);
 
     ret = drvHdcSetSessionReference(g_prof_hdc_info.session[dev_id]);
     if (ret != DRV_ERROR_NONE) {
@@ -399,7 +403,7 @@ STATIC drvError_t prof_session_msg_send(HDC_SESSION session, unsigned char *buff
         return ret;
     }
 
-    PROF_DEBUG("Profile command sending was success. (msg_type=%d)\n", cmd_msg->msg_type);
+    PROF_DEBUG("Profile command was sent successfully. (msg_type=%d)\n", cmd_msg->msg_type);
 
     ret = drvHdcFreeMsg(hdc_msg);
     if (ret != DRV_ERROR_NONE) {
@@ -420,8 +424,7 @@ STATIC drvError_t prof_per_session_disconnect(uint32_t dev_id, uint32_t chan_id)
 
     if (g_prof_hdc_info.prof_channel_num_count[dev_id] == 0 ||
         g_prof_hdc_info.prof_channel_enable_flag[dev_id][chan_id] == 0) {
-        PROF_RUN_INFO("Profile session had no channel client. HDC session had been closed. (dev_id=%u)\n",
-                      dev_id);
+        PROF_RUN_INFO("Profile session had no channel client. HDC session had been closed. (dev_id=%u)\n", dev_id);
         return DRV_ERROR_NOT_SUPPORT;
     }
 

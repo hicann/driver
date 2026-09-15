@@ -1854,7 +1854,7 @@ int esched_publish_event_to_topic(u32 chip_id, u32 event_src, struct sched_publi
     }
 
     if (event_info->event_id == EVENT_CDQ_MSG) {
-        sched_info("CDQM func is not support.\n");
+        sched_info("CDQM func is not supported.\n");
         return DRV_ERROR_NOT_SUPPORT;
     }
 

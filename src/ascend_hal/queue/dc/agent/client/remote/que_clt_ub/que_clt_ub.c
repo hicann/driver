@@ -321,7 +321,7 @@ static int que_clt_destroy_send(unsigned int devid, unsigned int qid)
 
     ret = que_event_send_ex(devid, QUE_SEND_NORMAL, DRV_SUBEVENT_DESTROY_MSG, &event_msg, QUE_EVENT_MAX_WAIT_10S);
     if (que_unlikely(ret != DRV_ERROR_NONE)) {
-        QUEUE_LOG_ERR("event send fail. (ret=%d; devid=%u; qid=%u\n", ret, devid, qid);
+        QUEUE_LOG_ERR("event send fail. (ret=%d; devid=%u; qid=%u)\n", ret, devid, qid);
         return ret;
     }
 

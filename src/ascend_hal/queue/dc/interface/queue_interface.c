@@ -317,7 +317,7 @@ drvError_t halQueueCreate(unsigned int devId, const QueueAttr *queAttr, unsigned
         return ret;
     }
 
-    QUEUE_LOG_INFO("not set queue_create_iner. (deploy_type=%u)\n", type);
+    QUEUE_LOG_INFO("not set queue_create_inner. (deploy_type=%u)\n", type);
     return DRV_ERROR_NOT_SUPPORT;
 }
 

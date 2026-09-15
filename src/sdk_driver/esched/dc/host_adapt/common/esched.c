@@ -1638,7 +1638,7 @@ int32_t sched_wait_event(u32 chip_id, int32_t pid, u32 gid, u32 tid, int32_t tim
     }
 
     if (tid >= grp_ctx->cfg_thread_num) {
-        sched_err("The value of variable tid is out of range. (chip_id=%u; pid=%d; gid=%u; gid=%u; max=%u)\n", chip_id,
+        sched_err("The value of variable tid is out of range. (chip_id=%u; pid=%d; gid=%u; tid=%u; max=%u)\n", chip_id,
                   pid, gid, tid, grp_ctx->cfg_thread_num);
         esched_proc_put(proc_ctx);
         return DRV_ERROR_PARA_ERROR;
@@ -1811,7 +1811,7 @@ int32_t sched_get_exact_event(u32 chip_id, int32_t pid, u32 gid, u32 tid, u32 ev
     }
 
     if (tid >= grp_ctx->cfg_thread_num) {
-        sched_err("The value of variable tid is out of range. (chip_id=%u; pid=%d; gid=%u; gid=%u; max=%u)\n", chip_id,
+        sched_err("The value of variable tid is out of range. (chip_id=%u; pid=%d; gid=%u; tid=%u; max=%u)\n", chip_id,
                   pid, gid, tid, grp_ctx->cfg_thread_num);
         ret = DRV_ERROR_PARA_ERROR;
         goto out;
@@ -2224,7 +2224,7 @@ static void sched_event_queue_res_dump(struct sched_event_que *que, bool cpu_res
         node_event_res_log_sw = true;
     }
 
-    sched_warn("alloc event resource not success. (depth=%u, head=%u, tail=%u, mask=%u, cur_time=%llu(tick))\n",
+    sched_warn("Alloc event resource abnormal. (depth=%u, head=%u, tail=%u, mask=%u, cur_time=%llu(tick))\n",
                que->depth, que->head, que->tail, que->mask, sched_get_cur_timestamp());
 
     que_head = que->head;
@@ -2847,7 +2847,7 @@ int sched_query_tid_in_grp(u32 chip_id, int pid, u32 gid, u32 os_tid, u32 *tid)
 
     proc_ctx = esched_chip_proc_get(chip_id, pid);
     if (proc_ctx == NULL) {
-        sched_err("Failed to proc_ctx. (chip_id=%u; pid=%d)\n", chip_id, pid);
+        sched_err("Failed to get proc_ctx. (chip_id=%u; pid=%d)\n", chip_id, pid);
         esched_dev_put(node);
         return DRV_ERROR_NO_PROCESS;
     }
@@ -4646,7 +4646,7 @@ STATIC int32_t esched_create_dev_lock(u32 devid, struct sched_dev_ops *ops)
 
     node = (struct sched_numa_node *)sched_vzalloc(sizeof(struct sched_numa_node));
     if (node == NULL) {
-        sched_err("Valloc Mem failed. (size=0x%lx)\n", sizeof(struct sched_numa_node));
+        sched_err("Failed to vzalloc memory. (size=0x%lx)\n", sizeof(struct sched_numa_node));
         return DRV_ERROR_OUT_OF_MEMORY;
     }
 

@@ -209,7 +209,7 @@ int esched_get_real_pid(struct topic_sched_mailbox *mb, u32 devid, u32 pid)
 
     if (mb->pid == 0) { /* Notice:only pid=0 return DRV_ERROR_PARA_ERROR */
         if (!esched_log_limited(SCHED_LOG_LIMIT_GET_REAL_PID)) {
-            sched_warn("Recv a fak task or mb pid invalid. (dev_id=%u)\n", devid);
+            sched_warn("Recv a fake task or mb pid invalid. (dev_id=%u)\n", devid);
         }
         return DRV_ERROR_PARA_ERROR;
     }

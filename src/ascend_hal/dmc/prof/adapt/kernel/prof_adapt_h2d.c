@@ -34,7 +34,7 @@ drvError_t prof_kernel_get_channels(uint32_t dev_id, struct prof_channel_list *c
 
     ret = drvGetProcessSign(&sign_info);
     if (ret != DRV_ERROR_NONE) {
-        PROF_ERR("Failed get process sign. (devid=%u, ret=%d).\n", dev_id, (int)ret);
+        PROF_ERR("Failed to get process sign. (devid=%u, ret=%d).\n", dev_id, (int)ret);
         return ret;
     }
 

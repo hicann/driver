@@ -21,8 +21,9 @@
 #include "prof_adapt_user.h"
 #include "prof_event_master.h"
 
-STATIC drvError_t prof_host_sample_start_para_check(uint32_t dev_id, uint32_t chan_id, struct prof_user_start_para *para,
-    struct prof_user_chan_priv *chan_priv)
+STATIC drvError_t prof_host_sample_start_para_check(uint32_t dev_id, uint32_t chan_id,
+                                                    struct prof_user_start_para *para,
+                                                    struct prof_user_chan_priv *chan_priv)
 {
     if ((chan_id == CHANNEL_STARS_SOC_LOG_BUFFER) || (chan_id == CHANNEL_FFTS_PROFILE_BUFFER_TASK)) {
         para->sample_period = PROF_HOST_SAMPLE_PERIOD_MIN;
@@ -34,7 +35,8 @@ STATIC drvError_t prof_host_sample_start_para_check(uint32_t dev_id, uint32_t ch
     }
 
     if ((para->sample_period < PROF_HOST_SAMPLE_PERIOD_MIN) || (para->sample_period > PROF_HOST_SAMPLE_PERIOD_MAX)) {
-        PROF_ERR("Invalid sample period. (dev_id=%u, chan_id=%u, sample_period=%ums)\n", dev_id, chan_id, para->sample_period);
+        PROF_ERR("Invalid sample period. (dev_id=%u, chan_id=%u, sample_period=%ums, valid range=[%u, %u])\n", dev_id,
+                 chan_id, para->sample_period, PROF_HOST_SAMPLE_PERIOD_MIN, PROF_HOST_SAMPLE_PERIOD_MAX);
         return DRV_ERROR_INVALID_VALUE;
     }
 
@@ -45,9 +47,8 @@ STATIC drvError_t prof_host_sample_start_para_check(uint32_t dev_id, uint32_t ch
     return DRV_ERROR_NONE;
 }
 
-
 STATIC drvError_t prof_user_chan_host_sample_start(uint32_t dev_id, uint32_t chan_id, struct prof_user_start_para *para,
-    char *priv)
+                                                   char *priv)
 {
     struct prof_user_chan_priv *chan_priv = (struct prof_user_chan_priv *)priv;
     drvError_t ret;
@@ -94,14 +95,15 @@ STATIC drvError_t prof_user_chan_host_sample_start(uint32_t dev_id, uint32_t cha
     ret = prof_user_sample_timer_init(chan_priv, para->sample_period);
     if (ret != DRV_ERROR_NONE) {
         prof_user_sample_thread_disable(chan_priv);
-        (void)prof_user_host_sample_event_stop(dev_id, chan_id, &stop_para, PROF_STOP_STAGE_PAUSE_AND_RELEASE); /* first device stop then host stop */
+        (void)prof_user_host_sample_event_stop(
+            dev_id, chan_id, &stop_para, PROF_STOP_STAGE_PAUSE_AND_RELEASE); /* first device stop then host stop */
         prof_user_sample_stop(chan_priv, PROF_STOP_STAGE_DEFAULT);
         PROF_ERR("Failed to init timer. (dev_id=%u, chan_id=%u, ret=%d)\n", dev_id, chan_id, (int)ret);
         return ret;
     }
 
     PROF_INFO("Host sample start success. (dev_id=%u, chan_id=%u, sub_chan_id=%u, outdata_len=%u)\n", dev_id, chan_id,
-        start_out_msg.sub_chan_id, start_out_msg.outdata_len);
+              start_out_msg.sub_chan_id, start_out_msg.outdata_len);
     return DRV_ERROR_NONE;
 }
 
@@ -154,12 +156,14 @@ STATIC drvError_t prof_user_chan_proactive_sample(uint32_t dev_id, uint32_t chan
 
     if (CAS(&chan_priv->sample_status, PROF_SAMPLE_NORMAL, PROF_SAMPLE_FLUSH_START)) {
         (void)sem_post(chan_priv->sem);
-        while (!CAS(&chan_priv->sample_status, PROF_SAMPLE_FLUSH_FINISH, PROF_SAMPLE_NORMAL) && (wait_num < 1000)) { /* 1000 */
+        while (!CAS(&chan_priv->sample_status, PROF_SAMPLE_FLUSH_FINISH, PROF_SAMPLE_NORMAL) &&
+               (wait_num < 1000)) { /* 1000 */
             nanosleep(&ts, NULL);
             wait_num++;
         }
         if (wait_num >= 1000) { /* 1000 */
-            PROF_ERR("wait sample timeout. (dev_id=%u, chan_id=%u, sample_flag=%u)\n", dev_id, chan_id, chan_priv->sample_status);
+            PROF_ERR("wait sample timeout. (dev_id=%u, chan_id=%u, sample_flag=%u)\n", dev_id, chan_id,
+                     chan_priv->sample_status);
             return DRV_ERROR_WAIT_TIMEOUT;
         }
     } else {
@@ -170,11 +174,11 @@ STATIC drvError_t prof_user_chan_proactive_sample(uint32_t dev_id, uint32_t chan
 }
 
 STATIC drvError_t prof_user_chan_host_sample_stop(uint32_t dev_id, uint32_t chan_id, struct prof_user_stop_para *para,
-    char *priv)
+                                                  char *priv)
 {
     int ret;
     (void)para;
-    struct prof_user_chan_priv *chan_priv  = (struct prof_user_chan_priv *)priv;
+    struct prof_user_chan_priv *chan_priv = (struct prof_user_chan_priv *)priv;
 
     ret = prof_user_host_sample_event_stop(dev_id, chan_id, para, PROF_STOP_STAGE_PAUSE);
     if (ret != 0) {

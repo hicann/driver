@@ -30,7 +30,7 @@
 #ifndef CFG_ENV_HOST
 #define ESCHED_MAX_PHY_DEV_NUM 4
 #endif
-#define ESCHED_CLOSE_MAX_SLEEP 10000  /* 10ms */
+#define ESCHED_CLOSE_MAX_SLEEP 10000 /* 10ms */
 
 static THREAD__ int32_t sched_dev_fd[ESCHED_DEV_NUM];
 static esched_proc_grp_info sched_grp[ESCHED_DEV_NUM];
@@ -43,14 +43,16 @@ static bool esched_thread_key_flag = false;
 pthread_mutex_t g_esched_init_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 THREAD__ void (*esched_finish_func[SCHED_MAX_GRP_NUM][EVENT_MAX_NUM])(unsigned int dev_id, unsigned int grp_id,
-    unsigned int event_id, unsigned int subevent_id) = {{NULL}};
+                                                                      unsigned int event_id,
+                                                                      unsigned int subevent_id) = {{NULL}};
 THREAD__ void (*esched_finish_func_ex[SCHED_MAX_GRP_NUM][EVENT_MAX_NUM])(unsigned int dev_id, unsigned int grp_id,
-    esched_event_info event_info) = {{NULL}};
+                                                                         esched_event_info event_info) = {{NULL}};
 
 THREAD__ void (*esched_ack_func[SCHED_MAX_GRP_NUM][EVENT_MAX_NUM])(unsigned int dev_id, unsigned int subevent_id,
-    char *msg, unsigned int msgLen) = {{NULL}};
-THREAD__ void (*esched_trace_record_func[SCHED_MAX_GRP_NUM][EVENT_MAX_NUM])(unsigned int grp_id, unsigned int event_id,
-    unsigned int subevent_id, sched_trace_time_info *sched_trace_time_info) = {{NULL}};
+                                                                   char *msg, unsigned int msgLen) = {{NULL}};
+THREAD__ void (*esched_trace_record_func[SCHED_MAX_GRP_NUM][EVENT_MAX_NUM])(
+    unsigned int grp_id, unsigned int event_id, unsigned int subevent_id,
+    sched_trace_time_info *sched_trace_time_info) = {{NULL}};
 
 static bool g_esched_snapshot_flag = false;
 unsigned long long esched_get_cur_cpu_timestamp(void)
@@ -58,7 +60,7 @@ unsigned long long esched_get_cur_cpu_timestamp(void)
     unsigned long long cur_tick = esched_get_cur_cpu_tick();
     if (g_esched_snapshot_flag) {
         return sched_adapt_curr_time(cur_tick);
-    } 
+    }
     return cur_tick;
 }
 
@@ -90,8 +92,7 @@ int esched_device_check(unsigned int dev_id)
 
 void esched_clear_grp_info(unsigned int dev_id)
 {
-    (void)memset_s((void *)sched_grp[dev_id].info, sizeof(sched_grp[dev_id].info),
-        0, sizeof(sched_grp[dev_id].info));    
+    (void)memset_s((void *)sched_grp[dev_id].info, sizeof(sched_grp[dev_id].info), 0, sizeof(sched_grp[dev_id].info));
 }
 
 STATIC void esched_init_global_fork(unsigned int dev_id, int fd)
@@ -143,20 +144,25 @@ void esched_query_sync_msg_trace(uint32_t dev_id, struct event_summary *event, u
         return;
     }
 
-    sched_run_info("trace event cfg. (dev_id=%u; grp_id=%u; thread_id=%u; event_id=%u; subevent_id=%u; pid=%d; dst_engine=%d).\n",
+    sched_run_info(
+        "trace event cfg. (dev_id=%u; grp_id=%u; thread_id=%u; event_id=%u; subevent_id=%u; pid=%d; dst_engine=%d).\n",
         dev_id, grp_id, thread_id, event->event_id, event->subevent_id, event->pid, event->dst_engine);
-    sched_run_info("show trace info. (src_submit_user=%llu; src_submit_kernel=%llu; dst_publish=%llu; dst_wait_start=%llu; dst_wait_end=%llu;"
-        " dst_submit_usr=%llu; dst_rsp_submit_kernel=%llu; src_publish=%llu; src_wait_start=%llu; src_wait_end=%llu).\n",
-        para.trace.src_submit_user_timestamp, para.trace.src_submit_kernel_timestamp, para.trace.dst_publish_timestamp,
-        para.trace.dst_wait_start_timestamp, para.trace.dst_wait_end_timestamp, para.trace.dst_submit_user_timestamp,
-        para.trace.dst_submit_kernel_timestamp, para.trace.src_publish_timestamp, para.trace.src_wait_start_timestamp,
-        para.trace.src_wait_end_timestamp);
+    sched_run_info("show trace info. (src_submit_user=%llu; src_submit_kernel=%llu; dst_publish=%llu; "
+                   "dst_wait_start=%llu; dst_wait_end=%llu;"
+                   " dst_submit_usr=%llu; dst_rsp_submit_kernel=%llu; src_publish=%llu; src_wait_start=%llu; "
+                   "src_wait_end=%llu).\n",
+                   para.trace.src_submit_user_timestamp, para.trace.src_submit_kernel_timestamp,
+                   para.trace.dst_publish_timestamp, para.trace.dst_wait_start_timestamp,
+                   para.trace.dst_wait_end_timestamp, para.trace.dst_submit_user_timestamp,
+                   para.trace.dst_submit_kernel_timestamp, para.trace.src_publish_timestamp,
+                   para.trace.src_wait_start_timestamp, para.trace.src_wait_end_timestamp);
 
     return;
 }
 
 drvError_t halEschedRegisterFinishFunc(unsigned int grpId, unsigned int event_id,
-    void (*finishFunc)(unsigned int devId, unsigned int grpId, unsigned int event_id, unsigned int subevent_id))
+                                       void (*finishFunc)(unsigned int devId, unsigned int grpId, unsigned int event_id,
+                                                          unsigned int subevent_id))
 {
     if ((grpId >= SCHED_MAX_GRP_NUM) || (event_id >= EVENT_MAX_NUM)) {
         sched_err("The value of grpId or event_id is out of range. (grpId=%u; event_id=%u)\n", grpId, event_id);
@@ -169,7 +175,8 @@ drvError_t halEschedRegisterFinishFunc(unsigned int grpId, unsigned int event_id
 }
 
 drvError_t esched_register_finish_func_ex(unsigned int grp_id, unsigned int event_id,
-    void (*finish_func)(unsigned int dev_id, unsigned int grp_id, esched_event_info event_info))
+                                          void (*finish_func)(unsigned int dev_id, unsigned int grp_id,
+                                                              esched_event_info event_info))
 {
     if ((grp_id >= SCHED_MAX_GRP_NUM) || (event_id >= EVENT_MAX_NUM)) {
         sched_err("The value of grp_id or event_id is out of range. (grp_id=%u; event_id=%u)\n", grp_id, event_id);
@@ -181,16 +188,14 @@ drvError_t esched_register_finish_func_ex(unsigned int grp_id, unsigned int even
     return DRV_ERROR_NONE;
 }
 
-static inline bool esched_thread_info_is_match(esched_thread_info *thread_info,
-    unsigned int dev_id, unsigned int grp_id, unsigned int thread_id)
+static inline bool esched_thread_info_is_match(esched_thread_info *thread_info, unsigned int dev_id,
+                                               unsigned int grp_id, unsigned int thread_id)
 {
-    return ((thread_info->dev_id == dev_id) &&
-        (thread_info->gid == grp_id) &&
-        (thread_info->tid == thread_id));
+    return ((thread_info->dev_id == dev_id) && (thread_info->gid == grp_id) && (thread_info->tid == thread_id));
 }
 
-static inline void esched_save_thread_info(esched_thread_wait_info *thread_wait_info,
-    uint32_t dev_id, uint32_t grp_id, uint32_t thread_id)
+static inline void esched_save_thread_info(esched_thread_wait_info *thread_wait_info, uint32_t dev_id, uint32_t grp_id,
+                                           uint32_t thread_id)
 {
     thread_wait_info->thread_info.dev_id = dev_id;
     thread_wait_info->thread_info.gid = grp_id;
@@ -257,7 +262,7 @@ static void esched_create_thread_wait_info_list_head(void)
     INIT_LIST_HEAD(&wait_info_head->list_head);
     wait_info_head->cur_thread_info.gid = SCHED_INVALID_GID;
     wait_info_head->cur_thread_info.tid = SCHED_INVALID_TID;
-    ret = pthread_setspecific(esched_thread_key, (void*)wait_info_head);
+    ret = pthread_setspecific(esched_thread_key, (void *)wait_info_head);
     if (ret != 0) {
         sched_err("set esched_thread_key specific failed.\n");
         free(wait_info_head);
@@ -276,12 +281,12 @@ static void esched_thread_destructor(void *key)
         return;
     }
 
-    list_for_each_safe(pos, n, &wait_info_head->list_head) {
+    list_for_each_safe(pos, n, &wait_info_head->list_head)
+    {
         thread_wait_info = list_entry(pos, esched_thread_wait_info, list);
         drv_user_list_del(&thread_wait_info->list);
-        sched_debug("Free thread wait info node(dev_id=%u; gid=%u; tid=%u).\n",
-            thread_wait_info->thread_info.dev_id, thread_wait_info->thread_info.gid,
-            thread_wait_info->thread_info.tid);
+        sched_debug("Free thread wait info node(dev_id=%u; gid=%u; tid=%u).\n", thread_wait_info->thread_info.dev_id,
+                    thread_wait_info->thread_info.gid, thread_wait_info->thread_info.tid);
         free(thread_wait_info);
     }
 
@@ -302,7 +307,7 @@ static void esched_create_thread_key_once(void)
 }
 
 /* Findout the same "devid + grpid + thread_id" list entry. */
-STATIC esched_thread_wait_info* esched_find_wait_info(unsigned int dev_id, unsigned int grp_id, unsigned int thread_id)
+STATIC esched_thread_wait_info *esched_find_wait_info(unsigned int dev_id, unsigned int grp_id, unsigned int thread_id)
 {
     esched_thread_wait_info_head *wait_info_head = NULL;
     struct list_head *pos = NULL, *n = NULL;
@@ -313,7 +318,8 @@ STATIC esched_thread_wait_info* esched_find_wait_info(unsigned int dev_id, unsig
         return NULL;
     }
 
-    list_for_each_safe(pos, n, &wait_info_head->list_head) {
+    list_for_each_safe(pos, n, &wait_info_head->list_head)
+    {
         thread_wait_info = list_entry(pos, esched_thread_wait_info, list);
         if (esched_thread_info_is_match(&thread_wait_info->thread_info, dev_id, grp_id, thread_id) == true) {
             return thread_wait_info;
@@ -323,7 +329,8 @@ STATIC esched_thread_wait_info* esched_find_wait_info(unsigned int dev_id, unsig
     return NULL;
 }
 
-STATIC esched_thread_wait_info* esched_create_wait_info(unsigned int dev_id, unsigned int grp_id, unsigned int thread_id)
+STATIC esched_thread_wait_info *esched_create_wait_info(unsigned int dev_id, unsigned int grp_id,
+                                                        unsigned int thread_id)
 {
     esched_thread_wait_info_head *wait_info_head = NULL;
     esched_thread_wait_info *thread_wait_info = NULL;
@@ -342,8 +349,7 @@ STATIC esched_thread_wait_info* esched_create_wait_info(unsigned int dev_id, uns
 
     esched_save_thread_info(thread_wait_info, dev_id, grp_id, thread_id);
     drv_user_list_add_head(&thread_wait_info->list, &wait_info_head->list_head);
-    sched_debug("Add thread wait info node(dev_id=%u; gid=%u; tid=%u).\n",
-        dev_id, grp_id, thread_id);
+    sched_debug("Add thread wait info node(dev_id=%u; gid=%u; tid=%u).\n", dev_id, grp_id, thread_id);
     return thread_wait_info;
 }
 
@@ -363,19 +369,19 @@ STATIC void esched_finish_call_back(unsigned int dev_id, unsigned int grp_id, un
 
     /* Only valid parameters are saved in the wait info, so the gid and event_id found in the list must be valid. */
     if (esched_finish_func[grp_id][thread_wait_info->event_info.event_id] != NULL) {
-        esched_finish_func[grp_id][thread_wait_info->event_info.event_id](dev_id,
-            grp_id, thread_wait_info->event_info.event_id, thread_wait_info->event_info.subevent_id);
+        esched_finish_func[grp_id][thread_wait_info->event_info.event_id](
+            dev_id, grp_id, thread_wait_info->event_info.event_id, thread_wait_info->event_info.subevent_id);
     }
     if (esched_finish_func_ex[grp_id][thread_wait_info->event_info.event_id] != NULL) {
-        esched_finish_func_ex[grp_id][thread_wait_info->event_info.event_id](dev_id,
-            grp_id, thread_wait_info->event_info);
+        esched_finish_func_ex[grp_id][thread_wait_info->event_info.event_id](dev_id, grp_id,
+                                                                             thread_wait_info->event_info);
     }
 
     /* Update the last event info invalid. */
     thread_wait_info->event_valid = 0;
 
     sched_debug("Called the finish func.(dev_id=%u; gid=%u; tid=%u; event_id=%u; subevent_id=%u).\n", dev_id, grp_id,
-        thread_id, thread_wait_info->event_info.event_id, thread_wait_info->event_info.subevent_id);
+                thread_id, thread_wait_info->event_info.event_id, thread_wait_info->event_info.subevent_id);
 }
 
 static void esched_save_wait_info(uint32_t dev_id, uint32_t thread_id, struct sched_ioctl_para_wait para)
@@ -389,7 +395,8 @@ static void esched_save_wait_info(uint32_t dev_id, uint32_t thread_id, struct sc
         /* Create new wait info when first time wait by this thread info. */
         thread_wait_info = esched_create_wait_info(dev_id, para.event.gid, thread_id);
         if (thread_wait_info == NULL) {
-            sched_err("Create new wait info failed. (dev_id=%u; grp_id=%u; tid=%u)\n", dev_id, para.event.gid, thread_id);
+            sched_err("Create new wait info failed. (dev_id=%u; grp_id=%u; tid=%u)\n", dev_id, para.event.gid,
+                      thread_id);
             return;
         }
     }
@@ -401,10 +408,11 @@ static void esched_save_wait_info(uint32_t dev_id, uint32_t thread_id, struct sc
     thread_wait_info->event_valid = 1;
 }
 
-#if (!defined (USER_EVENT_SCHED_UT)) && (!defined (EMU_ST))
+#if (!defined(USER_EVENT_SCHED_UT)) && (!defined(EMU_ST))
 drvError_t register_esched_trace_record_func(unsigned int grp_id, unsigned int event_id,
-    void (*finish_func)(unsigned int grp_id, unsigned int event_id, unsigned int subevent_id,
-        sched_trace_time_info *sched_trace_time_info))
+                                             void (*finish_func)(unsigned int grp_id, unsigned int event_id,
+                                                                 unsigned int subevent_id,
+                                                                 sched_trace_time_info *sched_trace_time_info))
 {
     if ((grp_id >= SCHED_MAX_GRP_NUM) || (event_id >= EVENT_MAX_NUM)) {
         sched_err("The value of grp_id or event_id is out of range. (grp_id=%u; event_id=%u)\n", grp_id, event_id);
@@ -416,9 +424,9 @@ drvError_t register_esched_trace_record_func(unsigned int grp_id, unsigned int e
 }
 #endif
 STATIC void esched_trace_record_call_back(unsigned int grp_id, struct sched_subscribed_event *event,
-    uint64_t wait_start_timestamp)
+                                          uint64_t wait_start_timestamp)
 {
-#if (!defined (USER_EVENT_SCHED_UT)) && (!defined (EMU_ST))
+#if (!defined(USER_EVENT_SCHED_UT)) && (!defined(EMU_ST))
     sched_trace_time_info sched_trace_time_info_ins;
     unsigned int event_id = event->event_id;
     unsigned int subevent_id = event->subevent_id;
@@ -651,7 +659,7 @@ drvError_t halEschedDettachDevice(uint32_t devId)
 }
 
 static drvError_t esched_wait_event_comm(esched_thread_info *wait_info, int32_t timeout, struct event_info *event,
-    esched_event_buffer *event_buffer)
+                                         esched_event_buffer *event_buffer)
 {
     drvError_t ret;
     struct sched_ioctl_para_wait para;
@@ -696,8 +704,8 @@ static drvError_t esched_wait_event_comm(esched_thread_info *wait_info, int32_t 
     return DRV_ERROR_NONE;
 }
 
-drvError_t esched_wait_event_ex(uint32_t dev_id, uint32_t grp_id,
-    uint32_t thread_id, int32_t timeout, struct event_info *event)
+drvError_t esched_wait_event_ex(uint32_t dev_id, uint32_t grp_id, uint32_t thread_id, int32_t timeout,
+                                struct event_info *event)
 {
     esched_thread_info wait_info = {dev_id, grp_id, thread_id};
     esched_event_buffer *event_buffer = NULL;
@@ -711,8 +719,8 @@ drvError_t esched_wait_event_ex(uint32_t dev_id, uint32_t grp_id,
     return esched_wait_event_comm(&wait_info, timeout, event, event_buffer);
 }
 
-drvError_t halEschedWaitEvent(uint32_t devId, uint32_t grpId,
-    uint32_t threadId, int32_t timeout, struct event_info *event)
+drvError_t halEschedWaitEvent(uint32_t devId, uint32_t grpId, uint32_t threadId, int32_t timeout,
+                              struct event_info *event)
 {
     esched_thread_info wait_info = {devId, grpId, threadId};
     esched_event_buffer event_buffer;
@@ -727,7 +735,8 @@ drvError_t halEschedWaitEvent(uint32_t devId, uint32_t grpId,
     return esched_wait_event_comm(&wait_info, timeout, event, &event_buffer);
 }
 
-static drvError_t esched_thread_swapout_common(unsigned int dev_id, unsigned int grp_id, unsigned int thread_id, int timeout)
+static drvError_t esched_thread_swapout_common(unsigned int dev_id, unsigned int grp_id, unsigned int thread_id,
+                                               int timeout)
 {
     struct sched_ioctl_para_wait para = {0};
     drvError_t ret;
@@ -796,8 +805,8 @@ drvError_t halEschedThreadGiveup(unsigned int devId, unsigned int grpId, unsigne
     }
 }
 
-drvError_t halEschedGetEvent(uint32_t devId, uint32_t grpId, uint32_t threadId,
-    EVENT_ID eventId, struct event_info *event)
+drvError_t halEschedGetEvent(uint32_t devId, uint32_t grpId, uint32_t threadId, EVENT_ID eventId,
+                             struct event_info *event)
 {
     drvError_t ret;
     struct sched_ioctl_para_get_event para;
@@ -831,8 +840,8 @@ drvError_t halEschedGetEvent(uint32_t devId, uint32_t grpId, uint32_t threadId,
     return DRV_ERROR_NONE;
 }
 
-STATIC drvError_t esched_submit_event_comm(uint32_t dev_id, struct event_summary *event,
-    unsigned int tid, unsigned int dst_dev_id, unsigned int *event_num)
+STATIC drvError_t esched_submit_event_comm(uint32_t dev_id, struct event_summary *event, unsigned int tid,
+                                           unsigned int dst_dev_id, unsigned int *event_num)
 {
     struct sched_ioctl_para_submit para;
     struct timespec publish_timestamp;
@@ -853,7 +862,7 @@ STATIC drvError_t esched_submit_event_comm(uint32_t dev_id, struct event_summary
     para.event_info.publish_timestamp = esched_get_cur_cpu_timestamp();
     (void)clock_gettime(CLOCK_MONOTONIC, &publish_timestamp);
     para.event_info.publish_timestamp_of_day = (uint64_t)((publish_timestamp.tv_sec * USEC_PER_SEC) +
-        (publish_timestamp.tv_nsec / NSEC_PER_USEC));
+                                                          (publish_timestamp.tv_nsec / NSEC_PER_USEC));
 
     ret = esched_dev_ioctl(dev_id, SCHED_SUBMIT_EVENT_ID, &para);
     *event_num = para.event_info.event_num;
@@ -902,8 +911,8 @@ static int esched_check_event_rsv_data(struct event_summary *events, unsigned in
     return DRV_ERROR_NONE;
 }
 
-DLLEXPORT drvError_t halEschedSubmitEventBatch(unsigned int devId, SUBMIT_FLAG flag,
-    struct event_summary *events, unsigned int event_num, unsigned int *succ_event_num)
+DLLEXPORT drvError_t halEschedSubmitEventBatch(unsigned int devId, SUBMIT_FLAG flag, struct event_summary *events,
+                                               unsigned int event_num, unsigned int *succ_event_num)
 {
     int ret;
 
@@ -924,7 +933,7 @@ DLLEXPORT drvError_t halEschedSubmitEventBatch(unsigned int devId, SUBMIT_FLAG f
 
     if (flag != SHARED_EVENT_ENTRY) {
 #ifndef EMU_ST
-        sched_warn("The flag is not support. (flag=%d)\n", flag);
+        sched_warn("The flag is not supported. (flag=%d)\n", flag);
 #endif
         return DRV_ERROR_NOT_SUPPORT;
     }
@@ -976,7 +985,8 @@ drvError_t halEschedSubmitEventEx(uint32_t devId, uint32_t dstDevId, struct even
 }
 
 drvError_t halEschedRegisterAckFunc(unsigned int grpId, EVENT_ID eventId,
-    void (*ackFunc)(unsigned int devId, unsigned int subevent_id, char *msg, unsigned int msgLen))
+                                    void (*ackFunc)(unsigned int devId, unsigned int subevent_id, char *msg,
+                                                    unsigned int msgLen))
 {
     if (!esched_support_extern_interface()) {
         sched_info("Not support yet.\n");
@@ -984,8 +994,8 @@ drvError_t halEschedRegisterAckFunc(unsigned int grpId, EVENT_ID eventId,
     }
 
     if ((grpId >= SCHED_MAX_GRP_NUM) || (eventId >= EVENT_MAX_NUM)) {
-        sched_err("The value of grpId or event_id is out of range. (grpId=%u; event_id=%u)\n",
-            grpId, (unsigned int)eventId);
+        sched_err("The value of grpId or event_id is out of range. (grpId=%u; event_id=%u)\n", grpId,
+                  (unsigned int)eventId);
         return DRV_ERROR_SCHED_PARA_ERR;
     }
 
@@ -994,8 +1004,7 @@ drvError_t halEschedRegisterAckFunc(unsigned int grpId, EVENT_ID eventId,
     return DRV_ERROR_NONE;
 }
 
-drvError_t halEschedAckEvent(uint32_t devId, EVENT_ID eventId, uint32_t subeventId,
-    char *msg, uint32_t msgLen)
+drvError_t halEschedAckEvent(uint32_t devId, EVENT_ID eventId, uint32_t subeventId, char *msg, uint32_t msgLen)
 {
     struct sched_ioctl_para_ack para;
     unsigned int cur_grp_id = esched_get_cur_group_id();
@@ -1018,8 +1027,7 @@ drvError_t halEschedAckEvent(uint32_t devId, EVENT_ID eventId, uint32_t subevent
     return esched_dev_ioctl(devId, SCHED_ACK_EVENT_ID, &para);
 }
 
-drvError_t halEschedSubscribeEvent(uint32_t devId, uint32_t grpId,
-    uint32_t threadId, u64 eventBitmap)
+drvError_t halEschedSubscribeEvent(uint32_t devId, uint32_t grpId, uint32_t threadId, u64 eventBitmap)
 {
     struct sched_ioctl_para_subscribe para;
 
@@ -1031,8 +1039,8 @@ drvError_t halEschedSubscribeEvent(uint32_t devId, uint32_t grpId,
     return esched_dev_ioctl(devId, SCHED_THREAD_SUBSCRIBE_EVENT_ID, &para);
 }
 
-drvError_t halEschedSetGrpEventQos(unsigned int devId, unsigned int grpId,
-    EVENT_ID eventId, struct event_sched_grp_qos *qos)
+drvError_t halEschedSetGrpEventQos(unsigned int devId, unsigned int grpId, EVENT_ID eventId,
+                                   struct event_sched_grp_qos *qos)
 {
     struct sched_ioctl_para_set_event_max_num para;
 
@@ -1071,8 +1079,8 @@ static int esched_create_grp(uint32_t dev_id, unsigned int grp_id, struct esched
 
     sched_grp[dev_id].info[grp_id].gid = grp_id;
     sched_grp[dev_id].info[grp_id].type = grp_para->type;
-    sched_info("Esched create grp success. (dev_id=%u; gid=%u; sched_mode=%u; grpName=%s)\n",
-        dev_id, grp_id, para.sched_mode, para.grp_name);
+    sched_info("Esched create grp success. (dev_id=%u; gid=%u; sched_mode=%u; grpName=%s)\n", dev_id, grp_id,
+               para.sched_mode, para.grp_name);
 
     return ret;
 }
@@ -1098,7 +1106,7 @@ static void esched_grp_name_print(uint32_t dev_id)
         }
 
         sched_info("Show detail. (gid=%u; grpName=%s)\n", sched_grp[dev_id].info[i].gid,
-            sched_grp[dev_id].info[i].grp_name);
+                   sched_grp[dev_id].info[i].grp_name);
     }
 }
 
@@ -1164,14 +1172,14 @@ drvError_t halEschedCreateGrpEx(uint32_t devId, struct esched_grp_para *grpPara,
 
     if ((esched_device_check(devId) != 0) || (grpPara == NULL) || (grpId == NULL)) {
         sched_err("Invalid para. (devId=%u; grpPara=%u; grpId=%u)\n", devId, grpPara == NULL ? 1 : 0,
-            grpId == NULL ? 1 : 0);
+                  grpId == NULL ? 1 : 0);
         return DRV_ERROR_PARA_ERROR;
     }
 
     if ((strnlen(grpPara->grp_name, EVENT_MAX_GRP_NAME_LEN) == 0) ||
         (strnlen(grpPara->grp_name, EVENT_MAX_GRP_NAME_LEN) >= EVENT_MAX_GRP_NAME_LEN)) {
         sched_err("Invalid grp name. (grp_name_len=%u)\n",
-            (unsigned int)strnlen(grpPara->grp_name, EVENT_MAX_GRP_NAME_LEN));
+                  (unsigned int)strnlen(grpPara->grp_name, EVENT_MAX_GRP_NAME_LEN));
         return DRV_ERROR_PARA_ERROR;
     }
 
@@ -1209,8 +1217,8 @@ drvError_t halEschedCreateGrpEx(uint32_t devId, struct esched_grp_para *grpPara,
     return ret;
 }
 
-drvError_t halEschedQueryInfo(unsigned int devId, ESCHED_QUERY_TYPE type,
-    struct esched_input_info *inPut, struct esched_output_info *outPut)
+drvError_t halEschedQueryInfo(unsigned int devId, ESCHED_QUERY_TYPE type, struct esched_input_info *inPut,
+                              struct esched_output_info *outPut)
 {
     struct sched_ioctl_para_query_info para;
     if (esched_device_check(devId) != 0) {
@@ -1246,15 +1254,15 @@ drvError_t halEschedQueryInfo(unsigned int devId, ESCHED_QUERY_TYPE type,
 }
 
 drvError_t halEschedQueryInfoEx(unsigned int devId, unsigned int dstDevId, ESCHED_QUERY_TYPE type,
-    struct esched_input_info *inPut, struct esched_output_info *outPut)
+                                struct esched_input_info *inPut, struct esched_output_info *outPut)
 {
     struct sched_ioctl_para_query_info para;
     unsigned int phy_dest_devid = 0;
     drvError_t ret;
 
     if ((esched_device_check(devId) != 0) || (type >= QUERY_TYPE_MAX) || (inPut == NULL) || (outPut == NULL)) {
-        sched_err("Invalid para. (devId=%u; type=%u; inPut=%u; outPut=%u)\n",
-            devId, type, inPut == NULL ? 1 : 0, outPut == NULL ? 1 : 0);
+        sched_err("Invalid para. (devId=%u; type=%u; inPut=%u; outPut=%u)\n", devId, type, inPut == NULL ? 1 : 0,
+                  outPut == NULL ? 1 : 0);
         return DRV_ERROR_PARA_ERROR;
     }
     ret = uda_get_udevid_by_devid_ex(dstDevId, &phy_dest_devid);
@@ -1277,8 +1285,8 @@ drvError_t halEschedQueryInfoEx(unsigned int devId, unsigned int dstDevId, ESCHE
 drvError_t esched_query_grp_type(uint32_t dev_id, uint32_t grp_id, GROUP_TYPE *type)
 {
     if ((esched_device_check(dev_id) != 0) || (grp_id >= SCHED_MAX_GRP_NUM)) {
-        sched_err("The dev_id or grp_id is invalid. (dev_id=%u; max=%u; grp_id=%u; max=%u)\n",
-            dev_id, ESCHED_LOGIC_DEV_NUM, grp_id, SCHED_MAX_GRP_NUM);
+        sched_err("The dev_id or grp_id is invalid. (dev_id=%u; dev_id_max=%u; grp_id=%u; grp_id_max=%u)\n", dev_id,
+                  ESCHED_LOGIC_DEV_NUM, grp_id, SCHED_MAX_GRP_NUM);
         return DRV_ERROR_PARA_ERROR;
     }
 
@@ -1322,7 +1330,8 @@ STATIC void esched_init_cpu_mask(struct sched_sched_cpu_mask *cpu_mask)
     }
 }
 
-STATIC int32_t esched_set_sched_cpu_mask(unsigned long long *mask, unsigned int sched_cpu_start, unsigned int sched_cpu_num)
+STATIC int32_t esched_set_sched_cpu_mask(unsigned long long *mask, unsigned int sched_cpu_start,
+                                         unsigned int sched_cpu_num)
 {
     unsigned int i;
 
@@ -1427,8 +1436,8 @@ drvError_t halEschedTraceRecord(uint32_t devId, const char *recordReason, const 
     }
 
     para.dev_id = devId;
-    len = ((strnlen(recordReason, SCHED_STR_MAX_LEN) >= SCHED_STR_MAX_LEN) ?
-        SCHED_STR_MAX_LEN - 1 : strnlen(recordReason, SCHED_STR_MAX_LEN));
+    len = ((strnlen(recordReason, SCHED_STR_MAX_LEN) >= SCHED_STR_MAX_LEN) ? SCHED_STR_MAX_LEN - 1 :
+                                                                             strnlen(recordReason, SCHED_STR_MAX_LEN));
     ret = strncpy_s(para.record_reason, SCHED_STR_MAX_LEN, recordReason, len);
     if (ret != 0) {
 #ifndef EMU_ST
@@ -1436,8 +1445,8 @@ drvError_t halEschedTraceRecord(uint32_t devId, const char *recordReason, const 
 #endif
     }
 
-    len = ((strnlen(key, SCHED_STR_MAX_LEN) >= SCHED_STR_MAX_LEN) ?
-        SCHED_STR_MAX_LEN - 1 : strnlen(key, SCHED_STR_MAX_LEN));
+    len = ((strnlen(key, SCHED_STR_MAX_LEN) >= SCHED_STR_MAX_LEN) ? SCHED_STR_MAX_LEN - 1 :
+                                                                    strnlen(key, SCHED_STR_MAX_LEN));
     ret = strncpy_s(para.key, SCHED_STR_MAX_LEN, key, len);
     if (ret != 0) {
 #ifndef EMU_ST
@@ -1457,8 +1466,7 @@ drvError_t esched_query_curr_sched_mode(unsigned int dev_id, unsigned int *sched
     struct sched_ioctl_para_query_sched_mode para;
 
     if ((esched_device_check(dev_id) != 0) || (sched_mode == NULL)) {
-        sched_err("Invalid para. (dev_id=%u; sched_mode_ptr=%u)\n",
-            dev_id, sched_mode == NULL ? 1 : 0);
+        sched_err("Invalid para. (dev_id=%u; sched_mode_ptr=%u)\n", dev_id, sched_mode == NULL ? 1 : 0);
         return DRV_ERROR_PARA_ERROR;
     }
 
@@ -1471,7 +1479,7 @@ drvError_t esched_query_curr_sched_mode(unsigned int dev_id, unsigned int *sched
     return DRV_ERROR_NONE;
 }
 #ifndef DRV_HOST
-static __thread unsigned int g_sched_mode[ESCHED_DEV_NUM] = {[0 ... (ESCHED_DEV_NUM - 1)] = 0xff};
+static __thread unsigned int g_sched_mode[ESCHED_DEV_NUM] = {[0 ...(ESCHED_DEV_NUM - 1)] = 0xff};
 #endif
 unsigned int esched_get_cpu_mode(uint32_t devid)
 {
@@ -1482,10 +1490,10 @@ unsigned int esched_get_cpu_mode(uint32_t devid)
     if (g_sched_mode[devid] != 0xff) {
         return g_sched_mode[devid];
     }
- 
+
     drvError_t ret;
     unsigned int cpu_mode = 0;
- 
+
     ret = esched_query_curr_sched_mode(devid, &cpu_mode);
     if (ret != DRV_ERROR_NONE) {
         return 0;
@@ -1613,8 +1621,8 @@ STATIC void __attribute__((destructor)) esched_exit(void)
 }
 
 #if defined(CFG_ENV_HOST) && !defined(CFG_SOC_PLATFORM_CLOUD_V4)
-/* The upper layer of milan obp does not distinguish between host and dev. The obj of the drvevent module is not linked 
-   on the host side.Therefore, symbol halEventProc,halDrvEventThreadInit,halDrvEventThreadUninit are provided on the 
+/* The upper layer of milan obp does not distinguish between host and dev. The obj of the drvevent module is not linked
+   on the host side.Therefore, symbol halEventProc,halDrvEventThreadInit,halDrvEventThreadUninit are provided on the
    host side for stubging. */
 #ifndef EMU_ST
 drvError_t halEventProc(unsigned int devId, struct event_info *event)

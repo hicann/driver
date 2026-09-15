@@ -47,16 +47,14 @@ static drvError_t prof_get_event_grpid(uint32_t dev_id, uint32_t remote_pid, uin
 #endif
     if (drv_ret == DRV_ERROR_NONE) {
         *grp_id = gid_out.grp_id;
-        PROF_INFO(
-            "Query grpid ok. (dev_id=%u, devpid=%d, group_name=%s, grp_id=%u)\n", dev_id, gid_in.pid, group_name,
-            *grp_id);
+        PROF_INFO("Query grpid ok. (dev_id=%u, devpid=%d, group_name=%s, grp_id=%u)\n", dev_id, gid_in.pid, group_name,
+                  *grp_id);
         return DRV_ERROR_NONE;
     }
 
     *grp_id = 0; // grp not exist, use default grpid 0.
-    PROF_WARN(
-        "Query grpid unsuccessfully. (ret=%d, dev_id=%u, devpid=%d, group_name=%s).\n", ret, dev_id, gid_in.pid,
-        group_name);
+    PROF_WARN("Query grpid abnormal. (ret=%d, dev_id=%u, devpid=%d, group_name=%s).\n", ret, dev_id, gid_in.pid,
+              group_name);
     return ret;
 }
 
@@ -77,7 +75,7 @@ STATIC drvError_t prof_event_info_init(struct prof_event_para *para, struct even
     event_info->msg_len = (unsigned int)(sizeof(struct event_sync_msg) + msg_send->msg_len);
     event_info->msg = (char *)malloc(event_info->msg_len);
     if (event_info->msg == NULL) {
-        PROF_ERR("Failed to alloc event msg alloc fail. (size=%d, dev_id=%u)\n", event_info->msg_len, dev_id);
+        PROF_ERR("Failed to alloc event msg. (size=%d, dev_id=%u)\n", event_info->msg_len, dev_id);
         return DRV_ERROR_OUT_OF_MEMORY;
     }
     msg_head = (struct event_sync_msg *)event_info->msg;
@@ -88,13 +86,13 @@ STATIC drvError_t prof_event_info_init(struct prof_event_para *para, struct even
 #endif
 
     if ((msg_send->msg_len > 0) && (msg_send->msg != NULL)) {
-        ret = memcpy_s(
-            event_info->msg + sizeof(struct event_sync_msg), msg_send->msg_len, msg_send->msg, msg_send->msg_len);
+        ret = memcpy_s(event_info->msg + sizeof(struct event_sync_msg), msg_send->msg_len, msg_send->msg,
+                       msg_send->msg_len);
         if (ret != EOK) {
             free(event_info->msg);
             event_info->msg = NULL;
-            PROF_ERR(
-                "Failed to copy event msg. (ret=%d, dev_id=%u, msg_len=%zu)\n", (int)ret, dev_id, msg_send->msg_len);
+            PROF_ERR("Failed to copy event msg. (ret=%d, dev_id=%u, msg_len=%zu)\n", (int)ret, dev_id,
+                     msg_send->msg_len);
             return DRV_ERROR_PARA_ERROR;
         }
     }
@@ -120,9 +118,8 @@ STATIC drvError_t prof_event_reply_init(struct prof_event_para *para, struct eve
     reply->buf_len = (uint32_t)(para->msg_recv.msg_len + PROF_EVENT_REPLY_BUFFER_RET_OFFSET);
     reply->buf = (char *)malloc(reply->buf_len);
     if (reply->buf == NULL) {
-        PROF_ERR(
-            "Failed to alloc reply. (devid=%u, size=%u, remote_pid=%u)\n", para->dev_id, reply->buf_len,
-            para->remote_pid);
+        PROF_ERR("Failed to alloc reply. (devid=%u, size=%u, remote_pid=%u)\n", para->dev_id, reply->buf_len,
+                 para->remote_pid);
         return DRV_ERROR_OUT_OF_MEMORY;
     }
 
@@ -137,8 +134,8 @@ STATIC void prof_event_reply_uninit(struct event_reply *reply)
     }
 }
 
-STATIC drvError_t prof_event_submit_sync_para_init(
-    struct prof_event_para *para, struct event_summary *event_info, struct event_reply *reply)
+STATIC drvError_t prof_event_submit_sync_para_init(struct prof_event_para *para, struct event_summary *event_info,
+                                                   struct event_reply *reply)
 {
     drvError_t ret;
 
@@ -169,23 +166,21 @@ STATIC drvError_t prof_event_get_submit_sync_result(struct prof_event_para *para
     ret = prof_comm_errcode_convert(PROF_EVENT_REPLY_BUFFER_RET(reply->buf));
     if (ret != DRV_ERROR_NONE) {
         if (ret != DRV_ERROR_NOT_SUPPORT) {
-            PROF_ERR(
-                "Failed to submit event. (result=%d, dev_id=%u, subevent_id=%u).\n", ret, para->dev_id,
-                para->subevent_id);
+            PROF_ERR("Failed to submit event. (result=%d, dev_id=%u, subevent_id=%u).\n", ret, para->dev_id,
+                     para->subevent_id);
         }
         return ret;
     }
 
     if (reply->reply_len > reply->buf_len) {
-        PROF_ERR(
-            "Reply len invalid. (ret=%d, dev_id=%u, remote_pid=%u, reply_len=%u, buf_len=%u)\n", ret, para->dev_id,
-            para->remote_pid, reply->reply_len, reply->buf_len);
+        PROF_ERR("Reply len invalid. (ret=%d, dev_id=%u, remote_pid=%u, reply_len=%u, buf_len=%u)\n", ret, para->dev_id,
+                 para->remote_pid, reply->reply_len, reply->buf_len);
         return DRV_ERROR_PARA_ERROR;
     }
 
     if ((msg_recv->msg != NULL) && (msg_recv->msg_len != 0)) {
-        ret =
-            memcpy_s(msg_recv->msg, msg_recv->msg_len, PROF_EVENT_REPLY_BUFFER_DATA_PTR(reply->buf), msg_recv->msg_len);
+        ret = memcpy_s(msg_recv->msg, msg_recv->msg_len, PROF_EVENT_REPLY_BUFFER_DATA_PTR(reply->buf),
+                       msg_recv->msg_len);
         if (ret != EOK) {
             PROF_ERR("Failed to copy out msg. (ret=%d, out_len=%ld)\n", ret, msg_recv->msg_len);
             return DRV_ERROR_MEMORY_OPT_FAIL;
@@ -209,9 +204,8 @@ drvError_t prof_event_submit_event_sync(struct prof_event_para *para)
     ret = halEschedSubmitEventSync(para->dev_id, &event_info, 10000, &reply); /* 10000 -> 10s */
 
     if (ret != DRV_ERROR_NONE) {
-        PROF_ERR(
-            "Failed to submit event. (ret=%d, dev_id=%u, remote_pid=%u, subevent_id=%u).\n", ret, para->dev_id,
-            para->remote_pid, event_info.subevent_id);
+        PROF_ERR("Failed to submit event. (ret=%d, dev_id=%u, remote_pid=%u, subevent_id=%u).\n", ret, para->dev_id,
+                 para->remote_pid, event_info.subevent_id);
         goto out;
     }
 
@@ -222,5 +216,8 @@ out:
 }
 
 #else
-int prof_event_comm_ut_test(void) { return 0; }
+int prof_event_comm_ut_test(void)
+{
+    return 0;
+}
 #endif

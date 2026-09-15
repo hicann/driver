@@ -233,7 +233,7 @@ static int _queue_chan_send(struct queue_chan *que_chan, int time_out)
     u64 mem_node_num = enque->va_node_num + enque->dma_node_num;
 
     if (ka_unlikely((enque->copyed_va_node_num + enque->va_node_num) > que_chan->local_va_num)) {
-        queue_err("Invalid va node num. (copyed_va_num=%u; va_num=%u; total_va_num=%u)\n", enque->copyed_va_node_num,
+        queue_err("Invalid va node num. (copied_va_num=%u; va_num=%u; total_va_num=%u)\n", enque->copyed_va_node_num,
                   enque->va_node_num, que_chan->local_va_num);
         return -EINVAL;
     }
@@ -242,7 +242,7 @@ static int _queue_chan_send(struct queue_chan *que_chan, int time_out)
         u64 size = ka_base_min_t(u64, queue_chan_get_enque_size(mem_node_num), queue_chan_max_msg_size());
         int ret = que_chan->attr.send(enque, (size_t)size, que_chan->attr.priv, time_out);
         if (ka_unlikely(ret != 0)) {
-            queue_err("Que chan send fail. (ret=%d; mem_node_num=%llu; size=%llu; copyed_va_num=%u; va_num=%u)\n", ret,
+            queue_err("Que chan send fail. (ret=%d; mem_node_num=%llu; size=%llu; copied_va_num=%u; va_num=%u)\n", ret,
                       mem_node_num, size, enque->copyed_va_node_num, enque->va_node_num);
             /* Return to user space. do not modify it */
             return DRV_ERROR_SEND_MESG;
@@ -670,7 +670,7 @@ static int queue_chan_dma_node_pack_remote_to_local(struct queue_chan_dma_node_a
     }
     *real_num += index;
     if (left_size != 0) {
-        queue_err("Pack dma node fail. (left_size=%llu; i=%llu; srv_va=0x%pK; src_index=%llu "
+        queue_err("Pack dma node fail. (left_size=%llu; i=%llu; src_va=0x%pK; src_index=%llu "
                   "dst_va=0x%pK; dst_index=%llu; passid=%d)\n",
                   left_size, index, (void *)(uintptr_t)src_va_mem_node->va_node.va, src_dma_index,
                   (void *)(uintptr_t)dst_chan_dma->dma_list.va, dst_dma_index, attr->loc_passid);
@@ -715,7 +715,7 @@ static int queue_chan_dma_node_pack_local_to_remote(struct queue_chan_dma_node_a
     }
     *real_num += index;
     if (left_size != 0) {
-        queue_err("Pack dma node fail. (left_size=%llu; i=%llu; srv_va=0x%pK; src_index=%llu "
+        queue_err("Pack dma node fail. (left_size=%llu; i=%llu; src_va=0x%pK; src_index=%llu "
                   "dst_va=0x%pK; dst_index=%llu; passid=%d)\n",
                   left_size, index, (void *)(uintptr_t)src_chan_dma->dma_list.va, src_dma_index,
                   (void *)(uintptr_t)dst_va_mem_node->va_node.va, dst_dma_index, attr->loc_passid);

@@ -19,8 +19,8 @@
 #include "prof_hdc_comm.h"
 #include "prof_hdc.h"
 
-#define PROF_HDC_FLUSH_MAXTIME 20 /* s */
-#define PROF_HDC_RESPOND_MAXTIME 10 /* s */
+#define PROF_HDC_FLUSH_MAXTIME 20         /* s */
+#define PROF_HDC_RESPOND_MAXTIME 10       /* s */
 #define PROF_HDC_SESSION_CLOSE_MAXTIME 50 /* s */
 #define PROF_HDC_TRY_COUNT 60000
 #define PROF_HDC_TRY_WAIT_TIME 1000 /* us */
@@ -149,8 +149,8 @@ STATIC drvError_t prof_hdc_get_ret(uint32_t dev_id, uint32_t chan_id, int timeou
     ret = sem_trywait(sem);
     while (ret != 0) {
         if (wait_count == wait_count_max) {
-            PROF_ERR("Waiting for device response was timeout.(dev_id=%u, chan_id=%u, msg_type=%u)\n",
-                dev_id, chan_id, msg_type);
+            PROF_ERR("Waiting for device response was timeout.(dev_id=%u, chan_id=%u, msg_type=%u)\n", dev_id, chan_id,
+                     msg_type);
             goto destroy_session;
         }
         (void)usleep(500); /* 500 */
@@ -225,8 +225,8 @@ STATIC drvError_t prof_hdc_start_msg_send(uint32_t dev_id, uint32_t chan_id, str
     if ((para->user_data != NULL) && (para->user_data_size != 0)) {
         ret = memcpy_s(start->user_data, PROF_USER_DATA_LEN, para->user_data, para->user_data_size);
         if (ret != 0) {
-            PROF_ERR("Failed to copy user_data. (dev_id=%u, chan_id=%u, ret=%d, data_size=%u)\n",
-                dev_id, chan_id, ret, para->user_data_size);
+            PROF_ERR("Failed to copy user_data. (dev_id=%u, chan_id=%u, ret=%d, data_size=%u)\n", dev_id, chan_id, ret,
+                     para->user_data_size);
             free(msg);
             return DRV_ERROR_MEMORY_OPT_FAIL;
         }
@@ -309,8 +309,8 @@ STATIC void prof_hdc_receive_channels(uint32_t dev_id, struct prof_hdc_msg *msg_
 
     (void)pthread_mutex_lock(&info->mutex);
     if (msg_head->cmd_verify != info->verify || info->channels == NULL) {
-        PROF_ERR("Recv dev respond too late. (dev_id=%u, msg_verify=%u, expect_verify=%u)\n",
-            dev_id, msg_head->cmd_verify, info->verify);
+        PROF_ERR("Recv dev respond too late. (dev_id=%u, msg_verify=%u, expect_verify=%u)\n", dev_id,
+                 msg_head->cmd_verify, info->verify);
         (void)pthread_mutex_unlock(&info->mutex);
         return;
     }
@@ -344,8 +344,8 @@ STATIC void prof_hdc_receive_chan_respond(uint32_t dev_id, struct prof_hdc_msg *
         return;
     }
 
-    PROF_INFO("Received chan response. (msg_type=%d, dev_id=%u, chan_id=%u, ret_val=%d)\n",
-        msg_head->msg_type, dev_id, chan_id, msg_head->ret_val);
+    PROF_INFO("Received chan response. (msg_type=%d, dev_id=%u, chan_id=%u, ret_val=%d)\n", msg_head->msg_type, dev_id,
+              chan_id, msg_head->ret_val);
 
     chan_info = prof_hdc_get_chan_info(dev_id, chan_id);
     if (chan_info == NULL) {
@@ -371,8 +371,8 @@ STATIC void prof_hdc_receive_chan_data(uint32_t dev_id, struct prof_hdc_msg *msg
     struct prof_comm_core_notifier *notifier = prof_comm_get_notifier();
 
     if (total_len != (sizeof(struct prof_hdc_msg) + msg_head->data_len)) {
-        PROF_ERR("Invalid para. (dev_id=%u, total_len=%u, head_size=%lu, data_len=%u)\n",
-            dev_id, total_len, sizeof(struct prof_hdc_msg), msg_head->data_len);
+        PROF_ERR("Invalid para. (dev_id=%u, total_len=%u, head_size=%lu, data_len=%u)\n", dev_id, total_len,
+                 sizeof(struct prof_hdc_msg), msg_head->data_len);
         return;
     }
 
@@ -455,10 +455,11 @@ drvError_t prof_hdc_get_channels(uint32_t dev_id, struct prof_channel_list *chan
 
     ret = prof_hdc_get_channels_msg_send(dev_id, info);
     if (ret != DRV_ERROR_NONE) {
-        goto exit; 
+        goto exit;
     }
 
-    ret = prof_hdc_get_ret(dev_id, 0, PROF_HDC_RESPOND_MAXTIME + PROF_HDC_SESSION_CLOSE_MAXTIME, PROF_HDC_CMD_GET_CHANNEL);
+    ret = prof_hdc_get_ret(dev_id, 0, PROF_HDC_RESPOND_MAXTIME + PROF_HDC_SESSION_CLOSE_MAXTIME,
+                           PROF_HDC_CMD_GET_CHANNEL);
     if (ret != DRV_ERROR_NONE) {
         PROF_ERR("Failed to get channels. (dev_id=%u, ret=%d)\n", dev_id, (int)ret);
     }
@@ -479,7 +480,7 @@ drvError_t prof_hdc_start(uint32_t dev_id, uint32_t chan_id, struct prof_user_st
 
     ret = drvGetProcessSign(&sign_info);
     if (ret != DRV_ERROR_NONE) {
-        PROF_ERR("Failed get process sign. (devid=%u, chan_id=%u, ret=%d).\n", dev_id, chan_id, (int)ret);
+        PROF_ERR("Failed to get process sign. (devid=%u, chan_id=%u, ret=%d).\n", dev_id, chan_id, (int)ret);
         return ret;
     }
 
@@ -510,7 +511,8 @@ drvError_t prof_hdc_stop(uint32_t dev_id, uint32_t chan_id)
         return ret;
     }
 
-    return prof_hdc_get_ret(dev_id, chan_id, PROF_HDC_RESPOND_MAXTIME + PROF_HDC_SESSION_CLOSE_MAXTIME, PROF_HDC_CMD_STOP);
+    return prof_hdc_get_ret(dev_id, chan_id, PROF_HDC_RESPOND_MAXTIME + PROF_HDC_SESSION_CLOSE_MAXTIME,
+                            PROF_HDC_CMD_STOP);
 }
 
 drvError_t prof_hdc_flush(uint32_t dev_id, uint32_t chan_id)

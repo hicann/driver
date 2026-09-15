@@ -77,7 +77,8 @@ STATIC bbox_status bbox_dump_bbox_ddr(u32 phy_id, u32 offset, u32 size, u8 *buf)
 
     ret = halGetDeviceInfo(logic_id, MODULE_TYPE_SYSTEM, INFO_TYPE_HD_CONNECT_TYPE, &hd_connect_type);
     if (ret != DRV_ERROR_NONE) {
-        BBOX_ERR("[%s] get connect type failed. (ret=%d)", bbox_get_dev_str(phy_id, logic_id, dev_buf, sizeof(dev_buf)), ret);
+        BBOX_ERR("[%s] get connect type failed. (ret=%d)", bbox_get_dev_str(phy_id, logic_id, dev_buf, sizeof(dev_buf)),
+                 ret);
         return ret;
     }
 
@@ -116,7 +117,7 @@ STATIC bbox_status bbox_get_bbox_ddr(u32 phy_id, u32 offset, u32 size, u8 *buf)
 #ifndef BBOX_ST_TEST
     ret = bbox_dump_bbox_ddr(master_id, offset, size, buf);
     if (ret != BBOX_SUCCESS) {
-        BBOX_WAR("master device memory dump not completely.");
+        BBOX_WAR("master device memory dump is not complete.");
     }
 
     u8 *curr_buf = (u8 *)bbox_malloc(size);
@@ -127,7 +128,7 @@ STATIC bbox_status bbox_get_bbox_ddr(u32 phy_id, u32 offset, u32 size, u8 *buf)
 
     ret = bbox_dump_bbox_ddr(phy_id, offset, size, curr_buf);
     if (ret != BBOX_SUCCESS) {
-        BBOX_INF("current device memory dump not completely.");
+        BBOX_INF("current device memory dump is not complete.");
     }
 
     ret = bbox_ddr_dump_joint_dump(curr_buf, buf, size);
@@ -158,7 +159,8 @@ bbox_status bbox_check_dev_event(u32 phy_id, int logic_id, u16 *event, char *tms
     u32 master_id = 0;
     drvError_t ret = bbox_drv_get_master_dev_id(phy_id, &master_id);
     if (ret != DRV_ERROR_NONE) {
-        BBOX_ERR_CTRL(BBOX_ERR, return BBOX_FAILURE, "[%s] get master id failed(%d).", bbox_get_dev_str(phy_id, logic_id, dev_buf, sizeof(dev_buf)), (int)ret);
+        BBOX_ERR_CTRL(BBOX_ERR, return BBOX_FAILURE, "[%s] get master id failed(%d).",
+                      bbox_get_dev_str(phy_id, logic_id, dev_buf, sizeof(dev_buf)), (int)ret);
     }
 
     u8 *buffer = (u8 *)bbox_malloc(DMA_MEMDUMP_MAXLEN);
@@ -173,8 +175,8 @@ bbox_status bbox_check_dev_event(u32 phy_id, int logic_id, u16 *event, char *tms
 
     const struct rdr_head *head = (const struct rdr_head *)buffer;
     if (bbox_ddr_dump_check(head) == false) {
-        BBOX_ERR("[device-%u] magic(0x%x) and version(0x%x) is wrong.",
-                 phy_id, head->top_head.magic, head->top_head.version);
+        BBOX_ERR("[device-%u] magic(0x%x) and version(0x%x) are wrong.", phy_id, head->top_head.magic,
+                 head->top_head.version);
         bbox_free(buffer);
         return BBOX_FAILURE;
     }
@@ -249,7 +251,8 @@ STATIC bbox_status bbox_get_hboot_data(u32 phy_id, u32 offset, u32 size, u8 *buf
     return bbox_drv_read_data(phy_id, MEM_TYPE_HBOOT_SRAM, offset, buf, size);
 }
 
-static drvError_t bbox_get_vmcore_stat_time_out(u32 phy_id, MEM_CTRL_TYPE mem_type, u32 offset, u8 *buf, u32 size, u32 timeout)
+static drvError_t bbox_get_vmcore_stat_time_out(u32 phy_id, MEM_CTRL_TYPE mem_type, u32 offset, u8 *buf, u32 size,
+                                                u32 timeout)
 {
     drvError_t ret;
     unsigned int read_times = 0;
@@ -300,7 +303,7 @@ STATIC bbox_status bbox_get_vmcore_stat(u32 phy_id, u32 offset, u32 size, u8 *bu
     }
     return DRV_ERROR_NOT_SUPPORT;
 }
- 
+
 /**
  * @brief       get vmcore data. arguments was checked by caller
  * @param [in]  phy_id:      device phy id
@@ -359,7 +362,7 @@ STATIC int bbox_check_bbox_ddr(u32 phy_id)
 
     const struct rdr_head *head = (const struct rdr_head *)buffer;
     if (!bbox_ddr_dump_check(head)) {
-        BBOX_ERR("magic(0x%x) and version(0x%x) is wrong.", head->top_head.magic, head->top_head.version);
+        BBOX_ERR("magic(0x%x) and version(0x%x) are wrong.", head->top_head.magic, head->top_head.version);
         BBOX_SAFE_FREE(buffer);
         return BBOX_FAILURE;
     }
@@ -388,7 +391,8 @@ STATIC int bbox_get_cdr_data(u32 phy_id, u32 offset, u32 size, u8 *buf)
 
     ret = halGetDeviceInfo(logic_id, MODULE_TYPE_SYSTEM, INFO_TYPE_HD_CONNECT_TYPE, &hd_connect_type);
     if (ret != DRV_ERROR_NONE) {
-        BBOX_ERR("[%s] get connect type failed. (ret=%d)", bbox_get_dev_str(phy_id, logic_id, dev_buf, sizeof(dev_buf)), ret);
+        BBOX_ERR("[%s] get connect type failed. (ret=%d)", bbox_get_dev_str(phy_id, logic_id, dev_buf, sizeof(dev_buf)),
+                 ret);
         return ret;
     }
 
@@ -549,174 +553,131 @@ STATIC bbox_status bbox_get_hsm_log(u32 phy_id, u32 offset, u32 size, u8 *buf)
 }
 
 static dump_data_config_st g_boot_failed_config[] = {
-    {"hboot",          			BBOX_SRAM_HBOOT_OFFSET,       BBOX_SRAM_HBOOT_LEN,
-     BBOX_DUMP_FILE_HBOOT,  	PLAINTEXT_TABLE_HBOOT,
-     NULL,                      bbox_get_hboot_data,         bbox_parse_sram_mntn_data},
-    {"hbm_sram",                BBOX_SRAM_HBM_DFX_OFFSET,     BBOX_SRAM_HBM_DFX_LEN,
-     BBOX_DUMP_FILE_HBM_SRAM,   PLAINTEXT_TABLE_HBM_SRAM,
-     NULL,                      bbox_get_sram_data,          bbox_parse_sram_mntn_data},
-    {"sram_snapshot",           BBOX_SRAM_SNAPSHOT_OFFSET,    BBOX_SRAM_SNAPSHOT_LEN,
-     BBOX_DUMP_FILE_SRAM_SNAPSHOT,  PLAINTEXT_TABLE_SRAM_SNAPSHOT,
-     NULL,                      bbox_get_sram_data,          bbox_parse_sram_mntn_data},
-    {"bios_hiss",           	BBOX_SRAM_BIOS_HISS_OFFSET,   BBOX_SRAM_BIOS_HISS_LEN,
-     BBOX_DUMP_FILE_BIOS_HISS,  PLAINTEXT_TABLE_BIOS_HISS,
-     NULL,                      bbox_get_sram_data,          bbox_parse_sram_mntn_data},
-    {"hdr_snapshot",            BBOX_DDR_HDR_OFFSET,          BBOX_DDR_HDR_LEN,
-     BBOX_DUMP_FILE_HDR,        PLAINTEXT_TABLE_MAX,
-     bbox_check_bios_stage,        bbox_get_hdr_data,          bbox_parse_hdr_data},
-    {"kernel_log",              BBOX_DDR_KLOG_OFFSET,         BBOX_DDR_KLOG_LEN,
-     BBOX_DUMP_FILE_KLOG,       PLAINTEXT_TABLE_MAX,
-     NULL,                      bbox_get_kernel_log,         bbox_parse_klog_data},
+    {"hboot", BBOX_SRAM_HBOOT_OFFSET, BBOX_SRAM_HBOOT_LEN, BBOX_DUMP_FILE_HBOOT, PLAINTEXT_TABLE_HBOOT, NULL,
+     bbox_get_hboot_data, bbox_parse_sram_mntn_data},
+    {"hbm_sram", BBOX_SRAM_HBM_DFX_OFFSET, BBOX_SRAM_HBM_DFX_LEN, BBOX_DUMP_FILE_HBM_SRAM, PLAINTEXT_TABLE_HBM_SRAM,
+     NULL, bbox_get_sram_data, bbox_parse_sram_mntn_data},
+    {"sram_snapshot", BBOX_SRAM_SNAPSHOT_OFFSET, BBOX_SRAM_SNAPSHOT_LEN, BBOX_DUMP_FILE_SRAM_SNAPSHOT,
+     PLAINTEXT_TABLE_SRAM_SNAPSHOT, NULL, bbox_get_sram_data, bbox_parse_sram_mntn_data},
+    {"bios_hiss", BBOX_SRAM_BIOS_HISS_OFFSET, BBOX_SRAM_BIOS_HISS_LEN, BBOX_DUMP_FILE_BIOS_HISS,
+     PLAINTEXT_TABLE_BIOS_HISS, NULL, bbox_get_sram_data, bbox_parse_sram_mntn_data},
+    {"hdr_snapshot", BBOX_DDR_HDR_OFFSET, BBOX_DDR_HDR_LEN, BBOX_DUMP_FILE_HDR, PLAINTEXT_TABLE_MAX,
+     bbox_check_bios_stage, bbox_get_hdr_data, bbox_parse_hdr_data},
+    {"kernel_log", BBOX_DDR_KLOG_OFFSET, BBOX_DDR_KLOG_LEN, BBOX_DUMP_FILE_KLOG, PLAINTEXT_TABLE_MAX, NULL,
+     bbox_get_kernel_log, bbox_parse_klog_data},
 };
 
 static dump_data_config_st g_heatbeat_lost_config[] = {
-    {"hboot",          			BBOX_SRAM_HBOOT_OFFSET,       BBOX_SRAM_HBOOT_LEN,
-     BBOX_DUMP_FILE_HBOOT,  	PLAINTEXT_TABLE_HBOOT,
-     NULL,                      bbox_get_hboot_data,         bbox_parse_sram_mntn_data},
-    {"hbm_sram",                BBOX_SRAM_HBM_DFX_OFFSET,     BBOX_SRAM_HBM_DFX_LEN,
-     BBOX_DUMP_FILE_HBM_SRAM,   PLAINTEXT_TABLE_HBM_SRAM,
-     NULL,                      bbox_get_sram_data,          bbox_parse_sram_mntn_data},
-    {"sram_snapshot",           BBOX_SRAM_SNAPSHOT_OFFSET,    BBOX_SRAM_SNAPSHOT_LEN,
-     BBOX_DUMP_FILE_SRAM_SNAPSHOT,  PLAINTEXT_TABLE_SRAM_SNAPSHOT,
-     NULL,                      bbox_get_sram_data,          bbox_parse_sram_mntn_data},
-    {"bios_hiss",           	BBOX_SRAM_BIOS_HISS_OFFSET,   BBOX_SRAM_BIOS_HISS_LEN,
-     BBOX_DUMP_FILE_BIOS_HISS,  PLAINTEXT_TABLE_BIOS_HISS,
-     NULL,                      bbox_get_sram_data,          bbox_parse_sram_mntn_data},
-    {"kernel_log",              BBOX_DDR_KLOG_OFFSET,         BBOX_DDR_KLOG_LEN,
-     BBOX_DUMP_FILE_KLOG,       PLAINTEXT_TABLE_MAX,
-     NULL,                      bbox_get_kernel_log,         bbox_parse_klog_data},
-    {"chip_dfx_min",            BBOX_SRAM_CHIP_DFX_OFFSET,    BBOX_SRAM_CHIP_DFX_LEN,
-     BBOX_DUMP_FILE_CDR_SRAM,   PLAINTEXT_TABLE_CDR_SRAM,
-     NULL,                      bbox_get_sram_data,          bbox_parse_cdr_min_data},
-    {"chip_dfx_full",           BBOX_DDR_CHIP_DFX_OFFSET,     BBOX_DDR_CHIP_DFX_LEN,
-     BBOX_DUMP_FILE_CDR_DDR,    PLAINTEXT_TABLE_CDR,
-     NULL,          bbox_get_cdr_data,            bbox_parse_cdr_full_data},
-    {"ts_log",                            BBOX_DUMP_TS_LOG_OFFSET,             BBOX_DUMP_TS_LOG_LEN,
-    BBOX_DUMP_FILE_TS_LOG,                PLAINTEXT_TABLE_TS_LOG,
-    NULL,                                 bbox_get_ts_log,                         bbox_parse_log_data},
-    {"imp_log",                           BBOX_DUMP_IMP_LOG_OFFSET,            BBOX_DUMP_IMP_LOG_LEN,
-    BBOX_DUMP_FILE_IMP_LOG,               PLAINTEXT_TABLE_IMP_LOG,
-    NULL,                                 bbox_get_imp_log,                        bbox_parse_log_data},
-    {"imu_log",                           BBOX_DUMP_IMU_LOG_OFFSET,            BBOX_DUMP_IMU_LOG_LEN,
-    BBOX_DUMP_FILE_IMU_LOG,               PLAINTEXT_TABLE_IMU_LOG,
-    NULL,                                 bbox_get_imu_log,                        bbox_parse_log_data},
-    {"hsm_log",                           BBOX_DUMP_HSM_LOG_OFFSET,            BBOX_DUMP_HSM_LOG_LEN,
-    BBOX_DUMP_FILE_HSM_LOG,               PLAINTEXT_TABLE_HSM_LOG,
-    NULL,                                 bbox_get_hsm_log,                        bbox_parse_log_data},
-    {"debug_device_os_log",               BBOX_DDR_DEBUG_DEVICE_OS_LOG_OFFSET, BBOX_DDR_DEBUG_DEVICE_OS_LOG_LEN,
-     BBOX_DUMP_FILE_DEBUG_DEVICE_OS_LOG,  PLAINTEXT_TABLE_DEBUG_DEVICE_OS_LOG,
-     NULL,                                bbox_dma_get_debug_dev_os_log,             bbox_parse_slog_data},
-    {"sec_device_os_log",                 BBOX_DDR_SEC_DEVICE_OS_LOG_OFFSET,   BBOX_DDR_SEC_DEVICE_OS_LOG_LEN,
-     BBOX_DUMP_FILE_SEC_DEVICE_OS_LOG,    PLAINTEXT_TABLE_SEC_DEVICE_OS_LOG,
-     NULL,                                bbox_dma_get_sec_log,                    bbox_parse_slog_data},
-    {"run_device_os_log",                 BBOX_DDR_RUN_DEVICE_OS_LOG_OFFSET,   BBOX_DDR_RUN_DEVICE_OS_LOG_LEN,
-     BBOX_DUMP_FILE_RUN_DEVICE_OS_LOG,    PLAINTEXT_TABLE_RUN_DEVICE_OS_LOG,
-     NULL,                                bbox_dma_get_run_dev_os_log,               bbox_parse_slog_data},
-    {"run_event_log",                     BBOX_DDR_RUN_EVENT_LOG_OFFSET,       BBOX_DDR_RUN_EVENT_LOG_LEN,
-     BBOX_DUMP_FILE_RUN_EVENT_LOG,        PLAINTEXT_TABLE_RUN_EVENT_LOG,
-     NULL,                                bbox_dma_get_run_event_log,               bbox_parse_slog_data},
-    {"debug_device_fw_log",               BBOX_DDR_DEBUG_DEVICE_FW_LOG_OFFSET, BBOX_DDR_DEBUG_DEVICE_FW_LOG_LEN,
-     BBOX_DUMP_FILE_DEBUG_DEVICE_FW_LOG,  PLAINTEXT_TABLE_DEBUG_DEVICE_FW_LOG,
-     bbox_check_bbox_ddr,                    bbox_dma_get_debug_dev_fw_log,             bbox_parse_slog_data},
-    {"bbox_ddr_dump",           BBOX_DDR_BASE_OFFSET,         BBOX_DDR_BASE_LEN,
-     BBOX_DUMP_FILE_DDR_DMA,    PLAINTEXT_TABLE_MAX,
-     NULL,                      bbox_get_bbox_ddr,            bbox_parse_bbox_ddr_data},
+    {"hboot", BBOX_SRAM_HBOOT_OFFSET, BBOX_SRAM_HBOOT_LEN, BBOX_DUMP_FILE_HBOOT, PLAINTEXT_TABLE_HBOOT, NULL,
+     bbox_get_hboot_data, bbox_parse_sram_mntn_data},
+    {"hbm_sram", BBOX_SRAM_HBM_DFX_OFFSET, BBOX_SRAM_HBM_DFX_LEN, BBOX_DUMP_FILE_HBM_SRAM, PLAINTEXT_TABLE_HBM_SRAM,
+     NULL, bbox_get_sram_data, bbox_parse_sram_mntn_data},
+    {"sram_snapshot", BBOX_SRAM_SNAPSHOT_OFFSET, BBOX_SRAM_SNAPSHOT_LEN, BBOX_DUMP_FILE_SRAM_SNAPSHOT,
+     PLAINTEXT_TABLE_SRAM_SNAPSHOT, NULL, bbox_get_sram_data, bbox_parse_sram_mntn_data},
+    {"bios_hiss", BBOX_SRAM_BIOS_HISS_OFFSET, BBOX_SRAM_BIOS_HISS_LEN, BBOX_DUMP_FILE_BIOS_HISS,
+     PLAINTEXT_TABLE_BIOS_HISS, NULL, bbox_get_sram_data, bbox_parse_sram_mntn_data},
+    {"kernel_log", BBOX_DDR_KLOG_OFFSET, BBOX_DDR_KLOG_LEN, BBOX_DUMP_FILE_KLOG, PLAINTEXT_TABLE_MAX, NULL,
+     bbox_get_kernel_log, bbox_parse_klog_data},
+    {"chip_dfx_min", BBOX_SRAM_CHIP_DFX_OFFSET, BBOX_SRAM_CHIP_DFX_LEN, BBOX_DUMP_FILE_CDR_SRAM,
+     PLAINTEXT_TABLE_CDR_SRAM, NULL, bbox_get_sram_data, bbox_parse_cdr_min_data},
+    {"chip_dfx_full", BBOX_DDR_CHIP_DFX_OFFSET, BBOX_DDR_CHIP_DFX_LEN, BBOX_DUMP_FILE_CDR_DDR, PLAINTEXT_TABLE_CDR,
+     NULL, bbox_get_cdr_data, bbox_parse_cdr_full_data},
+    {"ts_log", BBOX_DUMP_TS_LOG_OFFSET, BBOX_DUMP_TS_LOG_LEN, BBOX_DUMP_FILE_TS_LOG, PLAINTEXT_TABLE_TS_LOG, NULL,
+     bbox_get_ts_log, bbox_parse_log_data},
+    {"imp_log", BBOX_DUMP_IMP_LOG_OFFSET, BBOX_DUMP_IMP_LOG_LEN, BBOX_DUMP_FILE_IMP_LOG, PLAINTEXT_TABLE_IMP_LOG, NULL,
+     bbox_get_imp_log, bbox_parse_log_data},
+    {"imu_log", BBOX_DUMP_IMU_LOG_OFFSET, BBOX_DUMP_IMU_LOG_LEN, BBOX_DUMP_FILE_IMU_LOG, PLAINTEXT_TABLE_IMU_LOG, NULL,
+     bbox_get_imu_log, bbox_parse_log_data},
+    {"hsm_log", BBOX_DUMP_HSM_LOG_OFFSET, BBOX_DUMP_HSM_LOG_LEN, BBOX_DUMP_FILE_HSM_LOG, PLAINTEXT_TABLE_HSM_LOG, NULL,
+     bbox_get_hsm_log, bbox_parse_log_data},
+    {"debug_device_os_log", BBOX_DDR_DEBUG_DEVICE_OS_LOG_OFFSET, BBOX_DDR_DEBUG_DEVICE_OS_LOG_LEN,
+     BBOX_DUMP_FILE_DEBUG_DEVICE_OS_LOG, PLAINTEXT_TABLE_DEBUG_DEVICE_OS_LOG, NULL, bbox_dma_get_debug_dev_os_log,
+     bbox_parse_slog_data},
+    {"sec_device_os_log", BBOX_DDR_SEC_DEVICE_OS_LOG_OFFSET, BBOX_DDR_SEC_DEVICE_OS_LOG_LEN,
+     BBOX_DUMP_FILE_SEC_DEVICE_OS_LOG, PLAINTEXT_TABLE_SEC_DEVICE_OS_LOG, NULL, bbox_dma_get_sec_log,
+     bbox_parse_slog_data},
+    {"run_device_os_log", BBOX_DDR_RUN_DEVICE_OS_LOG_OFFSET, BBOX_DDR_RUN_DEVICE_OS_LOG_LEN,
+     BBOX_DUMP_FILE_RUN_DEVICE_OS_LOG, PLAINTEXT_TABLE_RUN_DEVICE_OS_LOG, NULL, bbox_dma_get_run_dev_os_log,
+     bbox_parse_slog_data},
+    {"run_event_log", BBOX_DDR_RUN_EVENT_LOG_OFFSET, BBOX_DDR_RUN_EVENT_LOG_LEN, BBOX_DUMP_FILE_RUN_EVENT_LOG,
+     PLAINTEXT_TABLE_RUN_EVENT_LOG, NULL, bbox_dma_get_run_event_log, bbox_parse_slog_data},
+    {"debug_device_fw_log", BBOX_DDR_DEBUG_DEVICE_FW_LOG_OFFSET, BBOX_DDR_DEBUG_DEVICE_FW_LOG_LEN,
+     BBOX_DUMP_FILE_DEBUG_DEVICE_FW_LOG, PLAINTEXT_TABLE_DEBUG_DEVICE_FW_LOG, bbox_check_bbox_ddr,
+     bbox_dma_get_debug_dev_fw_log, bbox_parse_slog_data},
+    {"bbox_ddr_dump", BBOX_DDR_BASE_OFFSET, BBOX_DDR_BASE_LEN, BBOX_DUMP_FILE_DDR_DMA, PLAINTEXT_TABLE_MAX, NULL,
+     bbox_get_bbox_ddr, bbox_parse_bbox_ddr_data},
 };
- 
+
 static dump_data_config_st g_hdc_exception_config[] = {
-    {"hboot",          			BBOX_SRAM_HBOOT_OFFSET,       BBOX_SRAM_HBOOT_LEN,
-     BBOX_DUMP_FILE_HBOOT,  	PLAINTEXT_TABLE_HBOOT,
-     NULL,                      bbox_get_hboot_data,         bbox_parse_sram_mntn_data},
-    {"hbm_sram",                BBOX_SRAM_HBM_DFX_OFFSET,     BBOX_SRAM_HBM_DFX_LEN,
-     BBOX_DUMP_FILE_HBM_SRAM,   PLAINTEXT_TABLE_HBM_SRAM,
-     NULL,                      bbox_get_sram_data,          bbox_parse_sram_mntn_data},
-    {"sram_snapshot",           BBOX_SRAM_SNAPSHOT_OFFSET,    BBOX_SRAM_SNAPSHOT_LEN,
-     BBOX_DUMP_FILE_SRAM_SNAPSHOT,  PLAINTEXT_TABLE_SRAM_SNAPSHOT,
-     NULL,                      bbox_get_sram_data,          bbox_parse_sram_mntn_data},
-    {"bios_hiss",           	BBOX_SRAM_BIOS_HISS_OFFSET,   BBOX_SRAM_BIOS_HISS_LEN,
-     BBOX_DUMP_FILE_BIOS_HISS,  PLAINTEXT_TABLE_BIOS_HISS,
-     NULL,                      bbox_get_sram_data,          bbox_parse_sram_mntn_data},
-    {"kernel_log",              BBOX_DDR_KLOG_OFFSET,         BBOX_DDR_KLOG_LEN,
-     BBOX_DUMP_FILE_KLOG,       PLAINTEXT_TABLE_MAX,
-     NULL,                      bbox_get_kernel_log,         bbox_parse_klog_data},
-    {"bbox_ddr_dump",           BBOX_DDR_BASE_OFFSET,         BBOX_DDR_BASE_LEN,
-     BBOX_DUMP_FILE_DDR_DMA,    PLAINTEXT_TABLE_MAX,
-     NULL,                      bbox_get_bbox_ddr,            bbox_parse_bbox_ddr_data},
+    {"hboot", BBOX_SRAM_HBOOT_OFFSET, BBOX_SRAM_HBOOT_LEN, BBOX_DUMP_FILE_HBOOT, PLAINTEXT_TABLE_HBOOT, NULL,
+     bbox_get_hboot_data, bbox_parse_sram_mntn_data},
+    {"hbm_sram", BBOX_SRAM_HBM_DFX_OFFSET, BBOX_SRAM_HBM_DFX_LEN, BBOX_DUMP_FILE_HBM_SRAM, PLAINTEXT_TABLE_HBM_SRAM,
+     NULL, bbox_get_sram_data, bbox_parse_sram_mntn_data},
+    {"sram_snapshot", BBOX_SRAM_SNAPSHOT_OFFSET, BBOX_SRAM_SNAPSHOT_LEN, BBOX_DUMP_FILE_SRAM_SNAPSHOT,
+     PLAINTEXT_TABLE_SRAM_SNAPSHOT, NULL, bbox_get_sram_data, bbox_parse_sram_mntn_data},
+    {"bios_hiss", BBOX_SRAM_BIOS_HISS_OFFSET, BBOX_SRAM_BIOS_HISS_LEN, BBOX_DUMP_FILE_BIOS_HISS,
+     PLAINTEXT_TABLE_BIOS_HISS, NULL, bbox_get_sram_data, bbox_parse_sram_mntn_data},
+    {"kernel_log", BBOX_DDR_KLOG_OFFSET, BBOX_DDR_KLOG_LEN, BBOX_DUMP_FILE_KLOG, PLAINTEXT_TABLE_MAX, NULL,
+     bbox_get_kernel_log, bbox_parse_klog_data},
+    {"bbox_ddr_dump", BBOX_DDR_BASE_OFFSET, BBOX_DDR_BASE_LEN, BBOX_DUMP_FILE_DDR_DMA, PLAINTEXT_TABLE_MAX, NULL,
+     bbox_get_bbox_ddr, bbox_parse_bbox_ddr_data},
 };
- 
+
 static dump_data_config_st g_oom_config[] = {
-    {"kernel_log",              BBOX_DDR_KLOG_OFFSET,         BBOX_DDR_KLOG_LEN,
-     BBOX_DUMP_FILE_KLOG,       PLAINTEXT_TABLE_MAX,
-     NULL,                      bbox_get_kernel_log,         bbox_parse_klog_data},
-    {"bbox_ddr_dump",           BBOX_DDR_BASE_OFFSET,         BBOX_DDR_BASE_LEN,
-     BBOX_DUMP_FILE_DDR_DMA,    PLAINTEXT_TABLE_MAX,
-     NULL,                      bbox_get_bbox_ddr,            bbox_parse_bbox_ddr_data},
+    {"kernel_log", BBOX_DDR_KLOG_OFFSET, BBOX_DDR_KLOG_LEN, BBOX_DUMP_FILE_KLOG, PLAINTEXT_TABLE_MAX, NULL,
+     bbox_get_kernel_log, bbox_parse_klog_data},
+    {"bbox_ddr_dump", BBOX_DDR_BASE_OFFSET, BBOX_DDR_BASE_LEN, BBOX_DUMP_FILE_DDR_DMA, PLAINTEXT_TABLE_MAX, NULL,
+     bbox_get_bbox_ddr, bbox_parse_bbox_ddr_data},
 };
- 
+
 static dump_data_config_st g_force_config[] = {
-    {"hboot",          			BBOX_SRAM_HBOOT_OFFSET,       BBOX_SRAM_HBOOT_LEN,
-     BBOX_DUMP_FILE_HBOOT,  	PLAINTEXT_TABLE_HBOOT,
-     NULL,                      bbox_get_hboot_data,         bbox_parse_sram_mntn_data},
-    {"hbm_sram",                BBOX_SRAM_HBM_DFX_OFFSET,     BBOX_SRAM_HBM_DFX_LEN,
-     BBOX_DUMP_FILE_HBM_SRAM,   PLAINTEXT_TABLE_HBM_SRAM,
-     NULL,                      bbox_get_sram_data,          bbox_parse_sram_mntn_data},
-    {"sram_snapshot",           BBOX_SRAM_SNAPSHOT_OFFSET,    BBOX_SRAM_SNAPSHOT_LEN,
-     BBOX_DUMP_FILE_SRAM_SNAPSHOT,  PLAINTEXT_TABLE_SRAM_SNAPSHOT,
-     NULL,                      bbox_get_sram_data,          bbox_parse_sram_mntn_data},
-    {"bios_hiss",           	BBOX_SRAM_BIOS_HISS_OFFSET,   BBOX_SRAM_BIOS_HISS_LEN,
-     BBOX_DUMP_FILE_BIOS_HISS,  PLAINTEXT_TABLE_BIOS_HISS,
-     NULL,                      bbox_get_sram_data,          bbox_parse_sram_mntn_data},
-    {"hdr_snapshot",            BBOX_DDR_HDR_OFFSET,          BBOX_DDR_HDR_LEN,
-     BBOX_DUMP_FILE_HDR,        PLAINTEXT_TABLE_MAX,
-     bbox_check_bios_stage,        bbox_get_hdr_data,          bbox_parse_hdr_data},
-    {"kernel_log",              BBOX_DDR_KLOG_OFFSET,         BBOX_DDR_KLOG_LEN,
-     BBOX_DUMP_FILE_KLOG,       PLAINTEXT_TABLE_MAX,
-     NULL,                      bbox_get_kernel_log,         bbox_parse_klog_data},
-    {"chip_dfx_min",            BBOX_SRAM_CHIP_DFX_OFFSET,    BBOX_SRAM_CHIP_DFX_LEN,
-     BBOX_DUMP_FILE_CDR_SRAM,   PLAINTEXT_TABLE_CDR_SRAM_LOOSE,
-     NULL,                      bbox_get_sram_data,          bbox_parse_cdr_min_data},
-    {"chip_dfx_full",           BBOX_DDR_CHIP_DFX_OFFSET,     BBOX_DDR_CHIP_DFX_LEN,
-     BBOX_DUMP_FILE_CDR_DDR,    PLAINTEXT_TABLE_CDR,
-     NULL,          bbox_get_cdr_data,            bbox_parse_cdr_full_data},
-    {"ts_log",                            BBOX_DUMP_TS_LOG_OFFSET,             BBOX_DUMP_TS_LOG_LEN,
-    BBOX_DUMP_FILE_TS_LOG,                PLAINTEXT_TABLE_TS_LOG,
-    NULL,                                 bbox_get_ts_log,                         bbox_parse_log_data},
-    {"imp_log",                           BBOX_DUMP_IMP_LOG_OFFSET,            BBOX_DUMP_IMP_LOG_LEN,
-    BBOX_DUMP_FILE_IMP_LOG,               PLAINTEXT_TABLE_IMP_LOG,
-    NULL,                                 bbox_get_imp_log,                        bbox_parse_log_data},
-    {"imu_log",                           BBOX_DUMP_IMU_LOG_OFFSET,            BBOX_DUMP_IMU_LOG_LEN,
-    BBOX_DUMP_FILE_IMU_LOG,               PLAINTEXT_TABLE_IMU_LOG,
-    NULL,                                 bbox_get_imu_log,                        bbox_parse_log_data},
-    {"hsm_log",                           BBOX_DUMP_HSM_LOG_OFFSET,            BBOX_DUMP_HSM_LOG_LEN,
-    BBOX_DUMP_FILE_HSM_LOG,               PLAINTEXT_TABLE_HSM_LOG,
-    NULL,                                 bbox_get_hsm_log,                        bbox_parse_log_data},
-    {"debug_device_os_log",               BBOX_DDR_DEBUG_DEVICE_OS_LOG_OFFSET, BBOX_DDR_DEBUG_DEVICE_OS_LOG_LEN,
-     BBOX_DUMP_FILE_DEBUG_DEVICE_OS_LOG,  PLAINTEXT_TABLE_DEBUG_DEVICE_OS_LOG,
-     NULL,                                bbox_dma_get_debug_dev_os_log,             bbox_parse_slog_data},
-    {"sec_device_os_log",                 BBOX_DDR_SEC_DEVICE_OS_LOG_OFFSET,   BBOX_DDR_SEC_DEVICE_OS_LOG_LEN,
-     BBOX_DUMP_FILE_SEC_DEVICE_OS_LOG,    PLAINTEXT_TABLE_SEC_DEVICE_OS_LOG,
-     NULL,                                bbox_dma_get_sec_log,                    bbox_parse_slog_data},
-    {"run_device_os_log",                 BBOX_DDR_RUN_DEVICE_OS_LOG_OFFSET,   BBOX_DDR_RUN_DEVICE_OS_LOG_LEN,
-     BBOX_DUMP_FILE_RUN_DEVICE_OS_LOG,    PLAINTEXT_TABLE_RUN_DEVICE_OS_LOG,
-     NULL,                                bbox_dma_get_run_dev_os_log,               bbox_parse_slog_data},
-    {"run_event_log",                     BBOX_DDR_RUN_EVENT_LOG_OFFSET,       BBOX_DDR_RUN_EVENT_LOG_LEN,
-     BBOX_DUMP_FILE_RUN_EVENT_LOG,        PLAINTEXT_TABLE_RUN_EVENT_LOG,
-     NULL,                                bbox_dma_get_run_event_log,               bbox_parse_slog_data},
-    {"debug_device_fw_log",               BBOX_DDR_DEBUG_DEVICE_FW_LOG_OFFSET, BBOX_DDR_DEBUG_DEVICE_FW_LOG_LEN,
-     BBOX_DUMP_FILE_DEBUG_DEVICE_FW_LOG,  PLAINTEXT_TABLE_DEBUG_DEVICE_FW_LOG,
-     bbox_check_bbox_ddr,                    bbox_dma_get_debug_dev_fw_log,             bbox_parse_slog_data},
-    {"bbox_ddr_dump",           BBOX_DDR_BASE_OFFSET,         BBOX_DDR_BASE_LEN,
-     BBOX_DUMP_FILE_DDR_DMA,    PLAINTEXT_TABLE_MAX,
-     NULL,                      bbox_get_bbox_ddr,            bbox_parse_bbox_ddr_data},
+    {"hboot", BBOX_SRAM_HBOOT_OFFSET, BBOX_SRAM_HBOOT_LEN, BBOX_DUMP_FILE_HBOOT, PLAINTEXT_TABLE_HBOOT, NULL,
+     bbox_get_hboot_data, bbox_parse_sram_mntn_data},
+    {"hbm_sram", BBOX_SRAM_HBM_DFX_OFFSET, BBOX_SRAM_HBM_DFX_LEN, BBOX_DUMP_FILE_HBM_SRAM, PLAINTEXT_TABLE_HBM_SRAM,
+     NULL, bbox_get_sram_data, bbox_parse_sram_mntn_data},
+    {"sram_snapshot", BBOX_SRAM_SNAPSHOT_OFFSET, BBOX_SRAM_SNAPSHOT_LEN, BBOX_DUMP_FILE_SRAM_SNAPSHOT,
+     PLAINTEXT_TABLE_SRAM_SNAPSHOT, NULL, bbox_get_sram_data, bbox_parse_sram_mntn_data},
+    {"bios_hiss", BBOX_SRAM_BIOS_HISS_OFFSET, BBOX_SRAM_BIOS_HISS_LEN, BBOX_DUMP_FILE_BIOS_HISS,
+     PLAINTEXT_TABLE_BIOS_HISS, NULL, bbox_get_sram_data, bbox_parse_sram_mntn_data},
+    {"hdr_snapshot", BBOX_DDR_HDR_OFFSET, BBOX_DDR_HDR_LEN, BBOX_DUMP_FILE_HDR, PLAINTEXT_TABLE_MAX,
+     bbox_check_bios_stage, bbox_get_hdr_data, bbox_parse_hdr_data},
+    {"kernel_log", BBOX_DDR_KLOG_OFFSET, BBOX_DDR_KLOG_LEN, BBOX_DUMP_FILE_KLOG, PLAINTEXT_TABLE_MAX, NULL,
+     bbox_get_kernel_log, bbox_parse_klog_data},
+    {"chip_dfx_min", BBOX_SRAM_CHIP_DFX_OFFSET, BBOX_SRAM_CHIP_DFX_LEN, BBOX_DUMP_FILE_CDR_SRAM,
+     PLAINTEXT_TABLE_CDR_SRAM_LOOSE, NULL, bbox_get_sram_data, bbox_parse_cdr_min_data},
+    {"chip_dfx_full", BBOX_DDR_CHIP_DFX_OFFSET, BBOX_DDR_CHIP_DFX_LEN, BBOX_DUMP_FILE_CDR_DDR, PLAINTEXT_TABLE_CDR,
+     NULL, bbox_get_cdr_data, bbox_parse_cdr_full_data},
+    {"ts_log", BBOX_DUMP_TS_LOG_OFFSET, BBOX_DUMP_TS_LOG_LEN, BBOX_DUMP_FILE_TS_LOG, PLAINTEXT_TABLE_TS_LOG, NULL,
+     bbox_get_ts_log, bbox_parse_log_data},
+    {"imp_log", BBOX_DUMP_IMP_LOG_OFFSET, BBOX_DUMP_IMP_LOG_LEN, BBOX_DUMP_FILE_IMP_LOG, PLAINTEXT_TABLE_IMP_LOG, NULL,
+     bbox_get_imp_log, bbox_parse_log_data},
+    {"imu_log", BBOX_DUMP_IMU_LOG_OFFSET, BBOX_DUMP_IMU_LOG_LEN, BBOX_DUMP_FILE_IMU_LOG, PLAINTEXT_TABLE_IMU_LOG, NULL,
+     bbox_get_imu_log, bbox_parse_log_data},
+    {"hsm_log", BBOX_DUMP_HSM_LOG_OFFSET, BBOX_DUMP_HSM_LOG_LEN, BBOX_DUMP_FILE_HSM_LOG, PLAINTEXT_TABLE_HSM_LOG, NULL,
+     bbox_get_hsm_log, bbox_parse_log_data},
+    {"debug_device_os_log", BBOX_DDR_DEBUG_DEVICE_OS_LOG_OFFSET, BBOX_DDR_DEBUG_DEVICE_OS_LOG_LEN,
+     BBOX_DUMP_FILE_DEBUG_DEVICE_OS_LOG, PLAINTEXT_TABLE_DEBUG_DEVICE_OS_LOG, NULL, bbox_dma_get_debug_dev_os_log,
+     bbox_parse_slog_data},
+    {"sec_device_os_log", BBOX_DDR_SEC_DEVICE_OS_LOG_OFFSET, BBOX_DDR_SEC_DEVICE_OS_LOG_LEN,
+     BBOX_DUMP_FILE_SEC_DEVICE_OS_LOG, PLAINTEXT_TABLE_SEC_DEVICE_OS_LOG, NULL, bbox_dma_get_sec_log,
+     bbox_parse_slog_data},
+    {"run_device_os_log", BBOX_DDR_RUN_DEVICE_OS_LOG_OFFSET, BBOX_DDR_RUN_DEVICE_OS_LOG_LEN,
+     BBOX_DUMP_FILE_RUN_DEVICE_OS_LOG, PLAINTEXT_TABLE_RUN_DEVICE_OS_LOG, NULL, bbox_dma_get_run_dev_os_log,
+     bbox_parse_slog_data},
+    {"run_event_log", BBOX_DDR_RUN_EVENT_LOG_OFFSET, BBOX_DDR_RUN_EVENT_LOG_LEN, BBOX_DUMP_FILE_RUN_EVENT_LOG,
+     PLAINTEXT_TABLE_RUN_EVENT_LOG, NULL, bbox_dma_get_run_event_log, bbox_parse_slog_data},
+    {"debug_device_fw_log", BBOX_DDR_DEBUG_DEVICE_FW_LOG_OFFSET, BBOX_DDR_DEBUG_DEVICE_FW_LOG_LEN,
+     BBOX_DUMP_FILE_DEBUG_DEVICE_FW_LOG, PLAINTEXT_TABLE_DEBUG_DEVICE_FW_LOG, bbox_check_bbox_ddr,
+     bbox_dma_get_debug_dev_fw_log, bbox_parse_slog_data},
+    {"bbox_ddr_dump", BBOX_DDR_BASE_OFFSET, BBOX_DDR_BASE_LEN, BBOX_DUMP_FILE_DDR_DMA, PLAINTEXT_TABLE_MAX, NULL,
+     bbox_get_bbox_ddr, bbox_parse_bbox_ddr_data},
 };
 
 static dump_data_config_st g_vmcore_config[] = {
-    {"vmcore_stat",          	BBOX_HBM_VMCORE_STAT_OFFSET,  BBOX_HBM_VMCORE_STAT_LEN,
-     BBOX_DUMP_VMCORE_STAT,     PLAINTEXT_TABLE_VMCORE_STAT,
-     NULL,                      bbox_get_vmcore_stat,    NULL},
-    {"vmcore",          		BBOX_HBM_VMCORE_OFFSET,       BBOX_HBM_VMCORE_LEN,
-     BBOX_DUMP_FILE_VMCORE,  	PLAINTEXT_TABLE_VMCORE,
-     NULL,                      bbox_get_vmcore_data,         NULL},
+    {"vmcore_stat", BBOX_HBM_VMCORE_STAT_OFFSET, BBOX_HBM_VMCORE_STAT_LEN, BBOX_DUMP_VMCORE_STAT,
+     PLAINTEXT_TABLE_VMCORE_STAT, NULL, bbox_get_vmcore_stat, NULL},
+    {"vmcore", BBOX_HBM_VMCORE_OFFSET, BBOX_HBM_VMCORE_LEN, BBOX_DUMP_FILE_VMCORE, PLAINTEXT_TABLE_VMCORE, NULL,
+     bbox_get_vmcore_data, NULL},
 };
 
 const dump_data_config_st *bbox_get_data_config(enum EXCEPTION_EVENT_TYPE event)

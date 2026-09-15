@@ -436,7 +436,7 @@ int queue_dma_sync_link_copy(u32 dev_id, struct devdrv_dma_node *dma_node, u64 d
     }
     timeinterval = ka_system_jiffies_to_msecs(ka_jiffies - stamp);
     if (timeinterval > QUEUE_WAKEUP_TIMEINTERVAL) {
-        queue_warn("Hal_kernel_devdrv_dma_sync_link_copy too long. (dev_id=%u; timeinterval=%lu, retry_cnt=%d; "
+        queue_warn("Hal_kernel_devdrv_dma_sync_link_copy too long. (dev_id=%u; timeinterval=%lums, retry_cnt=%d; "
                    "dma_node_num=%llu)\n",
                    dev_id, timeinterval, retry_cnt, dma_node_num);
     }

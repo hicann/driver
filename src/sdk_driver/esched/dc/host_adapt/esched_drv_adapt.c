@@ -659,7 +659,7 @@ STATIC int esched_drv_host_init_irq(struct sched_hard_res *res)
     struct esched_drv_dev_attr *attr = (struct esched_drv_dev_attr *)res->priv;
 
     if (attr == NULL) {
-        sched_err("Invalid attr. (dev_id=%u\n", dev_id);
+        sched_err("Invalid attr. (dev_id=%u)\n", dev_id);
         return DRV_ERROR_PARA_ERROR;
     }
 
@@ -684,7 +684,7 @@ STATIC void esched_drv_host_uninit_irq(struct sched_hard_res *res)
     struct esched_drv_dev_attr *attr = (struct esched_drv_dev_attr *)res->priv;
 
     if (attr == NULL) {
-        sched_err("Invalid attr. (dev_id=%u\n", res->dev_id);
+        sched_err("Invalid attr. (dev_id=%u)\n", res->dev_id);
         return;
     }
 

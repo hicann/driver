@@ -484,7 +484,7 @@ int hal_kernel_sched_register_event_pre_proc_handle(unsigned int event_id, SCHED
         }
     }
 
-    sched_err("Event has already been registered too many handle. (event_id=%u)\n", event_id);
+    sched_err("Event has already registered too many handles. (event_id=%u)\n", event_id);
     return DRV_ERROR_PARA_ERROR;
 }
 KA_EXPORT_SYMBOL_GPL(hal_kernel_sched_register_event_pre_proc_handle);
@@ -939,7 +939,7 @@ STATIC int32_t sched_fop_open(ka_inode_t *inode, ka_file_t *filep)
     task = esched_task_hash_find((int)ka_task_get_current()->tgid, devid);
     if ((task != NULL) && (task->status == TASK_RELEASE_INACTIVE)) {
         ka_task_mutex_unlock(&esched_task_mutex);
-        sched_err("esched has been opened by task.(pid=%d)\n", ka_task_get_current()->tgid);
+        sched_err("esched has been opened by task. (pid=%d)\n", ka_task_get_current()->tgid);
         return DRV_ERROR_OPEN_FAILED;
     }
 
@@ -947,7 +947,7 @@ STATIC int32_t sched_fop_open(ka_inode_t *inode, ka_file_t *filep)
         ka_task_mutex_unlock(&esched_task_mutex);
         ret = esched_wait_task_release_finish(devid);
         if (ret != DRV_ERROR_NONE) {
-            sched_err("Pre-esched task not be released.(pid=%d)\n", ka_task_get_current()->tgid);
+            sched_err("Pre-esched task not released. (pid=%d)\n", ka_task_get_current()->tgid);
             return DRV_ERROR_OPEN_FAILED;
         }
         ka_task_mutex_lock(&esched_task_mutex);
@@ -956,7 +956,7 @@ STATIC int32_t sched_fop_open(ka_inode_t *inode, ka_file_t *filep)
     task = ka_mm_kzalloc(sizeof(*task), KA_GFP_KERNEL | __KA_GFP_ACCOUNT);
     if (ka_unlikely(task == NULL)) {
         ka_task_mutex_unlock(&esched_task_mutex);
-        sched_err("esched alloc task memory failed.(pid=%d)\n", ka_task_get_current()->tgid);
+        sched_err("esched alloc task memory failed. (pid=%d)\n", ka_task_get_current()->tgid);
         return DRV_ERROR_OUT_OF_MEMORY;
     }
 

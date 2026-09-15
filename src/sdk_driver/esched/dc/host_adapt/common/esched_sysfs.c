@@ -1152,7 +1152,7 @@ STATIC ssize_t sched_sysfs_node_sched_thread_run_abnormal_time_write(ka_device_t
     }
 
     if (val < (SCHED_GUARD_WORK_PERIOD * MILLISECOND_TO_MICROSECOND)) {
-        sched_err("The value of unit us must be large than 10ms. (val=%u)\n", val);
+        sched_err("The value of unit us must be larger than 10ms. (val=%u)\n", val);
         return count;
     }
 
