@@ -339,7 +339,6 @@ static int uvm_prefetch_h2d_readmostly(struct devmm_svm_process *svm_proc, struc
 #ifndef EMU_ST
         if (task_created) {
             uvm_hnode_wait_for_removal(prefetch_task->id);
-            devmm_kfree_ex(prefetch_task);
         }
         devmm_drv_err("uvm_prefetch_h2d_common failed. (va=0x%llx, src_dev_id=%u, dst_dev_id=%u)\n", batch_info->va,
                       batch_info->src_location.id, batch_info->dst_location.id);
