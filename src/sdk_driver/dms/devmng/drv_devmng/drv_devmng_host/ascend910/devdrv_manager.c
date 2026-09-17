@@ -600,12 +600,15 @@ int devdrv_try_get_dev_info_occupy(struct devdrv_info *dev_info)
         return -EFAULT;
     }
 
+    ka_task_mutex_lock(&dev_info->lock);
     ka_base_atomic_inc(&dev_info->occupy_ref);
     if (dev_info->status == DEVINFO_STATUS_REMOVED) {
         ka_base_atomic_dec(&dev_info->occupy_ref);
+        ka_task_mutex_unlock(&dev_info->lock);
         devdrv_drv_err("The dev_info has been removed.\n");
         return -EFAULT;
     }
+    ka_task_mutex_unlock(&dev_info->lock);
 
     return 0;
 }
@@ -844,11 +847,10 @@ STATIC int devdrv_get_board_info_from_dev(unsigned int dev_id, struct devdrv_boa
         return -ENODEV;
     }
 
-    ka_base_atomic_inc(&dev_info->occupy_ref);
-    if (dev_info->status == DEVINFO_STATUS_REMOVED) {
+    ret = devdrv_try_get_dev_info_occupy(dev_info);
+    if (ret != 0) {
         devdrv_drv_warn("Device has been reset. (phy_id=%u)\n", dev_id);
-        ret = -EINVAL;
-        goto OCCUPY_AND_TASK_CNT_OUT;
+        return -EINVAL;
     }
 
     ret = dms_set_urd_msg(&feature_cfg, (void *)&dev_id, sizeof(u32), sizeof(struct devdrv_board_info_cache), &urd_msg);
@@ -2185,7 +2187,9 @@ STATIC int devdrv_manager_uninit_instance(u32 dev_id)
         return -EINVAL;
     }
 
+    ka_task_mutex_lock(&dev_info->lock);
     dev_info->status = DEVINFO_STATUS_REMOVED;
+    ka_task_mutex_unlock(&dev_info->lock);
     dev_info->dmp_started = false;
     while (retry_cnt < WAIT_PROCESS_EXIT_TIME) {
         if (ka_base_atomic_read(&dev_info->occupy_ref) == 0) {

@@ -206,11 +206,12 @@ STATIC int devdrv_manager_get_devinfo(unsigned long arg)
         goto FREE_DEV_INFO_EXIT;
     }
 
-    ka_base_atomic_inc(&dev_info->occupy_ref);
-    if (dev_info->status == DEVINFO_STATUS_REMOVED) {
+    ret = devdrv_try_get_dev_info_occupy(dev_info);
+    if (ret != 0) {
         devdrv_drv_warn("dev %d has been reset\n", dev_info->dev_id);
         ret = -EINVAL;
-        goto HOT_RESET_CNT_EXIT;
+        dms_hotreset_task_cnt_decrease(phys_id);
+        goto FREE_DEV_INFO_EXIT;
     }
 
     (void)hvdevmng_get_aicore_num(dev_info->dev_id, vfid, &hccl_devinfo->ai_core_num);
