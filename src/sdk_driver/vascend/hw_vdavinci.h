@@ -406,7 +406,7 @@ bool hw_dvt_hypervisor_is_valid_gfn(void *__vdavinci, unsigned long gfn);
 /**
  * hw_dvt_hypervisor_mmio_get - get the mmio address and size of specified bar
  * @dst: return the mmio address to host driver
- * @size: retrun the mmio size to host driver
+ * @size: return the mmio size to host driver
  * @vdavinci: a vdavinci
  * @bar: specify the bar[2/4]
  *

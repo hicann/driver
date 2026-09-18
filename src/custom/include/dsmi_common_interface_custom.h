@@ -19,25 +19,25 @@ extern "C" {
 #endif
 #endif /* __cplusplus */
 
-#define DEV_DAVINCI_NOT_EXIST    0x68022001
-#define HOST_HDC_NOT_EXIST       0x68022002
-#define HOST_MANAGER_NOT_EXIST   0x68022003
-#define HOST_SVM_NOT_EXIST       0x68022004
-#define BOARD_TYPE_RC            1
-#define DSMI_HEALTH_ERROR_LEVEL  3
-#define DEV_PATH_MAX             128
-#define EP_MODE                  "0xd100"
+#define DEV_DAVINCI_NOT_EXIST 0x68022001
+#define HOST_HDC_NOT_EXIST 0x68022002
+#define HOST_MANAGER_NOT_EXIST 0x68022003
+#define HOST_SVM_NOT_EXIST 0x68022004
+#define BOARD_TYPE_RC 1
+#define DSMI_HEALTH_ERROR_LEVEL 3
+#define DEV_PATH_MAX 128
+#define EP_MODE "0xd100"
 #define DSMI_MAIN_CMD_EX_COMPUTING 0x8000
 #define DSMI_MAIN_CMD_EX_CONTAINER 0x8001
-#define DSMI_MAIN_CMD_GPIO         0x8002
-#define DSMI_MAIN_CMD_EX_CERT      0x8003
-#define VDEV_VM_CONFIG_ITEM        0x8004
+#define DSMI_MAIN_CMD_GPIO 0x8002
+#define DSMI_MAIN_CMD_EX_CERT 0x8003
+#define VDEV_VM_CONFIG_ITEM 0x8004
 #define DSMI_MAIN_CMD_EN_DECRYPTION 0x8005
-#define DSMI_MAIN_CMD_PCIE_BANDWIDTH      0x8006
-#define DSMI_MAIN_CMD_HCCS_BANDWIDTH      0X8007
-#define DSMI_MAIN_CMD_HCCS_LINKERR        0X8008
-#define DSMI_MAIN_CMD_PCIE_LINKERR        0X8009
-#define DSMI_MAIN_CMD_URMA_INFO           0x8010
+#define DSMI_MAIN_CMD_PCIE_BANDWIDTH 0x8006
+#define DSMI_MAIN_CMD_HCCS_BANDWIDTH 0X8007
+#define DSMI_MAIN_CMD_HCCS_LINKERR 0X8008
+#define DSMI_MAIN_CMD_PCIE_LINKERR 0X8009
+#define DSMI_MAIN_CMD_URMA_INFO 0x8010
 
 typedef enum {
     DSMI_CERT_SUB_CMD_INIT_TLS_PUB_KEY = 0,
@@ -55,7 +55,7 @@ typedef struct _certs_chain_data {
 } CERTS_CHAIN_DATA;
 
 #define CERT_COMMON_NAME_LEN 64
-#define CERT_ITEM_NAME_LEN    16
+#define CERT_ITEM_NAME_LEN 16
 #define CERT_TIME_LEN 32
 typedef struct _cert_info {
     unsigned int alarm_stat;
@@ -148,38 +148,38 @@ typedef struct dsmi_chip_pcie_err_rate_stru {
     unsigned int dl_dcrc_err_num;
 } PCIE_ERR_RATE_INFO_STU;
 
-DLLEXPORT int dsmi_get_pcie_bdf(int device_id,struct tag_pcie_bdfinfo *pcie_idinfo);
+DLLEXPORT int dsmi_get_pcie_bdf(int device_id, struct tag_pcie_bdfinfo *pcie_idinfo);
 
 /**
-* @ingroup driver
-* @brief  Get the pcie err rate of ascend AI processor Hisilicon SOC
-* @attention NULL
-* @param [in] device_id  The device id
-* @param [out] pcie_err_code_info  Get the pcie err rate of ascend AI processor Hisilicon SOC
-* @return  0 for success, others for fail
-*/
+ * @ingroup driver
+ * @brief  Get the pcie err rate of ascend AI processor Hisilicon SOC
+ * @attention NULL
+ * @param [in] device_id  The device id
+ * @param [out] pcie_err_code_info  Get the pcie err rate of ascend AI processor Hisilicon SOC
+ * @return  0 for success, others for fail
+ */
 
 DLLEXPORT int dsmi_get_pcie_error_rate(int device_id, struct dsmi_chip_pcie_err_rate_stru *pcie_err_code_info);
 
 /**
-* @ingroup driver
-* @brief  clear the pcie err rate of ascend AI processor Hisilicon SOC
-* @attention NULL
-* @param [in] device_id  The device id
-* @return  0 for success, others for fail
-*/
+ * @ingroup driver
+ * @brief  clear the pcie err rate of ascend AI processor Hisilicon SOC
+ * @attention NULL
+ * @param [in] device_id  The device id
+ * @return  0 for success, others for fail
+ */
 DLLEXPORT int dsmi_clear_pcie_error_rate(int device_id);
 
-#define ALM_NAME_LEN    16
-#define ALM_EXTRA_LEN   32
-#define ALM_REASON_LEN  32
-#define ALM_REPAIR_LEN  32
+#define ALM_NAME_LEN 16
+#define ALM_EXTRA_LEN 32
+#define ALM_REASON_LEN 32
+#define ALM_REPAIR_LEN 32
 
 struct dsmi_alarm_info_stru {
     unsigned int id;
     unsigned int level;
-    unsigned int clr_type;            /* 0: automatical clear, 1:manaul clear */
-    unsigned int moi;    /* blackbox code */
+    unsigned int clr_type; /* 0: automatically clear, 1:manual clear */
+    unsigned int moi;      /* blackbox code */
     unsigned char name[ALM_NAME_LEN];
     unsigned char extra_info[ALM_EXTRA_LEN];
     unsigned char reason_info[ALM_REASON_LEN];
@@ -187,17 +187,17 @@ struct dsmi_alarm_info_stru {
 };
 
 /**
-* @ingroup driver
-* @brief  Get the detailed device alarm info
-* @attention NULL
-* @param [in] device_id  The device id
-* @param [out] alarmcount The number of alarms on the device
-* @param [out] dsmi_alarm_info_stru The detailed alarm info
-* @return  0 for success, others for fail
-*/
+ * @ingroup driver
+ * @brief  Get the detailed device alarm info
+ * @attention NULL
+ * @param [in] device_id  The device id
+ * @param [out] alarmcount The number of alarms on the device
+ * @param [out] dsmi_alarm_info_stru The detailed alarm info
+ * @return  0 for success, others for fail
+ */
 DLLEXPORT int dsmi_get_device_alarminfo(int device_id, int *alarmcount, struct dsmi_alarm_info_stru *palarminfo);
 
-#define COMPUTING_POWER_INFO_RESERVE_NUM    3
+#define COMPUTING_POWER_INFO_RESERVE_NUM 3
 
 struct dsmi_computing_power_info {
     unsigned int data1;
@@ -205,55 +205,55 @@ struct dsmi_computing_power_info {
 };
 
 /**
-* @ingroup driver
-* @brief Get the DIE ID of the specified device
-* @attention NULL
-* @param [in] device_id  The device id
-* @param [out] schedule  return n die id infomation
-* @return  0 for success, others for fail
-* @note Support:Ascend910, Ascend910B
-*/
+ * @ingroup driver
+ * @brief Get the DIE ID of the specified device
+ * @attention NULL
+ * @param [in] device_id  The device id
+ * @param [out] schedule  return n die id infomation
+ * @return  0 for success, others for fail
+ * @note Support:Ascend910, Ascend910B
+ */
 DLLEXPORT int dsmi_get_device_ndie(int device_id, struct dsmi_soc_die_stru *pdevice_die);
 
 /**
-* @ingroup driver
-* @brief Get the aicore number of the device
-* @attention NULL
-* @param [in] device_id  The device id
-* @param [out] aicorenum The number of aicore
-* @return  0 for success, others for fail
-* @note Support:Ascend910, Ascend910B
-*/
+ * @ingroup driver
+ * @brief Get the aicore number of the device
+ * @attention NULL
+ * @param [in] device_id  The device id
+ * @param [out] aicorenum The number of aicore
+ * @return  0 for success, others for fail
+ * @note Support:Ascend910, Ascend910B
+ */
 DLLEXPORT int dsmi_get_computing_power_info(int device_id, int computing_power_type,
-                                  struct dsmi_computing_power_info *computing_power_info);
+                                            struct dsmi_computing_power_info *computing_power_info);
 
 /**
-* @ingroup driver
-* @brief Query the overall health status of the driver
-* @attention NULL
-* @param [out] phealth
-* @return  0 for success, others for fail
-*/
+ * @ingroup driver
+ * @brief Query the overall health status of the driver
+ * @attention NULL
+ * @param [out] phealth
+ * @return  0 for success, others for fail
+ */
 DLLEXPORT int dsmi_get_driver_health(unsigned int *phealth);
 
 /**
-* @ingroup driver
-* @brief Query driver fault code
-* @attention NULL
-* @param [in] device_id  The device id
-* @param [out] errorcount  Number of error codes
-* @param [out] perrorcode  error codes
-* @return  0 for success, others for fail
-*/
+ * @ingroup driver
+ * @brief Query driver fault code
+ * @attention NULL
+ * @param [in] device_id  The device id
+ * @param [out] errorcount  Number of error codes
+ * @param [out] perrorcode  error codes
+ * @return  0 for success, others for fail
+ */
 DLLEXPORT int dsmi_get_driver_errorcode(int *errorcount, unsigned int *perrorcode);
 
 /**
-* @ingroup driver
-* @pcie hot reset
-* @attention NULL
-* @param [in] device_id  The device id
-* @return  0 for success, others for fail
-*/
+ * @ingroup driver
+ * @pcie hot reset
+ * @attention NULL
+ * @param [in] device_id  The device id
+ * @return  0 for success, others for fail
+ */
 DLLEXPORT int dsmi_pcie_hot_reset(int device_id);
 
 #define MAX_RECORD_ECC_ADDR_COUNT 64
@@ -268,14 +268,14 @@ struct dsmi_multi_ecc_time_data {
 DLLEXPORT int dsmi_get_multi_ecc_time_info(int device_id, struct dsmi_multi_ecc_time_data *multi_ecc_time_data);
 
 /**
-* @ingroup driver
-* @brief Query hbm ecc record info
-* @attention NULL
-* @param [in]
-* @param [out] record info  ecc_common_data_s
-* @return  0 for success, others for fail
-* @note Support:Ascend910B
-*/
+ * @ingroup driver
+ * @brief Query hbm ecc record info
+ * @attention NULL
+ * @param [in]
+ * @param [out] record info  ecc_common_data_s
+ * @return  0 for success, others for fail
+ * @note Support:Ascend910B
+ */
 
 struct dsmi_ecc_common_data {
     unsigned long long physical_addr;
@@ -289,7 +289,7 @@ struct dsmi_ecc_common_data {
 #pragma pack()
 
 DLLEXPORT int dsmi_get_multi_ecc_record_info(int device_id, unsigned int *ecc_count, unsigned char read_type,
-    unsigned char module_type, struct dsmi_ecc_common_data *ecc_common_data_s);
+                                             unsigned char module_type, struct dsmi_ecc_common_data *ecc_common_data_s);
 
 /**
  * @ingroup driver
@@ -306,17 +306,17 @@ DLLEXPORT int dsmi_get_multi_ecc_record_info(int device_id, unsigned int *ecc_co
 typedef void (*fault_event_callback)(struct dsmi_event *event);
 
 DLLEXPORT int dsmi_product_get_device_info(unsigned int device_id, DSMI_MAIN_CMD main_cmd, unsigned int sub_cmd,
-    void *buf, unsigned int *size);
+                                           void *buf, unsigned int *size);
 
 /**
-* @ingroup driver
-* @brief Get mcu board id 
-* @attention NULL
-* @param [in] device_id  The device id
-* @param [out] mcu_board_id  mcu board id
-* @return  0 for success, others for fail
-*/
-DLLEXPORT int dsmi_product_get_mcu_board_id (unsigned int device_id, unsigned int *mcu_board_id);
+ * @ingroup driver
+ * @brief Get mcu board id
+ * @attention NULL
+ * @param [in] device_id  The device id
+ * @param [out] mcu_board_id  mcu board id
+ * @return  0 for success, others for fail
+ */
+DLLEXPORT int dsmi_product_get_mcu_board_id(unsigned int device_id, unsigned int *mcu_board_id);
 
 #ifdef __cplusplus
 #if __cplusplus

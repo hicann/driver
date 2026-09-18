@@ -20,7 +20,7 @@
 #define QUE_EVENT_TIMEOUT_MS 5000000    /* always wait */
 #define QUE_EVENT_MAX_WAIT_10S 10000000 /* always wait */
 #else
-#define QUE_EVENT_TIMEOUT_MS 5000    /* Defualt event timeout */
+#define QUE_EVENT_TIMEOUT_MS 5000    /* Default event timeout */
 #define QUE_EVENT_MAX_WAIT_10S 10000 /* 10s */
 #endif
 #define QUE_SEND_NORMAL 0

@@ -32,7 +32,7 @@ typedef enum tag_ts_task_type {
     TS_TASK_TYPE_MEMCPY = 5,            /**< memory copy task */
     TS_TASK_TYPE_MAINTENANCE = 6,       /**< such as destroy the event or stream */
     TS_TASK_TYPE_CREATE_STREAM = 7,     /**< create stream task */
-    TS_TASK_TYPE_DATA_DUMP = 8,         /**< kernal data dump configure */
+    TS_TASK_TYPE_DATA_DUMP = 8,         /**< kernel data dump configure */
     TS_TASK_TYPE_REMOTE_EVENT_WAIT = 9, /* * wait for event on another device */
     TS_TASK_TYPE_PCTRACE_ENABLE = 10,
     TS_TASK_TYPE_CREATE_L2_ADDR = 11, /**< create L2 addr info for aicpu kernel */
