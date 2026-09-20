@@ -2,7 +2,7 @@
 
 ## Overview
 
-`adp_mlx` is a driver adapter component for mlx5 series network cards, serving as a runtime dependency of the `ibv_extend` extension library.
+`adp_mlx` is a driver adapter component for Mellanox ConnectX (CX) series network cards, serving as a runtime dependency of the `ibv_extend` extension library.
 
 ```
 ┌─────────────────────────────────┐
