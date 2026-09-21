@@ -37,9 +37,9 @@
 #include "ka_memory_pub.h"
 
 #ifndef STATIC_SKIP
-    #define STATIC static
+#define STATIC static
 #else
-    #define STATIC
+#define STATIC
 #endif
 
 typedef struct PCI_BAR_RD_IN_tag {
@@ -54,7 +54,7 @@ struct pci_dev_info {
     struct mutex lock;
     void __iomem *bar_mem_addr;
     unsigned long bar_mem_len; /* 长度为0 说明bar无效 */
-    uint32_t bus;                           /* 这条 PCI 总线的总线编号 */
+    uint32_t bus;              /* 这条 PCI 总线的总线编号 */
     uint32_t device;
     uint32_t function;
     uint32_t irq_num;
@@ -65,7 +65,7 @@ extern SramDescCtlHeader g_fault_event_head;
 STATIC int lq_get_fault_event_head_info(IOCTL_CMD_S *ioctl_cmd)
 {
     int ret;
-    SramDescCtlHeader info_pipe;    /* 这个结构体是否和 sdk 新版本的结构体信息一致 ？ */
+    SramDescCtlHeader info_pipe = {0}; /* 这个结构体是否和 sdk 新版本的结构体信息一致 ？ */
 
     info_pipe.version = g_fault_event_head.version;
     info_pipe.length = g_fault_event_head.length;
@@ -122,13 +122,21 @@ OUT_FREE:
 }
 
 IOCTL_CMD_INFO_S ioctl_cmd_fun[] = {
-    { .cmd = IOCTL_GET_NODE_INFO,     .cmd_fun = get_all_fault_by_pci,      .cmd_fun_pre = NULL,      },
-    { .cmd = IOCTL_GET_HEAD_INFO,     .cmd_fun = lq_get_fault_event_head_info,          .cmd_fun_pre = NULL,      },
+    {
+        .cmd = IOCTL_GET_NODE_INFO,
+        .cmd_fun = get_all_fault_by_pci,
+        .cmd_fun_pre = NULL,
+    },
+    {
+        .cmd = IOCTL_GET_HEAD_INFO,
+        .cmd_fun = lq_get_fault_event_head_info,
+        .cmd_fun_pre = NULL,
+    },
 };
 
 uint32_t g_ioctl_cmd_num = sizeof(ioctl_cmd_fun) / sizeof(IOCTL_CMD_INFO_S);
 
-int pcidev_ioctl(void* msg)
+int pcidev_ioctl(void *msg)
 {
     IOCTL_CMD_S ioctl_cmd = {0};
     uint32_t i;

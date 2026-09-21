@@ -207,7 +207,7 @@ int dcmiv2_get_device_proc_mem_info(int dev_id, struct dcmi_proc_mem_info *proc_
     }
 
     check_result = !(dcmi_board_type_is_card() || dcmi_board_type_is_station() || dcmi_board_type_is_hilens() ||
-        dcmi_board_type_is_server() || dcmi_board_type_is_model());
+                     dcmi_board_type_is_server() || dcmi_board_type_is_model());
     if (check_result) {
         return DCMI_ERR_CODE_NOT_SUPPORT;
     }
@@ -368,6 +368,16 @@ int dcmiv2_get_device_ecc_info(int dev_id, enum dcmi_device_type input_type, str
     }
 }
 
+static int check_freq_type(enum dcmi_freq_type input_type)
+{
+    if (input_type == DCMI_FREQ_DDR || input_type == DCMI_FREQ_CTRLCPU || input_type == DCMI_FREQ_HBM ||
+        input_type == DCMI_FREQ_AICORE_CURRENT_ || input_type == DCMI_FREQ_AICORE_MAX ||
+        input_type == DCMI_FREQ_VECTORCORE_CURRENT) {
+        return DCMI_OK;
+    }
+    return DCMI_ERR_CODE_INVALID_PARAMETER;
+}
+
 int dcmiv2_get_device_frequency(int dev_id, enum dcmi_freq_type input_type, unsigned int *frequency)
 {
     int err, card_id, dev_phy_id;
@@ -378,7 +388,7 @@ int dcmiv2_get_device_frequency(int dev_id, enum dcmi_freq_type input_type, unsi
         return DCMI_ERR_CODE_INVALID_PARAMETER;
     }
 
-    if (input_type > DCMI_FREQ_VECTORCORE_CURRENT) {
+    if (check_freq_type(input_type)) {
         gplog(LOG_ERR, "input_type is invalid. input_type=%d", input_type);
         return DCMI_ERR_CODE_INVALID_PARAMETER;
     }
@@ -611,7 +621,7 @@ int dcmiv2_get_device_share_enable(int dev_id, unsigned int *enable_flag)
 
     if (device_type == NPU_TYPE) {
         err = dsmi_get_device_info(dev_id, DSMI_MAIN_CMD_EX_CONTAINER, DSMI_EX_CONTAINER_SUB_CMD_SHARE,
-        (void *)enable_flag, &size);
+                                   (void *)enable_flag, &size);
         if (err != DSMI_OK) {
             gplog(LOG_ERR, "call dsmi_get_device_info failed. err is %d.", err);
             return dcmi_convert_error_code(err);
@@ -632,7 +642,7 @@ int dcmiv2_get_device_share_config_recover_mode(unsigned int *enable_flag)
     if (err != DCMI_OK) {
         return err;
     }
-    
+
     if (enable_flag == NULL) {
         gplog(LOG_ERR, "enable_flag is NULL");
         return DCMI_ERR_CODE_INVALID_PARAMETER;
@@ -692,7 +702,7 @@ int dcmiv2_get_device_network_health(int dev_id, enum dcmi_rdfx_detect_result *r
 }
 
 int dcmiv2_get_device_netdev_health(int dev_id, const char *netdev_name, unsigned int netdev_name_len,
-    enum dcmi_rdfx_detect_result *result)
+                                    enum dcmi_rdfx_detect_result *result)
 {
     int err;
     enum dcmi_unit_type device_type = NPU_TYPE;
@@ -775,8 +785,8 @@ int dcmiv2_get_netdev_ip(int dev_id, const char *netdev_name, unsigned int netde
     return DCMI_OK;
 }
 
-int dcmiv2_get_netdev_mac(int dev_id, const char *netdev_name, unsigned int netdev_name_len,
-    char *mac_addr, unsigned int mac_addr_len)
+int dcmiv2_get_netdev_mac(int dev_id, const char *netdev_name, unsigned int netdev_name_len, char *mac_addr,
+                          unsigned int mac_addr_len)
 {
     int ret;
     enum dcmi_unit_type device_type = INVALID_TYPE;
@@ -819,7 +829,7 @@ int dcmiv2_get_netdev_mac(int dev_id, const char *netdev_name, unsigned int netd
 }
 
 int dcmiv2_get_netdev_gateway(int dev_id, const char *netdev_name, unsigned int netdev_name_len,
-    struct dcmi_ip_addr *gateway)
+                              struct dcmi_ip_addr *gateway)
 {
     int err;
     enum dcmi_unit_type device_type = NPU_TYPE;
@@ -884,8 +894,8 @@ int dcmiv2_get_ub_port_link_status(int dev_id, struct dcmi_ub_port_link_status *
 
     if (device_type == NPU_TYPE) {
         unsigned int out_size = sizeof(struct dcmi_ub_port_link_status);
-        ret = dsmi_get_device_info(dev_id, DSMI_MAIN_CMD_UB, DSMI_UB_INFO_SUB_CMD_PORT_STATUS,
-        (void *)ub_status, &out_size);
+        ret = dsmi_get_device_info(dev_id, DSMI_MAIN_CMD_UB, DSMI_UB_INFO_SUB_CMD_PORT_STATUS, (void *)ub_status,
+                                   &out_size);
         if (ret != DSMI_OK) {
             gplog(LOG_ERR, "call dsmi_get_device_info failed. err is %d.", ret);
         }
@@ -930,4 +940,3 @@ int dcmiv2_get_device_multi_utilization_rate(int dev_id, struct dcmi_multi_utili
         return DCMI_ERR_CODE_NOT_SUPPORT;
     }
 }
-

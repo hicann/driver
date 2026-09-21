@@ -15,7 +15,7 @@
 #include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
- 
+
 #include "securec.h"
 #include "dsmi_common_interface.h"
 #include "dcmi_interface_api.h"
@@ -29,40 +29,40 @@
 #include "dcmi_product_judge.h"
 #include "dcmi_environment_judge.h"
 #include "dcmi_cert_manage_intf.h"
- 
+
 int dcmiv2_revoke_device_sec_key(int dev_id, enum dcmi_revo_type input_type, const unsigned char *file_data,
-    unsigned int file_size)
+                                 unsigned int file_size)
 {
     int err;
     enum dcmi_unit_type device_type = NPU_TYPE;
- 
+
     if (!dcmi_is_in_phy_machine_root()) {
         gplog(LOG_OP, "Operation not permitted, only root user on physical machine can call this api.");
         return DCMI_ERR_CODE_OPER_NOT_PERMITTED;
     }
- 
+
     if (file_data == NULL) {
         gplog(LOG_ERR, "file_data is NULL");
         return DCMI_ERR_CODE_INVALID_PARAMETER;
     }
- 
+
     bool check_result = ((input_type >= DCMI_REVOCATION_TYPE_MAX) || (file_size != SEC_REVOCATION_FILE_LEN));
     if (check_result) {
         gplog(LOG_ERR, "input para is invalid. input_type=%d file_size=%u", input_type, file_size);
         return DCMI_ERR_CODE_INVALID_PARAMETER;
     }
- 
+
     err = dcmiv2_get_device_type(dev_id, &device_type);
     if (err != DCMI_OK) {
         gplog(LOG_ERR, "dcmi_get_device_type failed. err is %d.", err);
         return err;
     }
- 
+
     if (!dcmi_board_chip_type_is_ascend_950()) {
         gplog(LOG_OP, "This product does not support this api.");
         return DCMI_ERR_CODE_NOT_SUPPORT;
     }
- 
+
     if (device_type == NPU_TYPE) {
         err = dsmi_set_sec_revocation(dev_id, (DSMI_REVOCATION_TYPE)input_type, file_data, file_size);
         if (err != DSMI_OK) {
@@ -75,7 +75,7 @@ int dcmiv2_revoke_device_sec_key(int dev_id, enum dcmi_revo_type input_type, con
         gplog(LOG_OP, "device_type %d is not support.", device_type);
         return DCMI_ERR_CODE_NOT_SUPPORT;
     }
- 
+
     gplog(LOG_OP, "set sec revocation success. dev_id=%d, revo_type=%d", dev_id, input_type);
     return DCMI_OK;
 }
@@ -115,19 +115,17 @@ int dcmiv2_get_attest_akcert(int dev_id, unsigned char *ak_cert, unsigned int *a
         return DCMI_ERR_CODE_NOT_SUPPORT;
     }
 
-    *ak_cert_len = rep.data_len;
-
-    ret = memcpy_s(ak_cert, buffer_len, rep.data, *ak_cert_len);
+    ret = memcpy_s(ak_cert, buffer_len, rep.data, rep.data_len);
     if (ret != 0) {
         gplog(LOG_ERR, "memcpy_s failed.(buffer_len=%d, ret=%d", buffer_len, ret);
         return DCMI_ERR_CODE_SECURE_FUN_FAIL;
     }
+    *ak_cert_len = rep.data_len;
 
     return ret;
 }
 
-int dcmiv2_get_attest_evidence(int dev_id, struct attest_ctx *ctx,
-    unsigned char *evidence, unsigned int *evidence_len)
+int dcmiv2_get_attest_evidence(int dev_id, struct attest_ctx *ctx, unsigned char *evidence, unsigned int *evidence_len)
 {
     int ret;
     struct ATTEST_OPERATE_REQUEST req = {0};
@@ -151,7 +149,7 @@ int dcmiv2_get_attest_evidence(int dev_id, struct attest_ctx *ctx,
         gplog(LOG_OP, "This product does not support this api.");
         return DCMI_ERR_CODE_NOT_SUPPORT;
     }
- 
+
     if (device_type != NPU_TYPE) {
         gplog(LOG_ERR, "device_type %d is not support.", device_type);
         return DCMI_ERR_CODE_NOT_SUPPORT;
@@ -180,8 +178,8 @@ int dcmiv2_get_attest_evidence(int dev_id, struct attest_ctx *ctx,
             return DCMI_ERR_CODE_SECURE_FUN_FAIL;
         }
         req.start_len += rep.copied_len;
-        gplog(LOG_INFO, "start len = %u, copied len = %u, remain len = %u",
-            req.start_len, rep.copied_len, rep.remain_len);
+        gplog(LOG_INFO, "start len = %u, copied len = %u, remain len = %u", req.start_len, rep.copied_len,
+              rep.remain_len);
     } while (rep.remain_len > 0);
 
     return ret;

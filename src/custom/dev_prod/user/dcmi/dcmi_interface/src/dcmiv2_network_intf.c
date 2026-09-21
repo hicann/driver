@@ -36,7 +36,7 @@
 #include "dcmi_permission_judge.h"
 
 int dcmiv2_get_netdev_pkt_stats_info(int dev_id, int port_id,
-    struct dcmi_network_pkt_stats_info *network_pkt_stats_info)
+                                     struct dcmi_network_pkt_stats_info *network_pkt_stats_info)
 {
     int ret;
     enum dcmi_unit_type device_type = INVALID_TYPE;
@@ -68,7 +68,7 @@ int dcmiv2_get_netdev_pkt_stats_info(int dev_id, int port_id,
     }
 
     if (device_type == NPU_TYPE) {
-        ret = dsmi_get_netdev_stat(dev_id, port_id, (struct ds_port_stat_info*)network_pkt_stats_info);
+        ret = dsmi_get_netdev_stat(dev_id, port_id, (struct ds_port_stat_info *)network_pkt_stats_info);
         if ((ret != DSMI_OK) && (ret != DSMI_ERR_NOT_SUPPORT)) {
             gplog(LOG_ERR, "call dsmi_get_bandwidth failed. (ret=%d)", ret);
         }
@@ -81,7 +81,7 @@ int dcmiv2_get_netdev_pkt_stats_info(int dev_id, int port_id,
 }
 
 int dcmiv2_get_rdma_bandwidth_info(int dev_id, int port_id, unsigned int prof_time,
-    struct dcmi_network_rdma_bandwidth_info *network_rdma_bandwidth_info)
+                                   struct dcmi_network_rdma_bandwidth_info *network_rdma_bandwidth_info)
 {
     int ret;
     enum dcmi_unit_type device_type = INVALID_TYPE;
@@ -135,7 +135,7 @@ int dcmiv2_get_rdma_bandwidth_info(int dev_id, int port_id, unsigned int prof_ti
 }
 
 int dcmiv2_exec_ping(int dev_id, int port_id, struct dcmi_ping_operate_info *dcmi_ping,
-    struct dcmi_ping_reply_info *dcmi_reply)
+                     struct dcmi_ping_reply_info *dcmi_reply)
 {
     int ret;
     int card_id, device_id;
@@ -152,6 +152,7 @@ int dcmiv2_exec_ping(int dev_id, int port_id, struct dcmi_ping_operate_info *dcm
 
     if (dcmi_check_port_id_valid(port_id) == DCMI_ERR_CODE_INVALID_PARAMETER) {
         gplog(LOG_ERR, "port_id is invalid. Input portid is %d.", port_id);
+        free(info);
         return DCMI_ERR_CODE_INVALID_PARAMETER;
     }
 
@@ -198,16 +199,16 @@ int dcmiv2_exec_netdev_traceroute(int dev_id, const char *netdev_name, unsigned 
     }
 
     if (result == NULL || result->result_nums < 0 || result->result_nums > TRACEROUTE_TTL_MAX) {
-        gplog(LOG_ERR, "Parameter is invalid. (max_size=%u; traceout_result_nums=%u)",
-              TRACEROUTE_TTL_MAX, result->result_nums);
+        gplog(LOG_ERR, "Parameter is invalid. (max_size=%u; traceout_result_nums=%u)", TRACEROUTE_TTL_MAX,
+              result->result_nums);
         return DCMI_ERR_CODE_INVALID_PARAMETER;
     }
- 
+
     if (!dcmi_mainboard_is_a900_a5_uboe(g_mainboard_info.mainboard_id)) {
         gplog(LOG_OP, "This product does not support this api.");
         return DCMI_ERR_CODE_NOT_SUPPORT;
     }
-     
+
     err = dcmiv2_get_device_type(dev_id, &device_type);
     if (err != DCMI_OK) {
         gplog(LOG_ERR, "dcmi_get_device_type failed. (dev_id=%d; ret=%d).", dev_id, err);
@@ -229,7 +230,7 @@ int dcmiv2_exec_netdev_traceroute(int dev_id, const char *netdev_name, unsigned 
     }
 
     // 由于device侧开方函数无法使用，在host侧对stdev值开方
-    for (index = 0; index < result->result_nums ; index++) {
+    for (index = 0; index < result->result_nums; index++) {
         result[index].result_data->stdev = sqrt(result[index].result_data->stdev);
     }
 
@@ -237,7 +238,7 @@ int dcmiv2_exec_netdev_traceroute(int dev_id, const char *netdev_name, unsigned 
 }
 
 int dcmiv2_get_pfc_duration_info(int dev_id, const char *netdev_name, unsigned int netdev_name_len,
-    struct dcmi_netdev_pfc_duration_info *pfc_duration_info)
+                                 struct dcmi_netdev_pfc_duration_info *pfc_duration_info)
 {
     int ret;
     enum dcmi_unit_type device_type = INVALID_TYPE;
@@ -252,7 +253,7 @@ int dcmiv2_get_pfc_duration_info(int dev_id, const char *netdev_name, unsigned i
         gplog(LOG_ERR, "call dcmi_netdev_validity_check failed. (ret=%d)", ret);
         return DCMI_ERR_CODE_INVALID_PARAMETER;
     }
- 
+
     if (!dcmi_mainboard_is_a900_a5_uboe(g_mainboard_info.mainboard_id)) {
         gplog(LOG_OP, "This product does not support this api.");
         return DCMI_ERR_CODE_NOT_SUPPORT;
@@ -266,7 +267,7 @@ int dcmiv2_get_pfc_duration_info(int dev_id, const char *netdev_name, unsigned i
 
     if (device_type == NPU_TYPE) {
         ret = dsmi_get_netdev_pfc_duration_info(dev_id, netdev_name, netdev_name_len,
-            &pfc_duration_info->duration_info);
+                                                &pfc_duration_info->duration_info);
         if ((ret != DSMI_OK) && (ret != DSMI_ERR_NOT_SUPPORT)) {
             gplog(LOG_ERR, "call dsmi_get_netdev_pfc_duration_info failed. (ret=%d)", ret);
         }
@@ -300,7 +301,7 @@ int dcmiv2_clear_pfc_duration(int dev_id, const char *netdev_name, unsigned int 
         gplog(LOG_ERR, "call dcmi_netdev_validity_check failed. (ret=%d)", ret);
         return DCMI_ERR_CODE_INVALID_PARAMETER;
     }
- 
+
     if (!dcmi_mainboard_is_a900_a5_uboe(g_mainboard_info.mainboard_id)) {
         gplog(LOG_OP, "This device does not support set device gateway.");
         return DCMI_ERR_CODE_NOT_SUPPORT;
@@ -334,7 +335,7 @@ int dcmiv2_get_port_pkt_stats_info(int dev_id, struct dcmi_ub_port_info *ub_port
 
     if (ub_port_info == NULL || port_pkt_stats_info == NULL) {
         gplog(LOG_ERR, "The parameter is invalid. ub_port_info[%d] or port_pkt_stats_info[%d] is NULL",
-            ub_port_info == NULL, port_pkt_stats_info == NULL);
+              ub_port_info == NULL, port_pkt_stats_info == NULL);
         return DCMI_ERR_CODE_INVALID_PARAMETER;
     }
 
@@ -365,9 +366,9 @@ int dcmiv2_get_port_pkt_stats_info(int dev_id, struct dcmi_ub_port_info *ub_port
     }
 
     memset_s(port_pkt_stats_info->reserved, sizeof(port_pkt_stats_info->reserved), 0,
-                     sizeof(port_pkt_stats_info->reserved));
-    err = memcpy_s(port_pkt_stats_info, sizeof(*port_pkt_stats_info),
-                                &ds_port_pkt_stats_info, sizeof(ds_port_pkt_stats_info));
+             sizeof(port_pkt_stats_info->reserved));
+    err = memcpy_s(port_pkt_stats_info, sizeof(*port_pkt_stats_info), &ds_port_pkt_stats_info,
+                   sizeof(ds_port_pkt_stats_info));
     if (err != EOK) {
         gplog(LOG_ERR, "Failed to copy port statistics info. Error code: %d.", err);
         return DCMI_ERR_CODE_SECURE_FUN_FAIL;
@@ -388,7 +389,7 @@ int dcmiv2_get_port_avail_credit_info(int dev_id, struct dcmi_ub_port_info *ub_p
 
     if (ub_port_info == NULL || port_avail_credit_info == NULL) {
         gplog(LOG_ERR, "The parameter is invalid. ub_port_info[%d] or port_avail_credit_info[%d] is NULL",
-            ub_port_info ==  NULL, port_avail_credit_info == NULL);
+              ub_port_info == NULL, port_avail_credit_info == NULL);
         return DCMI_ERR_CODE_INVALID_PARAMETER;
     }
 
@@ -417,16 +418,13 @@ int dcmiv2_get_port_avail_credit_info(int dev_id, struct dcmi_ub_port_info *ub_p
         return dcmi_convert_error_code(ret);
     }
 
-    port_avail_credit_info->link_alloc_port_share_credit =
-        dsmi_port_avail_credit_info.link_alloc_port_share_credit;
-    port_avail_credit_info->link_cur_used_port_share_credit =
-        dsmi_port_avail_credit_info.link_cur_used_port_share_credit;
+    port_avail_credit_info->link_alloc_port_share_credit = dsmi_port_avail_credit_info.link_alloc_port_share_credit;
+    port_avail_credit_info->link_cur_used_port_share_credit = dsmi_port_avail_credit_info
+                                                                  .link_cur_used_port_share_credit;
 
     for (i = 0; i < VL_NUM_PER_PORT; i++) {
-        port_avail_credit_info->link_alloc_vl_pri_credit[i] =
-            dsmi_port_avail_credit_info.link_alloc_vl_pri_credit[i];
-        port_avail_credit_info->link_cur_used_pri_credit[i] =
-            dsmi_port_avail_credit_info.link_cur_used_pri_credit[i];
+        port_avail_credit_info->link_alloc_vl_pri_credit[i] = dsmi_port_avail_credit_info.link_alloc_vl_pri_credit[i];
+        port_avail_credit_info->link_cur_used_pri_credit[i] = dsmi_port_avail_credit_info.link_cur_used_pri_credit[i];
     }
 
     return dcmi_convert_error_code(ret);
@@ -465,8 +463,7 @@ int dcmiv2_get_device_netdev_list_info(int dev_id, struct dcmi_netdev_list_info 
     struct dsmi_netdev_list_info dsmi_netdev_list = {0};
 
     if (dev_id < 0 || netdev_list == NULL) {
-        gplog(LOG_ERR, "The parameter is invalid.(dev_id: %d or netdev_list%d is NULL)",
-              dev_id, netdev_list == NULL);
+        gplog(LOG_ERR, "The parameter is invalid.(dev_id: %d or netdev_list%d is NULL)", dev_id, netdev_list == NULL);
         return DCMI_ERR_CODE_INVALID_PARAMETER;
     }
 
@@ -498,8 +495,8 @@ int dcmiv2_get_device_netdev_list_info(int dev_id, struct dcmi_netdev_list_info 
         return dcmi_convert_error_code(ret);
     }
 
-    ret = memcpy_s(netdev_list, sizeof(struct dcmi_netdev_list_info),
-                   &dsmi_netdev_list, sizeof(struct dsmi_netdev_list_info));
+    ret = memcpy_s(netdev_list, sizeof(struct dcmi_netdev_list_info), &dsmi_netdev_list,
+                   sizeof(struct dsmi_netdev_list_info));
     if (ret != EOK) {
         gplog(LOG_ERR, "Failed to copy netdev_list_info. (err is %d).", ret);
         return DCMI_ERR_CODE_SECURE_FUN_FAIL;

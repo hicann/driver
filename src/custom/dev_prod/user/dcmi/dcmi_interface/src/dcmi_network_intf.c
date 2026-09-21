@@ -7,7 +7,7 @@
  * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
  * See LICENSE in the root of the software repository for the full text of the License.
  */
- 
+
 #include <stdio.h>
 #include <stdint.h>
 #include <time.h>
@@ -18,7 +18,7 @@
 #include <sys/socket.h>
 #include <math.h>
 #include <unistd.h>
- 
+
 #include "securec.h"
 #include "dsmi_network_interface.h"
 #include "dcmi_interface_api.h"
@@ -32,13 +32,13 @@
 #include "dcmi_inner_info_get.h"
 #include "dcmi_permission_judge.h"
 #include "dcmi_network_intf.h"
- 
+
 int dcmi_get_rdma_bandwidth_info(int card_id, int device_id, int port_id, unsigned int prof_time,
-    struct dcmi_network_rdma_bandwidth_info *network_rdma_bandwidth_info)
+                                 struct dcmi_network_rdma_bandwidth_info *network_rdma_bandwidth_info)
 {
     int ret;
     enum dcmi_unit_type device_type = INVALID_TYPE;
- 
+
     if (network_rdma_bandwidth_info == NULL) {
         gplog(LOG_ERR, "network_rdma_bandwidth_info is NULL\n");
         return DCMI_ERR_CODE_INVALID_PARAMETER;
@@ -48,12 +48,12 @@ int dcmi_get_rdma_bandwidth_info(int card_id, int device_id, int port_id, unsign
         gplog(LOG_ERR, "port_id is invalid. Input portid is %d.", port_id);
         return DCMI_ERR_CODE_INVALID_PARAMETER;
     }
- 
+
     if (prof_time > MAX_TIME_INTERVAL || prof_time < MIN_TIME_INTERVAL) {
         gplog(LOG_ERR, "Input prof time is invalid, prof time need to be 100-10000ms.");
         return DCMI_ERR_CODE_INVALID_PARAMETER;
     }
- 
+
     if (!(dcmi_board_chip_type_is_ascend_910b() || dcmi_board_chip_type_is_ascend_910_93())) {
         gplog(LOG_OP, "This device does not support get rdma bandwidth info.");
         return DCMI_ERR_CODE_NOT_SUPPORT;
@@ -63,24 +63,23 @@ int dcmi_get_rdma_bandwidth_info(int card_id, int device_id, int port_id, unsign
         gplog(LOG_OP, "This device does not support get rdma bandwidth info.");
         return DCMI_ERR_CODE_NOT_SUPPORT;
     }
- 
+
     ret = dcmi_get_device_type(card_id, device_id, &device_type);
     if (ret != DCMI_OK) {
         gplog(LOG_ERR, "dcmi_get_device_type failed. err is %d.\n", ret);
         return ret;
     }
- 
+
     if (device_type == NPU_TYPE) {
-        return dcmi_get_npu_rdma_bandwidth_info(card_id, device_id, port_id,
-            prof_time, network_rdma_bandwidth_info);
+        return dcmi_get_npu_rdma_bandwidth_info(card_id, device_id, port_id, prof_time, network_rdma_bandwidth_info);
     } else {
         gplog(LOG_ERR, "device_type %d is not support.", device_type);
         return DCMI_ERR_CODE_NOT_SUPPORT;
     }
 }
- 
+
 STATIC int dcmi_get_npu_netdev_pkt_stats_info(int card_id, int device_id, int port_id,
-    struct dcmi_network_pkt_stats_info *network_pkt_stats_info)
+                                              struct dcmi_network_pkt_stats_info *network_pkt_stats_info)
 {
     int ret;
     int device_logic_id = 0;
@@ -90,21 +89,21 @@ STATIC int dcmi_get_npu_netdev_pkt_stats_info(int card_id, int device_id, int po
         gplog(LOG_ERR, "call dcmi_get_device_logic_id failed. err is %d.", ret);
         return ret;
     }
- 
-    ret = dsmi_get_netdev_stat(device_logic_id, port_id, (struct ds_port_stat_info*)network_pkt_stats_info);
+
+    ret = dsmi_get_netdev_stat(device_logic_id, port_id, (struct ds_port_stat_info *)network_pkt_stats_info);
     if ((ret != DSMI_OK) && (ret != DSMI_ERR_NOT_SUPPORT)) {
         gplog(LOG_ERR, "call dsmi_get_bandwidth failed. err is %d.", ret);
     }
- 
+
     return dcmi_convert_error_code(ret);
 }
- 
+
 int dcmi_get_netdev_pkt_stats_info(int card_id, int device_id, int port_id,
-    struct dcmi_network_pkt_stats_info *network_pkt_stats_info)
+                                   struct dcmi_network_pkt_stats_info *network_pkt_stats_info)
 {
     int ret;
     enum dcmi_unit_type device_type = INVALID_TYPE;
-    
+
     if (network_pkt_stats_info == NULL) {
         gplog(LOG_ERR, "network_pkt_stats_info is NULL\n");
         return DCMI_ERR_CODE_INVALID_PARAMETER;
@@ -124,16 +123,15 @@ int dcmi_get_netdev_pkt_stats_info(int card_id, int device_id, int port_id,
         gplog(LOG_OP, "This device does not support get dcmi_get_netdev_pkt_stats_info info.");
         return DCMI_ERR_CODE_NOT_SUPPORT;
     }
- 
+
     ret = dcmi_get_device_type(card_id, device_id, &device_type);
     if (ret != DCMI_OK) {
         gplog(LOG_ERR, "dcmi_get_device_type failed. err is %d.\n", ret);
         return ret;
     }
- 
+
     if (device_type == NPU_TYPE) {
-        return dcmi_get_npu_netdev_pkt_stats_info(card_id, device_id, port_id,
-            network_pkt_stats_info);
+        return dcmi_get_npu_netdev_pkt_stats_info(card_id, device_id, port_id, network_pkt_stats_info);
     } else {
         gplog(LOG_ERR, "device_type %d is not support.", device_type);
         return DCMI_ERR_CODE_NOT_SUPPORT;
@@ -141,7 +139,7 @@ int dcmi_get_netdev_pkt_stats_info(int card_id, int device_id, int port_id,
 }
 
 STATIC int dcmi_get_npu_netdev_tc_pkt_stats_info(int card_id, int device_id,
-    struct dcmi_tc_stat_data *network_tc_stat_info)
+                                                 struct dcmi_tc_stat_data *network_tc_stat_info)
 {
     int ret;
     int device_logic_id = 0;
@@ -157,12 +155,11 @@ STATIC int dcmi_get_npu_netdev_tc_pkt_stats_info(int card_id, int device_id,
     if ((ret != DSMI_OK) && (ret != DSMI_ERR_NOT_SUPPORT)) {
         gplog(LOG_ERR, "Call dsmi_get_tc_stat failed. (ret=%d)", ret);
     }
- 
+
     return dcmi_convert_error_code(ret);
 }
 
-int dcmi_get_netdev_tc_stat_info(int card_id, int device_id,
-    struct dcmi_tc_stat_data *network_tc_stat_info)
+int dcmi_get_netdev_tc_stat_info(int card_id, int device_id, struct dcmi_tc_stat_data *network_tc_stat_info)
 {
     int ret;
     enum dcmi_unit_type device_type = INVALID_TYPE;
@@ -221,8 +218,8 @@ int dcmi_set_device_clear_tc_pkt_stats(int card_id, int device_id)
     enum dcmi_unit_type device_type = INVALID_TYPE;
 
     if (!(dcmi_is_in_privileged_docker_root() || dcmi_is_in_phy_machine_root() || dcmi_is_in_vm_root())) {
-    gplog(LOG_OP, "Operation not permitted, only root user on physical or virtual machine"
-            " or privileged docker can call this api.");
+        gplog(LOG_OP, "Operation not permitted, only root user on physical or virtual machine"
+                      " or privileged docker can call this api.");
         return DCMI_ERR_CODE_OPER_NOT_PERMITTED;
     }
 
@@ -246,7 +243,7 @@ int dcmi_set_device_clear_tc_pkt_stats(int card_id, int device_id)
         err = dcmi_set_npu_device_clear_tc_pkt_stats(card_id, device_id);
         if (err != DCMI_OK) {
             gplog(LOG_OP, "Clear tc_pkt_stats info failed. (card_id=%d, device_id=%d, err=%d).", card_id, device_id,
-                err);
+                  err);
             return err;
         }
 
@@ -310,8 +307,8 @@ int dcmi_traceroute_reset(int logic_id)
 
     ret = dsmi_reset_traceroute(logic_id, &troute_reset);
     if (ret != 0 || troute_reset != 0) {
-        gplog(LOG_ERR, "Dcmi reset traceroute failed. (ret=%d; logic_id=%d; troute_reset=%d)",
-            ret, logic_id, troute_reset);
+        gplog(LOG_ERR, "Dcmi reset traceroute failed. (ret=%d; logic_id=%d; troute_reset=%d)", ret, logic_id,
+              troute_reset);
         return DCMI_ERR_CODE_INNER_ERR;
     }
 
@@ -323,7 +320,7 @@ static int dcmi_traceroute_ip_param(unsigned int *dip, bool is_ipv6, char *ipadd
     struct in_addr addr;
     struct in6_addr addr6;
     int ret;
- 
+
     if (is_ipv6) {
         ret = inet_pton(AF_INET6, ipaddr, &addr6);
         if (ret <= 0) {
@@ -343,7 +340,7 @@ static int dcmi_traceroute_ip_param(unsigned int *dip, bool is_ipv6, char *ipadd
         }
         dip[0] = addr.s_addr;
     }
- 
+
     return DCMI_OK;
 }
 
@@ -355,30 +352,30 @@ STATIC int dcmi_traceroute_info_load(struct dsmi_traceroute_info *traceroute_inf
     bool is_ipv6 = param_in.ipv6_flag;
     int max_tc_or_tos = is_ipv6 ? TRACEROUTE_TC_MAX : TRACEROUTE_TOS_MAX;
     struct param_value param_info[] = {
-        { "max_ttl", .input.int_value = param_in.max_ttl,
-            .min.int_value = TRACEROUTE_TTL_MIN, .max.int_value = TRACEROUTE_TTL_MAX },
-        { "TOS(ipv4) or TC(ipv6)", .input.int_value = param_in.tos,
-            .min.int_value = TRACEROUTE_TOS_MIN, .max.int_value = max_tc_or_tos },
-        { "waittime", .input.int_value = param_in.waittime,
-            .min.int_value = TRACEROUTE_WAITTIME_MIN, .max.int_value = TRACEROUTE_WAITTIME_MAX },
-        { "source_port", .input.int_value = param_in.source_port,
-            .min.int_value = UDP_PORT_NUMBER_MIN, .max.int_value = UDP_PORT_NUMBER_MAX },
-        { "dest_port", .input.int_value = param_in.dest_port,
-            .min.int_value = UDP_PORT_NUMBER_MIN, .max.int_value = UDP_PORT_NUMBER_MAX },
+        {"max_ttl", .input.int_value = param_in.max_ttl, .min.int_value = TRACEROUTE_TTL_MIN,
+         .max.int_value = TRACEROUTE_TTL_MAX},
+        {"TOS(ipv4) or TC(ipv6)", .input.int_value = param_in.tos, .min.int_value = TRACEROUTE_TOS_MIN,
+         .max.int_value = max_tc_or_tos},
+        {"waittime", .input.int_value = param_in.waittime, .min.int_value = TRACEROUTE_WAITTIME_MIN,
+         .max.int_value = TRACEROUTE_WAITTIME_MAX},
+        {"source_port", .input.int_value = param_in.source_port, .min.int_value = UDP_PORT_NUMBER_MIN,
+         .max.int_value = UDP_PORT_NUMBER_MAX},
+        {"dest_port", .input.int_value = param_in.dest_port, .min.int_value = UDP_PORT_NUMBER_MIN,
+         .max.int_value = UDP_PORT_NUMBER_MAX},
     };
 
     for (index = 0; index < (sizeof(param_info) / sizeof(struct param_value)); index++) {
         tmp_value = param_info[index].input.int_value;
         if (tmp_value != TRACEROUTE_DEFAULT_VALUE &&
             (tmp_value < param_info[index].min.int_value || tmp_value > param_info[index].max.int_value)) {
-            gplog(LOG_ERR, "The input value is invalid. (operation=%s, input_value=%d)",
-                  param_info[index].operation, tmp_value);
+            gplog(LOG_ERR, "The input value is invalid. (operation=%s, input_value=%d)", param_info[index].operation,
+                  tmp_value);
             return DCMI_ERR_CODE_INVALID_PARAMETER;
         }
     }
 
-    ret = memcpy_s(traceroute_info_send, sizeof(struct dsmi_traceroute_info),
-                   &param_in, sizeof(struct dsmi_traceroute_info));
+    ret = memcpy_s(traceroute_info_send, sizeof(struct dsmi_traceroute_info), &param_in,
+                   sizeof(struct dsmi_traceroute_info));
     if (ret != DCMI_OK) {
         gplog(LOG_ERR, "Dcmi set traceroute memcpy failed! (ret=%d)", ret);
         return DCMI_ERR_CODE_SECURE_FUN_FAIL;
@@ -408,21 +405,22 @@ STATIC int dcmi_traceroute_start(int logic_id, struct dsmi_traceroute_info *trac
 
     if (troute_status == TRACEROUTE_STATUS_RUNNING) {
         gplog(LOG_ERR, "Traceroute is running, please kill the running process and start a new one. \
-              (troute_status=%d)", troute_status);
+              (troute_status=%d)",
+              troute_status);
         return DCMI_ERR_CODE_RESOURCE_OCCUPIED;
     } else if (troute_status == TRACEROUTE_STATUS_ERROR) {
         ret = dsmi_reset_traceroute(logic_id, &troute_reset);
         if (ret != 0 || troute_reset != 0) {
-            gplog(LOG_ERR, "Call dsmi_reset_traceroute failed. (ret=%d; logic_id=%d; troute_reset=%d)",
-                  ret, logic_id, troute_reset);
+            gplog(LOG_ERR, "Call dsmi_reset_traceroute failed. (ret=%d; logic_id=%d; troute_reset=%d)", ret, logic_id,
+                  troute_reset);
             return DCMI_ERR_CODE_INNER_ERR;
         }
     }
 
     ret = dsmi_start_traceroute(logic_id, traceroute_info_send, &troute_result);
     if (ret != 0 || troute_result == TRACEROUTE_STATUS_ERROR) {
-        gplog(LOG_ERR, "Call dsmi_start_traceroute failed. (ret=%d; logic_id=%d; troute_result=%d)",
-              ret, logic_id, troute_result);
+        gplog(LOG_ERR, "Call dsmi_start_traceroute failed. (ret=%d; logic_id=%d; troute_result=%d)", ret, logic_id,
+              troute_result);
         return DCMI_ERR_CODE_INNER_ERR;
     }
     return ret;
@@ -437,15 +435,16 @@ STATIC int dcmi_traceroute_waiting_finish(int logic_id)
         ret = dsmi_get_traceroute_status(logic_id, &troute_status);
         if (ret != 0) {
             gplog(LOG_ERR, "Dcmi_waiting_traceroute_finish get status failed. \
-                  ret=%d; logic_id=%d.", ret, logic_id);
+                  ret=%d; logic_id=%d.",
+                  ret, logic_id);
             return (ret < 0 ? DCMI_ERR_CODE_INVALID_PARAMETER : dcmi_convert_error_code(ret));
         }
 
         if (troute_status == TRACEROUTE_STATUS_NOT_RUNNING) {
             return DCMI_OK;
         } else if (troute_status == TRACEROUTE_STATUS_ERROR) {
-            gplog(LOG_ERR, "Dsmi got error traceroute status. (ret=%d; logic_id=%d; troute_status=%d)",
-                  ret, logic_id, troute_status);
+            gplog(LOG_ERR, "Dsmi got error traceroute status. (ret=%d; logic_id=%d; troute_status=%d)", ret, logic_id,
+                  troute_status);
             return DCMI_ERR_CODE_INNER_ERR;
         }
 
@@ -457,7 +456,7 @@ STATIC int dcmi_traceroute_waiting_finish(int logic_id)
 }
 
 int dcmi_set_traceroute_main(int logic_id, struct dcmi_traceroute_info param_in,
-    struct dcmi_network_node_info *ret_info, unsigned int ret_info_size)
+                             struct dcmi_network_node_info *ret_info, unsigned int ret_info_size)
 {
     int ret, index;
     struct dsmi_traceroute_info traceroute_info_send = {0};
@@ -502,7 +501,7 @@ int dcmi_set_traceroute_main(int logic_id, struct dcmi_traceroute_info param_in,
 }
 
 int dcmi_set_traceroute(int card_id, int device_id, struct dcmi_traceroute_info param_in,
-    struct dcmi_network_node_info *ret_info, unsigned int ret_info_size)
+                        struct dcmi_network_node_info *ret_info, unsigned int ret_info_size)
 {
     int ret;
     int logic_id = 0;
@@ -548,7 +547,7 @@ out:
 STATIC bool dcmi_check_sdid_is_valid(unsigned int sdid)
 {
     return (sdid != PING_SDID_INVALID_VALUE && SDID_GET_SERVERID(sdid) < A3_SUPERPOD_MAX_NUMS &&
-        (SDID_GET_CHIPID(sdid) * CHIP_DIE_CNT + SDID_GET_DIEID(sdid) == SDID_GET_DEVICEID(sdid)));
+            (SDID_GET_CHIPID(sdid) * CHIP_DIE_CNT + SDID_GET_DIEID(sdid) == SDID_GET_DEVICEID(sdid)));
 }
 
 STATIC bool dcmi_check_vnic_ip_is_valid(struct in_addr addr)
@@ -560,7 +559,7 @@ STATIC int dcmi_check_and_get_valid_ping_info(struct dcmi_ping_operate_info *dcm
                                               hccs_ping_operate_info *ping_info, int phy_id)
 {
     struct in_addr addr;
- 
+
     // dst_addr不为空时，以dst_addr作为目的地址
     if (strlen(dcmi_ping->dst_addr) > 0) {
         if (inet_pton(AF_INET, dcmi_ping->dst_addr, &addr) <= 0 || (dcmi_check_vnic_ip_is_valid(addr) == false)) {
@@ -571,33 +570,33 @@ STATIC int dcmi_check_and_get_valid_ping_info(struct dcmi_ping_operate_info *dcm
     } else {
         ping_info->sdid = dcmi_ping->sdid;
     }
- 
+
     // 用户输入的ip地址、sdid均无效
     if (dcmi_check_sdid_is_valid(ping_info->sdid) == false) {
         gplog(LOG_ERR, "dst_addr and sdid are invalid. (dst_addr=%u; sdid=%u)", addr.s_addr, ping_info->sdid);
         return DCMI_ERR_CODE_INVALID_PARAMETER;
     }
- 
+
     // 校验参数输入是否符合约束条件（防止处理时间过长导致HDC断链）：send_num * interval <= 20000ms , timeout 参数无意义
     if ((dcmi_ping->packet_size < PING_PACKET_SIZE_MIN || dcmi_ping->packet_size > PING_PACKET_SIZE_MAX) ||
         (dcmi_ping->packet_send_num < PING_PACKET_NUM_MIN || dcmi_ping->packet_send_num > PING_PACKET_NUM_MAX) ||
         (dcmi_ping->packet_interval < PING_PACKET_INTERVAL_MIN ||
-        dcmi_ping->packet_interval > PING_PACKET_INTERVAL_MAX) ||
+         dcmi_ping->packet_interval > PING_PACKET_INTERVAL_MAX) ||
         (dcmi_ping->timeout < PING_PACKET_TIMEOUT_MIN || dcmi_ping->timeout > PING_PACKET_TIMEOUT_MAX) ||
         (dcmi_ping->packet_send_num * dcmi_ping->packet_interval > PING_CONSTRAINT_VALUE)) {
         gplog(LOG_ERR, "input param is invalid. (packet_size=%u; packet_send_num=%u; packet_interval=%u)",
               dcmi_ping->packet_size, dcmi_ping->packet_send_num, dcmi_ping->packet_interval);
         return DCMI_ERR_CODE_INVALID_PARAMETER;
     }
- 
+
     ping_info->packet_size = dcmi_ping->packet_size;
     ping_info->packet_send_num = dcmi_ping->packet_send_num;
     ping_info->packet_interval = dcmi_ping->packet_interval;
     ping_info->phy_id = phy_id;
- 
+
     return DCMI_OK;
 }
- 
+
 STATIC void dcmi_get_ping_reply(hccs_ping_reply_info *reply_info, struct dcmi_ping_reply_info_v2 *dcmi_reply)
 {
     int i;
@@ -614,33 +613,32 @@ STATIC void dcmi_get_ping_reply(hccs_ping_reply_info *reply_info, struct dcmi_pi
     dcmi_reply->info.total_packet_send_num = reply_info->total_packet_send_num;
     dcmi_reply->info.total_packet_recv_num = reply_info->total_packet_recv_num;
 }
- 
+
 STATIC int dcmi_get_ping_info_status(int card_id, int device_id, int port_id, struct dcmi_ping_operate_info *dcmi_ping,
                                      struct dcmi_ping_reply_info_v2 *dcmi_reply)
 {
     int ret;
     int logic_id = 0;
     unsigned int phy_id = 0;
-    hccs_ping_operate_info ping_info = {.is_ipv6 = 0,
-                                        .sdid = PING_SDID_INVALID_VALUE};
+    hccs_ping_operate_info ping_info = {.is_ipv6 = 0, .sdid = PING_SDID_INVALID_VALUE};
     hccs_ping_reply_info *reply_info = (hccs_ping_reply_info *)calloc(1, sizeof(hccs_ping_reply_info));
     if (reply_info == NULL) {
         gplog(LOG_ERR, "calloc reply_info failed.");
         return DCMI_ERR_CODE_MEM_OPERATE_FAIL;
     }
- 
+
     ret = dcmi_check_port_id_valid(port_id);
     if (ret != DCMI_OK) {
         gplog(LOG_ERR, "port_id is invalid. (portid=%d; ret=%d)", port_id, ret);
         goto PING_EXIT;
     }
- 
+
     ret = dcmi_get_device_logic_id(&logic_id, card_id, device_id);
     if (ret != DCMI_OK) {
         gplog(LOG_ERR, "call dcmi_get_device_logic_id failed. (ret=%d)", ret);
         goto PING_EXIT;
     }
- 
+
     ret = dcmi_get_device_phyid_from_logicid((unsigned int)logic_id, &phy_id);
     if (ret != DCMI_OK) {
         gplog(LOG_ERR, "call dcmi_get_device_phyid_from_logicid failed. (ret=%d)", ret);
@@ -651,49 +649,49 @@ STATIC int dcmi_get_ping_info_status(int card_id, int device_id, int port_id, st
     if (ret != DCMI_OK) {
         goto PING_EXIT;
     }
- 
+
     ret = dsmi_hccs_ping(logic_id, 0, &ping_info, reply_info);
     if ((ret != DSMI_OK) && (ret != DSMI_ERR_NOT_SUPPORT)) {
         gplog(LOG_ERR, "call dsmi_hccs_ping failed. (ret=%d)", ret);
         ret = dcmi_convert_error_code(ret);
         goto PING_EXIT;
     }
- 
+
     dcmi_get_ping_reply(reply_info, dcmi_reply);
 PING_EXIT:
     free(reply_info);
     return ret;
 }
- 
+
 int dcmi_get_ping_info_v2(int card_id, int device_id, int port_id, struct dcmi_ping_operate_info *dcmi_ping,
                           struct dcmi_ping_reply_info_v2 *dcmi_reply)
 {
     int ret;
     enum dcmi_unit_type device_type = INVALID_TYPE;
- 
+
     if (dcmi_check_run_not_root() ||
         !(dcmi_is_in_phy_machine() || dcmi_check_run_in_vm() || dcmi_is_in_privileged_docker_root())) {
         gplog(LOG_ERR, "Operation not permitted, only root user on physical/virtual machine or"
-              " privileged docker can call this api.");
+                       " privileged docker can call this api.");
         return DCMI_ERR_CODE_OPER_NOT_PERMITTED;
     }
- 
+
     if (dcmi_ping == NULL || dcmi_reply == NULL) {
         gplog(LOG_ERR, "dcmi_ping is NULL or dcmi_reply is NULL.");
         return DCMI_ERR_CODE_INVALID_PARAMETER;
     }
- 
+
     if (!dcmi_board_chip_type_is_ascend_910_93()) {
         gplog(LOG_OP, "This device does not support get ping info.");
         return DCMI_ERR_CODE_NOT_SUPPORT;
     }
- 
+
     ret = dcmi_get_device_type(card_id, device_id, &device_type);
     if (ret != DCMI_OK) {
         gplog(LOG_ERR, "dcmi_get_device_type failed. (ret=%d)", ret);
         return ret;
     }
- 
+
     if (device_type == NPU_TYPE) {
         return dcmi_get_ping_info_status(card_id, device_id, port_id, dcmi_ping, dcmi_reply);
     } else {
@@ -719,6 +717,7 @@ int dcmi_get_ping_info(int card_id, int device_id, int port_id, struct dcmi_ping
 
     if (dcmi_board_chip_type_is_ascend_950()) {
         gplog(LOG_OP, "This product does not support this api.");
+        free(info);
         return DCMI_ERR_CODE_NOT_SUPPORT;
     }
 
@@ -737,12 +736,12 @@ int dcmi_get_ping_info(int card_id, int device_id, int port_id, struct dcmi_ping
 STATIC int dcmi_check_sdid_valid(char *target)
 {
     int sd_len, i;
- 
+
     if (target == NULL) {
         gplog(LOG_ERR, "target is NULL.");
         return DCMI_ERR_CODE_INVALID_PARAMETER;
     }
- 
+
     sd_len = strlen(target);
     if (sd_len > SDID_LEN_MAX) {
         gplog(LOG_ERR, "sdid is invalid. sd_len is tool long.sd_len=%d", sd_len);
@@ -754,20 +753,19 @@ STATIC int dcmi_check_sdid_valid(char *target)
             return DCMI_ERR_CODE_INVALID_PARAMETER;
         }
     }
- 
+
     return DCMI_OK;
 }
 
-STATIC int dcmi_get_hccsping_mesh_addr(int *sdid, char *target, struct in_addr *addr,
-                                       int isIp, int destnum)
+STATIC int dcmi_get_hccsping_mesh_addr(int *sdid, char *target, struct in_addr *addr, int isIp, int destnum)
 {
     int ret;
- 
+
     if (sdid == NULL || target == NULL || addr == NULL) {
         gplog(LOG_ERR, "input param is NULL");
         return DCMI_ERR_CODE_INVALID_PARAMETER;
     }
- 
+
     if (isIp == 0) {
         // 判断异常SDID
         ret = dcmi_check_sdid_valid(target);
@@ -779,7 +777,7 @@ STATIC int dcmi_get_hccsping_mesh_addr(int *sdid, char *target, struct in_addr *
         sdid[destnum] = (int)strtol(target, NULL, 0);
         return DCMI_OK;
     }
- 
+
     if (inet_pton(AF_INET, target, addr) <= 0 || (dcmi_check_vnic_ip_is_valid(*addr) == false)) {
         gplog(LOG_ERR, "hccsping mesh ip is invalid!");
         return DCMI_ERR_CODE_INVALID_PARAMETER;
@@ -787,9 +785,8 @@ STATIC int dcmi_get_hccsping_mesh_addr(int *sdid, char *target, struct in_addr *
     sdid[destnum] = IP_CONVERT_SDID(addr->s_addr);
     return DCMI_OK;
 }
- 
-static int dcmi_parse_hccsping_mesh_addr(struct dcmi_hccsping_mesh_operate *hccsping_mesh,
-                                         int *sdid, int *destnum)
+
+static int dcmi_parse_hccsping_mesh_addr(struct dcmi_hccsping_mesh_operate *hccsping_mesh, int *sdid, int *destnum)
 {
     int ret, valid_sdid_num = 0;
     struct in_addr addr;
@@ -810,7 +807,7 @@ static int dcmi_parse_hccsping_mesh_addr(struct dcmi_hccsping_mesh_operate *hccs
     }
 
     ptr = strchr(token, '.');
-    bool isIp = (ptr == NULL) ? 0 : 1;  // 判断用户输入是否全部为IP地址格式
+    bool isIp = (ptr == NULL) ? 0 : 1; // 判断用户输入是否全部为IP地址格式
     while (token != NULL) {
         ptr = strchr(token, '.');
         bool curIsip = (ptr == NULL) ? 0 : 1;
@@ -838,18 +835,18 @@ static int dcmi_check_hccsping_mesh_addr(struct dcmi_hccsping_mesh_operate *hccs
     int i, j, unrepeat_sdid_num = 0;
     int ret, destnum = 0;
     int sdid[HCCS_PING_MESH_MAX_NUM];
- 
+
     if (operate == NULL || hccsping_mesh == NULL) {
         gplog(LOG_ERR, "operate is NULL");
         return DCMI_ERR_CODE_INVALID_PARAMETER;
     }
- 
+
     ret = dcmi_parse_hccsping_mesh_addr(hccsping_mesh, sdid, &destnum);
     if (ret != DCMI_OK) {
         gplog(LOG_ERR, "dcmi_parse_hccsping_mesh_addr is failed!");
         return ret;
     }
-    
+
     // 进行地址去重
     for (i = 0; i < destnum; i++) {
         int exists = 0;
@@ -864,13 +861,13 @@ static int dcmi_check_hccsping_mesh_addr(struct dcmi_hccsping_mesh_operate *hccs
             unrepeat_sdid_num++;
         }
     }
- 
+
     if (unrepeat_sdid_num > HCCS_PING_MESH_MAX_NUM) {
         gplog(LOG_ERR, "dest_num is too many!");
         return DCMI_ERR_CODE_INVALID_PARAMETER;
     }
     operate->dest_num = unrepeat_sdid_num;
- 
+
     for (i = 0; i < unrepeat_sdid_num; i++) {
         if (dcmi_check_sdid_is_valid((unsigned int)sdid[i]) == false) {
             gplog(LOG_ERR, "pingmesh sdid is invalid. (sdid=%u)", (unsigned int)sdid[i]);
@@ -881,41 +878,41 @@ static int dcmi_check_hccsping_mesh_addr(struct dcmi_hccsping_mesh_operate *hccs
 
     return DCMI_OK;
 }
- 
+
 STATIC int parse_integer_param(int min, int max, int *value)
 {
     if (value == NULL) {
         gplog(LOG_ERR, "value is NULL");
         return DCMI_ERR_CODE_INVALID_PARAMETER;
     }
- 
+
     if (*value < min || *value > max) {
         gplog(LOG_ERR, "value is invalid.");
         return DCMI_ERR_CODE_INVALID_PARAMETER;
     }
     return DCMI_OK;
 }
- 
+
 STATIC int parse_pkt_param(struct dcmi_hccsping_mesh_operate *operate, int min, int max)
 {
     return parse_integer_param(min, max, &operate->pkt_size);
 }
- 
+
 STATIC int parse_cnt_param(struct dcmi_hccsping_mesh_operate *operate, int min, int max)
 {
     return parse_integer_param(min, max, &operate->pkt_send_num);
 }
- 
+
 STATIC int parse_interval_param(struct dcmi_hccsping_mesh_operate *operate, int min, int max)
 {
     return parse_integer_param(min, max, &operate->pkt_interval);
 }
- 
+
 STATIC int parse_task_interval_param(struct dcmi_hccsping_mesh_operate *operate, int min, int max)
 {
     return parse_integer_param(min, max, &operate->task_interval);
 }
- 
+
 STATIC int parse_task_id_param(struct dcmi_hccsping_mesh_operate *operate, int min, int max)
 {
     return parse_integer_param(min, max, &operate->task_id);
@@ -925,43 +922,38 @@ STATIC int parse_timeout_param(struct dcmi_hccsping_mesh_operate *operate, int m
 {
     return parse_integer_param(min, max, &operate->timeout);
 }
- 
+
 STATIC struct ping_mesh_parse_ext g_ping_mesh_parse[] = {
-    {parse_pkt_param, MIN_PKT_SIZE, MAX_PKT_SIZE},
-    {parse_cnt_param, 1, MAX_SEND_NUM},
-    {parse_interval_param, 0, MAX_PKT_INTERVAL},
-    {parse_task_interval_param, 1, MAX_TASK_INTERVAL},
-    {parse_task_id_param, 0, MAX_TASK_ID},
-    {parse_timeout_param, 0, INT_MAX}
-};
- 
+    {parse_pkt_param, MIN_PKT_SIZE, MAX_PKT_SIZE}, {parse_cnt_param, 1, MAX_SEND_NUM},
+    {parse_interval_param, 0, MAX_PKT_INTERVAL},   {parse_task_interval_param, 1, MAX_TASK_INTERVAL},
+    {parse_task_id_param, 0, MAX_TASK_ID},         {parse_timeout_param, 0, INT_MAX}};
+
 static int dcmi_get_hccsping_mesh_param_proc(struct dcmi_hccsping_mesh_operate *hccsping_mesh)
 {
     int ret, parse_index;
- 
+
     if (hccsping_mesh == NULL) {
         gplog(LOG_ERR, "hccsping_mesh is NULL.");
         return DCMI_ERR_CODE_INVALID_PARAMETER;
     }
- 
+
     for (parse_index = 0; parse_index < (sizeof(g_ping_mesh_parse) / sizeof(struct ping_mesh_parse_ext));
          parse_index++) {
         if (g_ping_mesh_parse[parse_index].parse_proc == NULL) {
             gplog(LOG_ERR, "parse_proc is NULL.");
             return DCMI_ERR_CODE_INVALID_PARAMETER;
         }
-        ret = g_ping_mesh_parse[parse_index].parse_proc(hccsping_mesh,
-                                                        g_ping_mesh_parse[parse_index].min,
+        ret = g_ping_mesh_parse[parse_index].parse_proc(hccsping_mesh, g_ping_mesh_parse[parse_index].min,
                                                         g_ping_mesh_parse[parse_index].max);
         if (ret != DCMI_OK) {
             gplog(LOG_ERR, "parse_index = %d,parse failed.ret is %d.", parse_index, ret);
             return ret;
         }
     }
-        
+
     return ret;
 }
- 
+
 static int dcmi_get_hccsping_mesh_param(struct dcmi_hccsping_mesh_operate *hccsping_mesh,
                                         struct hccs_ping_mesh_operate *operate, int phy_id)
 {
@@ -990,7 +982,7 @@ static int dcmi_start_hccs_ping_mesh_proc(int card_id, int device_id, int port_i
     struct hccs_ping_mesh_operate operate = {0};
     int device_logic_id = 0;
     unsigned int phy_id = 0;
- 
+
     ret = dcmi_get_device_logic_id(&device_logic_id, card_id, device_id);
     if (ret != DCMI_OK) {
         gplog(LOG_ERR, "call dcmi_get_device_logic_id failed. err is %d.", ret);
@@ -1015,18 +1007,17 @@ static int dcmi_start_hccs_ping_mesh_proc(int card_id, int device_id, int port_i
         gplog(LOG_ERR, "call dcmi_get_hccsping_mesh_param failed. err is %d.", ret);
         return ret;
     }
- 
+
     ret = dsmi_start_hccs_ping_mesh(device_logic_id, &operate);
     if ((ret != DSMI_OK) && (ret != DSMI_ERR_NOT_SUPPORT)) {
         gplog(LOG_ERR, "call dsmi start hccs ping mesh failed. (ret=%d)", ret);
         ret = dcmi_convert_error_code(ret);
     }
- 
+
     return ret;
 }
- 
-int dcmi_start_hccsping_mesh(int card_id, int device_id, int port_id,
-                             struct dcmi_hccsping_mesh_operate *hccsping_mesh)
+
+int dcmi_start_hccsping_mesh(int card_id, int device_id, int port_id, struct dcmi_hccsping_mesh_operate *hccsping_mesh)
 {
     int ret;
     enum dcmi_unit_type device_type = INVALID_TYPE;
@@ -1035,28 +1026,28 @@ int dcmi_start_hccsping_mesh(int card_id, int device_id, int port_id,
         gplog(LOG_ERR, "port_id is invalid. Input portid is %d.", port_id);
         return DCMI_ERR_CODE_INVALID_PARAMETER;
     }
- 
+
     if (hccsping_mesh == NULL) {
         gplog(LOG_ERR, "hccsping_mesh is NULL.");
         return DCMI_ERR_CODE_INVALID_PARAMETER;
     }
     if (!(dcmi_is_in_phy_machine_root() || dcmi_is_in_vm_root() || dcmi_is_in_privileged_docker_root())) {
         gplog(LOG_OP, "Operation not permitted, only root user on physical or virtual machine"
-            " or privileged docker can call this api.");
+                      " or privileged docker can call this api.");
         return DCMI_ERR_CODE_OPER_NOT_PERMITTED;
     }
- 
+
     if (!dcmi_board_chip_type_is_ascend_910_93()) {
         gplog(LOG_OP, "This device does not support start hccs ping mesh.");
         return DCMI_ERR_CODE_NOT_SUPPORT;
     }
- 
+
     ret = dcmi_get_device_type(card_id, device_id, &device_type);
     if (ret != DCMI_OK) {
         gplog(LOG_ERR, "dcmi_get_device_type failed. (ret=%d)", ret);
         return ret;
     }
- 
+
     if (device_type == NPU_TYPE) {
         gplog(LOG_INFO, "HCCS PINGMESH start!");
         return dcmi_start_hccs_ping_mesh_proc(card_id, device_id, port_id, hccsping_mesh);
@@ -1065,7 +1056,7 @@ int dcmi_start_hccsping_mesh(int card_id, int device_id, int port_id,
         return DCMI_ERR_CODE_NOT_SUPPORT;
     }
 }
- 
+
 int dcmi_stop_hccsping_mesh(int card_id, int device_id, int port_id, unsigned int task_id)
 {
     int ret;
@@ -1081,30 +1072,30 @@ int dcmi_stop_hccsping_mesh(int card_id, int device_id, int port_id, unsigned in
         gplog(LOG_ERR, "task_id %u is invalid.", task_id);
         return DCMI_ERR_CODE_INVALID_PARAMETER;
     }
-    
+
     if (!(dcmi_is_in_phy_machine_root() || dcmi_is_in_vm_root() || dcmi_is_in_privileged_docker_root())) {
         gplog(LOG_OP, "Operation not permitted, only root user on physical or virtual machine"
-            " or privileged docker can call this api.");
+                      " or privileged docker can call this api.");
         return DCMI_ERR_CODE_OPER_NOT_PERMITTED;
     }
-    
+
     ret = dcmi_get_device_logic_id(&device_logic_id, card_id, device_id);
     if (ret != DCMI_OK) {
         gplog(LOG_ERR, "call dcmi_get_device_logic_id failed. err is %d.", ret);
         return ret;
     }
-    
+
     if (!dcmi_board_chip_type_is_ascend_910_93()) {
         gplog(LOG_OP, "This device does not support start hccs ping mesh.");
         return DCMI_ERR_CODE_NOT_SUPPORT;
     }
- 
+
     ret = dcmi_get_device_type(card_id, device_id, &device_type);
     if (ret != DCMI_OK) {
         gplog(LOG_ERR, "dcmi_get_device_type failed. (ret=%d)", ret);
         return ret;
     }
- 
+
     if (device_type == NPU_TYPE) {
         gplog(LOG_INFO, "HCCS PINGMESH stop!");
         ret = dsmi_stop_hccs_ping_mesh(device_logic_id, (int)task_id);
@@ -1137,8 +1128,8 @@ STATIC int dcmi_get_hccs_ping_mesh_info_status(int device_logic_id, unsigned int
     }
 
     // 两个结构体存在字节偏移，需分开赋值
-    ret = memcpy_s(&hccsping_mesh_reply->info, sizeof(struct dcmi_hccsping_mesh_info),
-                   reply_info, sizeof(struct dcmi_hccsping_mesh_info));
+    ret = memcpy_s(&hccsping_mesh_reply->info, sizeof(struct dcmi_hccsping_mesh_info), reply_info,
+                   sizeof(struct dcmi_hccsping_mesh_info));
     ret += memcpy_s(&hccsping_mesh_reply->L1_plane_check_res, sizeof(hccsping_mesh_reply->L1_plane_check_res),
                     &reply_info->L1_plane_check_res, sizeof(reply_info->L1_plane_check_res));
     if (ret != DCMI_OK) {
@@ -1162,7 +1153,7 @@ int dcmi_get_hccsping_mesh_info_v2(int card_id, int device_id, int port_id, unsi
         gplog(LOG_ERR, "port_id is invalid. Input portid is %d.", port_id);
         return DCMI_ERR_CODE_INVALID_PARAMETER;
     }
- 
+
     if (hccsping_mesh_reply == NULL) {
         gplog(LOG_ERR, "hccsping_mesh_reply is NULL.");
         return DCMI_ERR_CODE_INVALID_PARAMETER;
@@ -1171,30 +1162,30 @@ int dcmi_get_hccsping_mesh_info_v2(int card_id, int device_id, int port_id, unsi
         gplog(LOG_ERR, "task_id %u is invalid.", task_id);
         return DCMI_ERR_CODE_INVALID_PARAMETER;
     }
- 
+
     if (!(dcmi_is_in_phy_machine_root() || dcmi_is_in_vm_root() || dcmi_is_in_privileged_docker_root())) {
         gplog(LOG_OP, "Operation not permitted, only root user on physical or virtual machine"
-            " or privileged docker can call this api.");
+                      " or privileged docker can call this api.");
         return DCMI_ERR_CODE_OPER_NOT_PERMITTED;
     }
- 
+
     ret = dcmi_get_device_logic_id(&device_logic_id, card_id, device_id);
     if (ret != DCMI_OK) {
         gplog(LOG_ERR, "call dcmi_get_device_logic_id failed. err is %d.", ret);
         return ret;
     }
- 
+
     if (!dcmi_board_chip_type_is_ascend_910_93()) {
         gplog(LOG_OP, "This device does not support start hccs ping mesh.");
         return DCMI_ERR_CODE_NOT_SUPPORT;
     }
- 
+
     ret = dcmi_get_device_type(card_id, device_id, &device_type);
     if (ret != DCMI_OK) {
         gplog(LOG_ERR, "dcmi_get_device_type failed. (ret=%d)", ret);
         return ret;
     }
- 
+
     if (device_type == NPU_TYPE) {
         return dcmi_get_hccs_ping_mesh_info_status(device_logic_id, task_id, hccsping_mesh_reply);
     } else {
@@ -1226,12 +1217,12 @@ int dcmi_get_hccsping_mesh_info(int card_id, int device_id, int port_id, unsigne
         return ret;
     }
 
-    memcpy_s(hccsping_mesh_reply, sizeof(struct dcmi_hccsping_mesh_info),
-             &info.info, sizeof(struct dcmi_hccsping_mesh_info));
+    memcpy_s(hccsping_mesh_reply, sizeof(struct dcmi_hccsping_mesh_info), &info.info,
+             sizeof(struct dcmi_hccsping_mesh_info));
 
     return DCMI_OK;
 }
- 
+
 int dcmi_get_hccsping_mesh_state(int card_id, int device_id, int port_id, unsigned int task_id, unsigned int *state)
 {
     int ret;
@@ -1242,7 +1233,7 @@ int dcmi_get_hccsping_mesh_state(int card_id, int device_id, int port_id, unsign
         gplog(LOG_ERR, "port_id is invalid. Input portid is %d.", port_id);
         return DCMI_ERR_CODE_INVALID_PARAMETER;
     }
- 
+
     if (state == NULL) {
         gplog(LOG_ERR, "state is NULL.");
         return DCMI_ERR_CODE_INVALID_PARAMETER;
@@ -1251,30 +1242,30 @@ int dcmi_get_hccsping_mesh_state(int card_id, int device_id, int port_id, unsign
         gplog(LOG_ERR, "task_id %u is invalid.", task_id);
         return DCMI_ERR_CODE_INVALID_PARAMETER;
     }
- 
+
     if (!(dcmi_is_in_phy_machine_root() || dcmi_is_in_vm_root() || dcmi_is_in_privileged_docker_root())) {
         gplog(LOG_OP, "Operation not permitted, only root user on physical or virtual machine"
-            " or privileged docker can call this api.");
+                      " or privileged docker can call this api.");
         return DCMI_ERR_CODE_OPER_NOT_PERMITTED;
     }
- 
+
     ret = dcmi_get_device_logic_id(&device_logic_id, card_id, device_id);
     if (ret != DCMI_OK) {
         gplog(LOG_ERR, "call dcmi_get_device_logic_id failed. err is %d.", ret);
         return ret;
     }
- 
+
     if (!dcmi_board_chip_type_is_ascend_910_93()) {
         gplog(LOG_OP, "This device does not support start hccs ping mesh.");
         return DCMI_ERR_CODE_NOT_SUPPORT;
     }
- 
+
     ret = dcmi_get_device_type(card_id, device_id, &device_type);
     if (ret != DCMI_OK) {
         gplog(LOG_ERR, "dcmi_get_device_type failed. (ret=%d)", ret);
         return ret;
     }
- 
+
     if (device_type == NPU_TYPE) {
         ret = dsmi_get_hccs_ping_mesh_state(device_logic_id, (int)task_id, state);
         if ((ret != DSMI_OK) && (ret != DSMI_ERR_NOT_SUPPORT)) {
@@ -1288,8 +1279,7 @@ int dcmi_get_hccsping_mesh_state(int card_id, int device_id, int port_id, unsign
     return ret;
 }
 
-STATIC int dcmi_get_npu_pfc_duration_info(int card_id, int device_id,
-	   struct dcmi_pfc_duration_info *pfc_info)
+STATIC int dcmi_get_npu_pfc_duration_info(int card_id, int device_id, struct dcmi_pfc_duration_info *pfc_info)
 {
     int ret;
     int device_logic_id = 0;
@@ -1303,7 +1293,7 @@ STATIC int dcmi_get_npu_pfc_duration_info(int card_id, int device_id,
     if ((ret != DSMI_OK) && (ret != DSMI_ERR_NOT_SUPPORT)) {
         gplog(LOG_ERR, "call dsmi_get_pfc_duration_info failed. err is %d.", ret);
     }
- 
+
     return dcmi_convert_error_code(ret);
 }
 
@@ -1318,12 +1308,12 @@ STATIC int dcmi_clear_npu_pfc_duration(int card_id, int device_id)
         gplog(LOG_ERR, "call dcmi_get_device_logic_id failed. err is %d.", ret);
         return ret;
     }
- 	
+
     ret = dsmi_clear_pfc_duration(device_logic_id, mode);
     if ((ret != DSMI_OK) && (ret != DSMI_ERR_NOT_SUPPORT)) {
         gplog(LOG_ERR, "call dsmi_clear_pfc_duration failed. err is %d.", ret);
     }
- 
+
     return dcmi_convert_error_code(ret);
 }
 
@@ -1332,7 +1322,7 @@ int dcmi_get_pfc_duration_info(int card_id, int device_id, struct dcmi_pfc_durat
     int ret;
     enum dcmi_unit_type device_type = INVALID_TYPE;
     unsigned int main_board_id;
-	
+
     if (pfc_info == NULL) {
         gplog(LOG_ERR, "pfc_duration_info is NULL");
         return DCMI_ERR_CODE_INVALID_PARAMETER;
@@ -1356,8 +1346,8 @@ int dcmi_get_pfc_duration_info(int card_id, int device_id, struct dcmi_pfc_durat
 
     if ((main_board_id == Atlas_9000_A3_SuperPoD_MAIN_BOARD_ID1) ||
         (main_board_id == Atlas_9000_A3_SuperPoD_MAIN_BOARD_ID2)) {
-            gplog(LOG_OP, "This device does not support clear pfc duration.");
-            return DCMI_ERR_CODE_NOT_SUPPORT;
+        gplog(LOG_OP, "This device does not support clear pfc duration.");
+        return DCMI_ERR_CODE_NOT_SUPPORT;
     }
 
     ret = dcmi_get_device_type(card_id, device_id, &device_type);
@@ -1365,7 +1355,7 @@ int dcmi_get_pfc_duration_info(int card_id, int device_id, struct dcmi_pfc_durat
         gplog(LOG_ERR, "dcmi_get_device_type failed. err is %d.", ret);
         return ret;
     }
- 
+
     if (device_type == NPU_TYPE) {
         return dcmi_get_npu_pfc_duration_info(card_id, device_id, pfc_info);
     } else {
@@ -1382,7 +1372,7 @@ int dcmi_clear_pfc_duration(int card_id, int device_id)
 
     if (!(dcmi_is_in_phy_machine_root() || dcmi_is_in_vm_root() || dcmi_is_in_privileged_docker_root())) {
         gplog(LOG_OP, "Operation not permitted, only root user on physical or virtual machine"
-            " or privileged docker can call this api.");
+                      " or privileged docker can call this api.");
         return DCMI_ERR_CODE_OPER_NOT_PERMITTED;
     }
 
@@ -1395,7 +1385,7 @@ int dcmi_clear_pfc_duration(int card_id, int device_id)
         gplog(LOG_OP, "This device does not support clear pfc duration.");
         return DCMI_ERR_CODE_NOT_SUPPORT;
     }
-    
+
     ret = dcmi_get_mainboard_id(card_id, 0, &main_board_id);
     if (ret != DCMI_OK) {
         gplog(LOG_ERR, "Failed to query main board id of card. err is %d", ret);
@@ -1405,8 +1395,8 @@ int dcmi_clear_pfc_duration(int card_id, int device_id)
     // 天工不支持
     if ((main_board_id == Atlas_9000_A3_SuperPoD_MAIN_BOARD_ID1) ||
         (main_board_id == Atlas_9000_A3_SuperPoD_MAIN_BOARD_ID2)) {
-            gplog(LOG_OP, "This device does not support clear pfc duration.");
-            return DCMI_ERR_CODE_NOT_SUPPORT;
+        gplog(LOG_OP, "This device does not support clear pfc duration.");
+        return DCMI_ERR_CODE_NOT_SUPPORT;
     }
 
     ret = dcmi_get_device_type(card_id, device_id, &device_type);
@@ -1414,7 +1404,7 @@ int dcmi_clear_pfc_duration(int card_id, int device_id)
         gplog(LOG_ERR, "dcmi_get_device_type failed. err is %d.\n", ret);
         return ret;
     }
- 
+
     if (device_type == NPU_TYPE) {
         return dcmi_clear_npu_pfc_duration(card_id, device_id);
     } else {
@@ -1422,7 +1412,6 @@ int dcmi_clear_pfc_duration(int card_id, int device_id)
         return DCMI_ERR_CODE_NOT_SUPPORT;
     }
 }
-
 
 STATIC int dcmi_get_qpn_list_status(int card_id, int device_id, int port_id, struct dcmi_qpn_list *list)
 {
@@ -1445,7 +1434,7 @@ STATIC int dcmi_get_qpn_list_status(int card_id, int device_id, int port_id, str
     if ((ret != DSMI_OK) && (ret != DSMI_ERR_NOT_SUPPORT)) {
         gplog(LOG_ERR, "Call dsmi_get_qpn_list failed. (ret=%d)", ret);
     }
- 
+
     return dcmi_convert_error_code(ret);
 }
 
@@ -1488,8 +1477,8 @@ int dcmi_get_qpn_list(int card_id, int device_id, int port_id, struct dcmi_qpn_l
     }
 }
 
-STATIC int dcmi_get_qp_info_status(int card_id, int device_id, int port_id,
-                                   unsigned int qpn, struct dcmi_qp_info *qp_info)
+STATIC int dcmi_get_qp_info_status(int card_id, int device_id, int port_id, unsigned int qpn,
+                                   struct dcmi_qp_info *qp_info)
 {
     int ret;
     int logic_id = 0;
@@ -1510,16 +1499,15 @@ STATIC int dcmi_get_qp_info_status(int card_id, int device_id, int port_id,
     if ((ret != DSMI_OK) && (ret != DSMI_ERR_NOT_SUPPORT)) {
         gplog(LOG_ERR, "Call dsmi_get_qp_info failed. (ret=%d)", ret);
     }
-    
+
     return dcmi_convert_error_code(ret);
 }
 
-int dcmi_get_qp_info(int card_id, int device_id, int port_id,
-                     unsigned int qpn, struct dcmi_qp_info *qp_info)
+int dcmi_get_qp_info(int card_id, int device_id, int port_id, unsigned int qpn, struct dcmi_qp_info *qp_info)
 {
     int ret;
     enum dcmi_unit_type device_type = INVALID_TYPE;
-    
+
     if (qp_info == NULL) {
         gplog(LOG_ERR, "The qp_info is NULL.");
         return DCMI_ERR_CODE_INVALID_PARAMETER;
@@ -1568,8 +1556,8 @@ STATIC int covert_dcmi_extra_statistics_info(struct ds_extra_statistics_info *ds
     info->cw_bad_cnt = ds_info->cw_bad_cnt;
     info->trans_total_bit = ds_info->trans_total_bit;
     info->cw_total_correct_bit = ds_info->cw_total_correct_bit;
-    info->rx_full_drop_cnt = ds_info->drop_num;  // drop_num 映射到 rx_full_drop_cnt
-    info->pcs_err_cnt = ds_info->pcs_err_count;  // pcs_err_count 映射到 pcs_err_cnt
+    info->rx_full_drop_cnt = ds_info->drop_num; // drop_num 映射到 rx_full_drop_cnt
+    info->pcs_err_cnt = ds_info->pcs_err_count; // pcs_err_count 映射到 pcs_err_cnt
     info->rx_send_app_good_pkts = ds_info->rx_send_app_good_pkts;
     info->rx_send_app_bad_pkts = ds_info->rx_send_app_bad_pkts;
 
@@ -1577,12 +1565,11 @@ STATIC int covert_dcmi_extra_statistics_info(struct ds_extra_statistics_info *ds
     if (ds_info->trans_total_bit > 0) {
         info->correcting_bit_rate = (double)ds_info->cw_total_correct_bit / (double)ds_info->trans_total_bit;
     } else {
-        info->correcting_bit_rate = 0.0;  // 防止除以零
+        info->correcting_bit_rate = 0.0; // 防止除以零
     }
 
     return DCMI_OK;
 }
-                                
 
 int dcmi_get_extra_statistics_info(int card_id, int device_id, int port_id,
                                    struct dcmi_extra_statistics_info *dcmi_info)
@@ -1591,7 +1578,7 @@ int dcmi_get_extra_statistics_info(int card_id, int device_id, int port_id,
     int logic_id = 0;
     struct ds_extra_statistics_info ds_info = {0};
     enum dcmi_unit_type device_type = INVALID_TYPE;
- 
+
     if (dcmi_info == NULL) {
         gplog(LOG_ERR, "The statistics info is NULL.");
         return DCMI_ERR_CODE_INVALID_PARAMETER;
@@ -1601,7 +1588,7 @@ int dcmi_get_extra_statistics_info(int card_id, int device_id, int port_id,
         gplog(LOG_ERR, "port_id is invalid. Input portid is %d.", port_id);
         return DCMI_ERR_CODE_INVALID_PARAMETER;
     }
- 
+
     if (!(dcmi_board_chip_type_is_ascend_910_93() || dcmi_board_chip_type_is_ascend_910b())) {
         gplog(LOG_OP, "This device does not support get extra statistics info.");
         return DCMI_ERR_CODE_NOT_SUPPORT;
@@ -1611,19 +1598,19 @@ int dcmi_get_extra_statistics_info(int card_id, int device_id, int port_id,
         gplog(LOG_OP, "This device does not support get extra statistics info.");
         return DCMI_ERR_CODE_NOT_SUPPORT;
     }
- 
+
     ret = dcmi_get_device_type(card_id, device_id, &device_type);
     if (ret != DCMI_OK) {
         gplog(LOG_ERR, "Call dcmi_get_device_type failed. (ret=%d)", ret);
         return ret;
     }
- 
+
     ret = dcmi_get_device_logic_id(&logic_id, card_id, device_id);
     if (ret != DCMI_OK) {
         gplog(LOG_ERR, "Call dcmi_get_device_logic_id failed. (ret=%d)", ret);
         return ret;
     }
- 
+
     if (device_type == NPU_TYPE) {
         ret = dsmi_get_extra_statistics_info(logic_id, port_id, &ds_info);
         if (ret != DSMI_OK) {

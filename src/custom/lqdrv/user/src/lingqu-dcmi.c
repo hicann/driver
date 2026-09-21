@@ -42,9 +42,9 @@
 #define MILL 1000
 
 #ifndef STATIC_SKIP
-    #define STATIC static
+#define STATIC static
 #else
-    #define STATIC
+#define STATIC
 #endif
 
 unsigned int g_faultlist_size = 0;
@@ -57,7 +57,7 @@ typedef struct {
     unsigned int bus; // 这条 PCI 总线的总线编号
     unsigned int device;
     unsigned int function;
-    unsigned int bar; // bar id
+    unsigned int bar;  // bar id
     unsigned int addr; // bar中的地址
     unsigned int dataLen;
 } PCI_BAR_RD_BUFFER;
@@ -83,10 +83,11 @@ int TcIoctlGetHeadInfo(void *pdata)
 
     ioctlCmd.cmd = IOCTL_GET_HEAD_INFO;
     ioctlCmd.len = 0;
-    ioctlCmd.in_addr = (void *) &paraIn;
+    ioctlCmd.in_addr = (void *)&paraIn;
     ioctlCmd.out_addr = pdata;
-    const int ret = ioctl(fd, COM_IOCTL_CMD, (void *) (&ioctlCmd)); // 这里用户态无需感知 head, tail, 返回新增的节点信息即可
-    (void) close(fd);
+    const int ret = ioctl(fd, COM_IOCTL_CMD,
+                          (void *)(&ioctlCmd)); // 这里用户态无需感知 head, tail, 返回新增的节点信息即可
+    (void)close(fd);
     if (ret != LQ_DCMI_OK) {
         LQ_DCMI_TYPE_LOG(LOG_ERR, "rdflash ioctl cmd[%d] fail, err %d\n", ioctlCmd.cmd, ret);
         return LQ_DCMI_ERR_CODE_IOCTL_FAIL;
@@ -115,10 +116,11 @@ int TcIoctlGetAllFault(FaultEventNodeTable *event_table)
     ioctlCmd.cmd = IOCTL_GET_NODE_INFO;
     ioctlCmd.len = 0;
     ioctlCmd.out_size = sizeof(FaultEventNodeTable) * CAPACITY;
-    ioctlCmd.in_addr = (void *) &paraIn;
+    ioctlCmd.in_addr = (void *)&paraIn;
     ioctlCmd.out_addr = event_table;
-    const int ret = ioctl(fd, COM_IOCTL_CMD, (void *) (&ioctlCmd)); // 这里用户态无需感知 head, tail, 返回新增的节点信息即可
-    (void) close(fd);
+    const int ret = ioctl(fd, COM_IOCTL_CMD,
+                          (void *)(&ioctlCmd)); // 这里用户态无需感知 head, tail, 返回新增的节点信息即可
+    (void)close(fd);
 
     if (ret != LQ_DCMI_OK) {
         LQ_DCMI_TYPE_LOG(LOG_ERR, "rd fault ioctl cmd[%d] fail, err %d\n", ioctlCmd.cmd, ret);
@@ -142,7 +144,7 @@ int TcGetVersion(unsigned int *version)
         return ret;
     }
 
-    const SramDescCtlHeader *header = (SramDescCtlHeader *) data;
+    const SramDescCtlHeader *header = (SramDescCtlHeader *)data;
 
     *version = header->version;
     g_faultlist_size = header->nodeNum;
@@ -185,7 +187,7 @@ STATIC SubscribeAclList g_subscribeAclList = {NULL};
 
 int SubscribeAclListAdd(SubscribeAclList *list, LqDcmiEventFilter filter, LqDcmiFaultEventCallback handler)
 {
-    LQ_DCMI_TYPE_LOG(LOG_INFO,  "SubscribeAclListAdd");
+    LQ_DCMI_TYPE_LOG(LOG_INFO, "SubscribeAclListAdd");
     SubscribeAclNode *newNode = (SubscribeAclNode *)malloc(sizeof(SubscribeAclNode));
     if (newNode == NULL) {
         // 处理内存不足的情况
@@ -225,13 +227,23 @@ SubscribeAclNode *SubscribeAclListFind(SubscribeAclList *list, LqDcmiEventFilter
         const LqDcmiEventFilterFlag currentfilterFlag = current->filter.filterFlag;
 
         bool match = true;
-        if (!(currentfilterFlag == filter.filterFlag)) { match = false; }
+        if (!(currentfilterFlag == filter.filterFlag)) {
+            match = false;
+        }
 
         if (match) {
-            if (!(currentfilter.chipId == filter.chipId)) { match = false; }
-            if (!(currentfilter.eventTypeId == filter.eventTypeId)) { match = false; }
-            if (!(currentfilter.eventId == filter.eventId)) { match = false; }
-            if (!(currentfilter.severity == filter.severity)) { match = false; }
+            if (!(currentfilter.chipId == filter.chipId)) {
+                match = false;
+            }
+            if (!(currentfilter.eventTypeId == filter.eventTypeId)) {
+                match = false;
+            }
+            if (!(currentfilter.eventId == filter.eventId)) {
+                match = false;
+            }
+            if (!(currentfilter.severity == filter.severity)) {
+                match = false;
+            }
 
             if (match) {
                 return current;
@@ -245,7 +257,7 @@ SubscribeAclNode *SubscribeAclListFind(SubscribeAclList *list, LqDcmiEventFilter
 
 unsigned int SubscribeAclListRemove(SubscribeAclList *list, LqDcmiEventFilter filter)
 {
-    LQ_DCMI_TYPE_LOG(LOG_INFO,  "SubscribeAclListRemove");
+    LQ_DCMI_TYPE_LOG(LOG_INFO, "SubscribeAclListRemove");
     if (list->aclNode == NULL) {
         // 链表为空，无需删除
         return LQ_DCMI_ERR_CODE_UNSUBSCRIBE_FAIL;
@@ -282,7 +294,9 @@ unsigned int SubscribeAclListRemove(SubscribeAclList *list, LqDcmiEventFilter fi
 
 void SubScribeHook(LqDcmiEvent *event)
 {
-    if (g_subscribeFlag == false) { return; }
+    if (g_subscribeFlag == false) {
+        return;
+    }
 
     SubscribeAclNode *current = g_subscribeAclList.aclNode;
     while (current != NULL) {
@@ -290,18 +304,34 @@ void SubScribeHook(LqDcmiEvent *event)
         const LqDcmiEventFilterFlag filterFlag = current->filter.filterFlag;
 
         if (filterFlag == 0) { // filterflag = 0表示故障全订阅
-            LQ_DCMI_TYPE_LOG(LOG_INFO,  "SubScribeHook event, filter is 0");
+            LQ_DCMI_TYPE_LOG(LOG_INFO, "SubScribeHook event, filter is 0");
             current->handler(event);
         } else {
             bool match = true;
-            if (filterFlag & EVENT_TYPE_ID) { if (filter.eventTypeId != event->eventType) { match = false; } }
-            if (filterFlag & EVENT_ID) { if (filter.eventId != event->subType) { match = false; } }
-            if (filterFlag & SEVERITY) { if (filter.severity != event->severity) { match = false; } }
-            if (filterFlag & CHIP_ID) { if (filter.chipId != event->switchChipid) { match = false; } }
+            if (filterFlag & EVENT_TYPE_ID) {
+                if (filter.eventTypeId != event->eventType) {
+                    match = false;
+                }
+            }
+            if (filterFlag & EVENT_ID) {
+                if (filter.eventId != event->subType) {
+                    match = false;
+                }
+            }
+            if (filterFlag & SEVERITY) {
+                if (filter.severity != event->severity) {
+                    match = false;
+                }
+            }
+            if (filterFlag & CHIP_ID) {
+                if (filter.chipId != event->switchChipid) {
+                    match = false;
+                }
+            }
 
             if (match) {
-                LQ_DCMI_TYPE_LOG(LOG_INFO,  "SubScribeHook event, eventType=%d, subtype=%d,chipid=%d", event->eventType,
-                    event->subType, event->switchChipid);
+                LQ_DCMI_TYPE_LOG(LOG_INFO, "SubScribeHook event, eventType=%d, subtype=%d,chipid=%d", event->eventType,
+                                 event->subType, event->switchChipid);
                 current->handler(event);
             }
         }
@@ -311,7 +341,7 @@ void SubScribeHook(LqDcmiEvent *event)
 
 void SubscribeAclListRemoveAll(SubscribeAclList *list)
 {
-    LQ_DCMI_TYPE_LOG(LOG_INFO,  "SubscribeAclListRemoveAll");
+    LQ_DCMI_TYPE_LOG(LOG_INFO, "SubscribeAclListRemoveAll");
     if (list == NULL) {
         // 处理 list 为空的情况，根据需求决定是否返回或处理
         return;
@@ -321,16 +351,15 @@ void SubscribeAclListRemoveAll(SubscribeAclList *list)
 
     while (current != NULL) {
         nextNode = current->next; // 保存下一个节点
-        free(current); // 释放当前节点
-        current = nextNode; // 移动到下一个节点
+        free(current);            // 释放当前节点
+        current = nextNode;       // 移动到下一个节点
     }
     list->aclNode = NULL; // 将链表头设为 NULL，表示链表已清空
     return;
 }
 
-static void HandleFault(LqDcmiEvent *event, FaultEventNodeTable *currFault,
-                        ChipFaultInfo *currChipFault, PortFaultInfo *currPortFault,
-                        unsigned int alarmType)
+static void HandleFault(LqDcmiEvent *event, FaultEventNodeTable *currFault, ChipFaultInfo *currChipFault,
+                        PortFaultInfo *currPortFault, unsigned int alarmType)
 {
     currFault->alarmFlag = 1;
     currFault->chipId = event->switchChipid;
@@ -351,16 +380,15 @@ static void HandleFault(LqDcmiEvent *event, FaultEventNodeTable *currFault,
     }
 }
 
-static void HandleRecovery(LqDcmiEvent *event, __attribute__ ((unused)) FaultEventNodeTable *currFault,
-                           ChipFaultInfo *currChipFault, PortFaultInfo *currPortFault,
-                           unsigned int alarmType)
+static void HandleRecovery(LqDcmiEvent *event, __attribute__((unused)) FaultEventNodeTable *currFault,
+                           ChipFaultInfo *currChipFault, PortFaultInfo *currPortFault, unsigned int alarmType)
 {
     unsigned int ret = 0;
     if (alarmType == CHIP_ALARM) {
         currChipFault->alarmFlag = 0;
         if (!IsPortNodeInfoZero(currChipFault->chipNodeInfo)) {
             ret = memset_s(&currChipFault->chipNodeInfo, sizeof(currChipFault->chipNodeInfo), 0,
-                sizeof(currChipFault->chipNodeInfo));
+                           sizeof(currChipFault->chipNodeInfo));
             if (ret != 0) {
                 LQ_DCMI_TYPE_LOG(LOG_ERR, "HandleRecovery memset_s fail");
                 return;
@@ -371,7 +399,7 @@ static void HandleRecovery(LqDcmiEvent *event, __attribute__ ((unused)) FaultEve
         currPortFault->alarmFlag = 0;
         if (!IsPortNodeInfoZero(currPortFault->portNodeInfo)) {
             ret = memset_s(&currPortFault->portNodeInfo, sizeof(currPortFault->portNodeInfo), 0,
-                sizeof(currPortFault->portNodeInfo));
+                           sizeof(currPortFault->portNodeInfo));
             if (ret != 0) {
                 LQ_DCMI_TYPE_LOG(LOG_ERR, "HandleRecovery memset_s fail");
                 return;
@@ -380,17 +408,21 @@ static void HandleRecovery(LqDcmiEvent *event, __attribute__ ((unused)) FaultEve
         }
 
         int flag = 0;
-        for (int i = 0; i < NUM_PORTS; ++i) { flag |= currChipFault->portFaultInfo[i].alarmFlag; }
-        if (flag == 0) { currChipFault->alarmFlag = 0; }
+        for (int i = 0; i < NUM_PORTS; ++i) {
+            flag |= currChipFault->portFaultInfo[i].alarmFlag;
+        }
+        if (flag == 0) {
+            currChipFault->alarmFlag = 0;
+        }
     }
 }
 
 static void EventHandler(LqDcmiEvent *event)
 {
     PortFaultInfo *currPortFault = NULL;
-    unsigned int subTypeIndex = find_index_by_sub_type(mapping, sizeof(mapping)/sizeof(mapping[0]), event->subType);
+    unsigned int subTypeIndex = find_index_by_sub_type(mapping, sizeof(mapping) / sizeof(mapping[0]), event->subType);
     if (subTypeIndex == INDEX_NOT_FOUND) {
-        LQ_DCMI_TYPE_LOG(LOG_ERR,  "EventHandler index is not found");
+        LQ_DCMI_TYPE_LOG(LOG_ERR, "EventHandler index is not found");
         return;
     }
 
@@ -405,7 +437,7 @@ static void EventHandler(LqDcmiEvent *event)
     FaultEventNodeTable *currFault = &g_user_event_table[index];
 
     if (chipId >= NUM_CHIP || (portId >= NUM_PORTS && portId != INVALID_PORTID)) {
-        LQ_DCMI_TYPE_LOG(LOG_ERR,  "chipId or portId is invalid");
+        LQ_DCMI_TYPE_LOG(LOG_ERR, "chipId or portId is invalid");
         return;
     }
     ChipFaultInfo *currChipFault = &currFault->chipFaultInfo[chipId];
@@ -420,11 +452,10 @@ static void EventHandler(LqDcmiEvent *event)
     }
 }
 
-
 int mapSharedMemory()
 {
     // 1. 打开设备文件
-    LQ_DCMI_TYPE_LOG(LOG_INFO,  "mapSharedMemory");
+    LQ_DCMI_TYPE_LOG(LOG_INFO, "mapSharedMemory");
     g_lqdcmi_dev_fd = open(DEV_NAME, O_RDWR);
     if (g_lqdcmi_dev_fd < 0) {
         LQ_DCMI_TYPE_LOG(LOG_ERR, "open %s err! errno = %d\n", DEV_NAME, g_lqdcmi_dev_fd);
@@ -447,8 +478,8 @@ int mapSharedMemory()
     }
     g_shared_memory_address = shared_mem;
 
-    LQ_DCMI_TYPE_LOG(LOG_INFO,  "mapSharedMemory:pro id:%d",
-        *(int *)(g_shared_memory_address + PROC_ID_POINTER_OFFSET * sizeof(int)));
+    LQ_DCMI_TYPE_LOG(LOG_INFO, "mapSharedMemory:pro id:%d",
+                     *(int *)(g_shared_memory_address + PROC_ID_POINTER_OFFSET * sizeof(int)));
 
     return LQ_DCMI_OK;
 }
@@ -457,19 +488,19 @@ void read_shared_memory()
 {
     unsigned int ret = 0;
     int *ptr_head = (int *)(g_shared_memory_address);
-    int head = *ptr_head;  // 获取头部
+    int head = *ptr_head; // 获取头部
     int *ptr_tail = (int *)(g_shared_memory_address + sizeof(int));
     int tail = *ptr_tail; // 读取尾部
     SramFaultEventData sd = {0};
 
     if (head == tail) {
-        return;  // 队列为空
+        return; // 队列为空
     }
 
     // 检查队列是否满
 
     while (head != tail) {
-        LQ_DCMI_TYPE_LOG(LOG_INFO,  "read_shared_memory:head=%d,tail=%d", head, tail);
+        LQ_DCMI_TYPE_LOG(LOG_INFO, "read_shared_memory:head=%d,tail=%d", head, tail);
         ret = memset_s(&sd, sizeof(SramFaultEventData), 0, sizeof(SramFaultEventData));
         if (ret != 0) {
             LQ_DCMI_TYPE_LOG(LOG_ERR, "read_shared_memory memset_s fail");
@@ -478,18 +509,19 @@ void read_shared_memory()
 
         // 按照4字节读
         ret = memcpy_s(&sd, sizeof(SramFaultEventData),
-            g_shared_memory_address + sizeof(SramFaultEventData) + head * sizeof(SramFaultEventData),
-            sizeof(SramFaultEventData));
+                       g_shared_memory_address + sizeof(SramFaultEventData) + head * sizeof(SramFaultEventData),
+                       sizeof(SramFaultEventData));
         if (ret != 0) {
             LQ_DCMI_TYPE_LOG(LOG_ERR, "read_shared_memory memcpy_s fail");
             return;
         }
 
-        LqDcmiEvent *event = (LqDcmiEvent *) (sd.data);
-        LQ_DCMI_TYPE_LOG(LOG_INFO,  "event_type: %x, sub_type: %u, peerport_device: %u, peerport_id: %u, "
-            "switch_chipid: %u, switch_portid: %u, severity: %u, assertion: %u\n",
-            event->eventType, event->subType, event->peerportDevice, event->peerportId,
-            event->switchChipid, event->switchPortid, event->severity, event->assertion);
+        LqDcmiEvent *event = (LqDcmiEvent *)(sd.data);
+        LQ_DCMI_TYPE_LOG(LOG_INFO,
+                         "event_type: %x, sub_type: %u, peerport_device: %u, peerport_id: %u, "
+                         "switch_chipid: %u, switch_portid: %u, severity: %u, assertion: %u\n",
+                         event->eventType, event->subType, event->peerportDevice, event->peerportId,
+                         event->switchChipid, event->switchPortid, event->severity, event->assertion);
 
         EventHandler(event);
 
@@ -498,7 +530,7 @@ void read_shared_memory()
         int *ptr = (int *)g_shared_memory_address;
         *ptr = head; // 更新头节点位置
     }
-    return;  // 成功返回 0
+    return; // 成功返回 0
 }
 
 int initFaultList()
@@ -516,10 +548,10 @@ void *update_thread_func()
 {
     while (g_globalThreadFlag == THREAD_RUNNING) {
         read_shared_memory();
-        (void) usleep(THREAD_SLEEP);
+        (void)usleep(THREAD_SLEEP);
     }
 
-    LQ_DCMI_TYPE_LOG(LOG_ERR,  "Something went wrong with update_thread_func!");
+    LQ_DCMI_TYPE_LOG(LOG_ERR, "Something went wrong with update_thread_func!");
     return NULL;
 }
 
@@ -535,14 +567,13 @@ int CreateUpdatePthread()
     }
 
     g_globalThreadFlag = THREAD_RUNNING;
-    (void) pthread_attr_init(&attr);
-    (void) pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
-    (void) pthread_attr_setscope(&attr, PTHREAD_SCOPE_SYSTEM);
-    (void) pthread_attr_setstacksize(&attr, (g_faultlist_size + NUM_CHIP) * THREAD_STACK_SIZE);
-    (void) pthread_attr_setschedpolicy(&attr, SCHED_RR);
-    threadSchedParam.sched_priority =
-        sched_get_priority_min(SCHED_RR) + THREAD_PRIORITY;
-    (void) pthread_attr_setschedparam(&attr, &threadSchedParam);
+    (void)pthread_attr_init(&attr);
+    (void)pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
+    (void)pthread_attr_setscope(&attr, PTHREAD_SCOPE_SYSTEM);
+    (void)pthread_attr_setstacksize(&attr, (g_faultlist_size + NUM_CHIP) * THREAD_STACK_SIZE);
+    (void)pthread_attr_setschedpolicy(&attr, SCHED_RR);
+    threadSchedParam.sched_priority = sched_get_priority_min(SCHED_RR) + THREAD_PRIORITY;
+    (void)pthread_attr_setschedparam(&attr, &threadSchedParam);
 
     if (pthread_create(&updateThread->threadId, &attr, update_thread_func, NULL) != 0) {
         pthread_attr_destroy(&attr);
@@ -551,8 +582,8 @@ int CreateUpdatePthread()
         return LQ_DCMI_ERR_CODE_UPDATETHREAD_CREATE_FAIL;
     }
 
-    (void) pthread_attr_destroy(&attr);
-    (void) pthread_mutex_unlock(&updateThread->threadLock);
+    (void)pthread_attr_destroy(&attr);
+    (void)pthread_mutex_unlock(&updateThread->threadLock);
 
     g_initFlag = true;
     return LQ_DCMI_OK;
@@ -600,13 +631,12 @@ int lq_dcmi_init()
         return ret;
     }
 
-    LQ_DCMI_TYPE_LOG(LOG_INFO,  "lq_dcmi_init success!");
+    LQ_DCMI_TYPE_LOG(LOG_INFO, "lq_dcmi_init success!");
 
     return LQ_DCMI_OK;
 }
 
-int lq_dcmi_subscribe_fault_event(const LqDcmiEventFilter filter,
-                                  const LqDcmiFaultEventCallback handler)
+int lq_dcmi_subscribe_fault_event(const LqDcmiEventFilter filter, const LqDcmiFaultEventCallback handler)
 {
     unsigned int ret = LQ_DCMI_OK;
     if (!g_initFlag) {
@@ -615,14 +645,15 @@ int lq_dcmi_subscribe_fault_event(const LqDcmiEventFilter filter,
     }
 
     if (filter.filterFlag & EVENT_TYPE_ID) {
-        if (find_index_by_event_type(mapping, sizeof(mapping)/sizeof(mapping[0]), filter.eventTypeId) == INDEX_NOT_FOUND) {
+        if (find_index_by_event_type(mapping, sizeof(mapping) / sizeof(mapping[0]), filter.eventTypeId) ==
+            INDEX_NOT_FOUND) {
             LQ_DCMI_TYPE_LOG(LOG_ERR, "event type id is not found");
             return LQ_DCMI_ERR_CODE_INVALID_FILTER;
         }
     }
 
     if (filter.filterFlag & EVENT_ID) {
-        if (find_index_by_sub_type(mapping, sizeof(mapping)/sizeof(mapping[0]), filter.eventId) == INDEX_NOT_FOUND) {
+        if (find_index_by_sub_type(mapping, sizeof(mapping) / sizeof(mapping[0]), filter.eventId) == INDEX_NOT_FOUND) {
             LQ_DCMI_TYPE_LOG(LOG_ERR, "sub type id is not found");
             return LQ_DCMI_ERR_CODE_INVALID_FILTER;
         }
@@ -675,14 +706,17 @@ STATIC int GetAllFault(unsigned int eventListLen, LqDcmiEvent **list, unsigned i
 
     for (unsigned int i = 0; i < CAPACITY; ++i) {
         const FaultEventNodeTable curr = g_user_event_table[i];
-        if (curr.alarmFlag == 0) { continue; }
+        if (curr.alarmFlag == 0) {
+            continue;
+        }
         for (unsigned int j = 0; j < NUM_CHIP; ++j) {
             const ChipFaultInfo chipFault = curr.chipFaultInfo[j];
-            if (chipFault.alarmFlag == 0) { continue; }
+            if (chipFault.alarmFlag == 0) {
+                continue;
+            }
             if (!(IsPortNodeInfoZero(chipFault.chipNodeInfo))) {
                 if (len + 1 > eventListLen) {
-                    ret = memcpy_s(*list, len * sizeof(LqDcmiEvent), faultList,
-                        len * sizeof(LqDcmiEvent));
+                    ret = memcpy_s(*list, len * sizeof(LqDcmiEvent), faultList, len * sizeof(LqDcmiEvent));
                     if (ret != 0) {
                         free(faultList);
                         return LQ_DCMI_ERR_CODE_MEM_COPY_FAIL;
@@ -697,8 +731,7 @@ STATIC int GetAllFault(unsigned int eventListLen, LqDcmiEvent **list, unsigned i
                     const PortFaultInfo portFault = chipFault.portFaultInfo[k];
                     if (portFault.alarmFlag == 1 && !(IsPortNodeInfoZero(portFault.portNodeInfo))) {
                         if (len + 1 > eventListLen) {
-                            ret = memcpy_s(*list, len * sizeof(LqDcmiEvent), faultList,
-                                len * sizeof(LqDcmiEvent));
+                            ret = memcpy_s(*list, len * sizeof(LqDcmiEvent), faultList, len * sizeof(LqDcmiEvent));
                             if (ret != 0) {
                                 free(faultList);
                                 return LQ_DCMI_ERR_CODE_MEM_COPY_FAIL;
@@ -732,8 +765,7 @@ STATIC int GetAllFault(unsigned int eventListLen, LqDcmiEvent **list, unsigned i
     return LQ_DCMI_OK;
 }
 
-int lq_dcmi_get_fault_info(unsigned int listLen, unsigned int *eventListLen,
-                           LqDcmiEvent *eventList)
+int lq_dcmi_get_fault_info(unsigned int listLen, unsigned int *eventListLen, LqDcmiEvent *eventList)
 {
     if (!g_initFlag) {
         LQ_DCMI_TYPE_LOG(LOG_ERR, "lq_dcmi_init should be called before get_fault_info!");
@@ -750,7 +782,7 @@ int lq_dcmi_get_fault_info(unsigned int listLen, unsigned int *eventListLen,
         return LQ_DCMI_ERR_CODE_INVALID_PARAMETER;
     }
 
-    if (listLen <= 0 || listLen > MAX_FAULT_NUMS) {
+    if (listLen <= 0 || listLen > g_faultlist_size) {
         LQ_DCMI_TYPE_LOG(LOG_ERR, "lisLen is invalid!");
         return LQ_DCMI_ERR_CODE_INVALID_PARAMETER;
     }
@@ -764,7 +796,7 @@ int lq_dcmi_get_fault_info(unsigned int listLen, unsigned int *eventListLen,
     return LQ_DCMI_OK;
 }
 
-int lq_dcmi_get_version(unsigned int* lq_version, unsigned int* lqdcmi_version)
+int lq_dcmi_get_version(unsigned int *lq_version, unsigned int *lqdcmi_version)
 {
     if (lq_version == NULL || lqdcmi_version == NULL) {
         LQ_DCMI_TYPE_LOG(LOG_ERR, "lq_version or lqdcmi_version is NULL!");
@@ -785,7 +817,7 @@ int lq_dcmi_get_version(unsigned int* lq_version, unsigned int* lqdcmi_version)
     return LQ_DCMI_OK;
 }
 
-unsigned int count_ports_faults_in_chip(const ChipFaultInfo* chipFaultInfo)
+unsigned int count_ports_faults_in_chip(const ChipFaultInfo *chipFaultInfo)
 {
     unsigned int port_faults = 0;
     for (unsigned int k = 0; k < NUM_PORTS; ++k) {
@@ -797,7 +829,7 @@ unsigned int count_ports_faults_in_chip(const ChipFaultInfo* chipFaultInfo)
     return port_faults;
 }
 
-int lq_dcmi_get_fault_nums(unsigned int* fault_nums)
+int lq_dcmi_get_fault_nums(unsigned int *fault_nums)
 {
     if (!g_initFlag) {
         LQ_DCMI_TYPE_LOG(LOG_ERR, "lq_dcmi_init should be called before lq_dcmi_get_fault_nums!");
@@ -813,10 +845,14 @@ int lq_dcmi_get_fault_nums(unsigned int* fault_nums)
 
     for (unsigned int i = 0; i < CAPACITY; ++i) {
         const FaultEventNodeTable curr = g_user_event_table[i];
-        if (curr.alarmFlag == 0) { continue; }
+        if (curr.alarmFlag == 0) {
+            continue;
+        }
         for (unsigned int j = 0; j < NUM_CHIP; ++j) {
             const ChipFaultInfo chipFault = curr.chipFaultInfo[j];
-            if (chipFault.alarmFlag == 0) { continue;}
+            if (chipFault.alarmFlag == 0) {
+                continue;
+            }
             if (!(IsPortNodeInfoZero(chipFault.chipNodeInfo))) {
                 len++;
                 continue;
@@ -830,7 +866,7 @@ int lq_dcmi_get_fault_nums(unsigned int* fault_nums)
 
 __attribute__((destructor)) void Cleanup()
 {
-    LQ_DCMI_TYPE_LOG(LOG_INFO,  "Cleanup!");
+    LQ_DCMI_TYPE_LOG(LOG_INFO, "Cleanup!");
 
     SubscribeAclListRemoveAll(&g_subscribeAclList);
     if (pthread_mutex_lock(&g_globalUpdateThread.threadLock) != 0) {

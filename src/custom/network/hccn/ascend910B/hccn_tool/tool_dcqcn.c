@@ -379,14 +379,14 @@ static int dcqcn_param_fixed_step(struct ds_dcqcn_info *info, char *val, char *p
 
 static int dcqcn_param_update_timer(struct ds_dcqcn_info *info, char *val, char *para, unsigned int length)
 {
-    unsigned short cfgdata;
+    unsigned long cfgdata;
     char *tmp_ptr = NULL;
     int ret;
 
     if (para == NULL) {
-        cfgdata = (unsigned short)strtoul(val, &tmp_ptr, STR_NUM_BASE);
+        cfgdata = strtoul(val, &tmp_ptr, STR_NUM_BASE);
         if (tmp_ptr == val || *tmp_ptr != '\0') {
-            roce_err("alg para val must be unsigned int, now is %u, tail is %s", cfgdata, tmp_ptr);
+            roce_err("alg para val must be unsigned int, now is %lu, tail is %s", cfgdata, tmp_ptr);
             return UDA_PARAM_INVALID_ERR;
         }
 
@@ -394,7 +394,7 @@ static int dcqcn_param_update_timer(struct ds_dcqcn_info *info, char *val, char 
             roce_err("dcqcn_param tmp %lu cfg trans failed.", cfgdata);
             return UDA_PARAM_INVALID_ERR;
         }
-        info->dcqcn_param.tmp = cfgdata;
+        info->dcqcn_param.tmp = (unsigned short)cfgdata;
     } else {
         ret = sprintf_s(para, length, "%u", info->dcqcn_param.tmp);
         if (ret <= 0) {
@@ -441,7 +441,7 @@ static int dcqcn_param_cnp_time(struct ds_dcqcn_info *info, char *val, char *par
     char *tmp_ptr = NULL;
     int ret;
 
-    if (para ==  NULL) {
+    if (para == NULL) {
         cfgdata = (unsigned int)strtoul(val, &tmp_ptr, STR_NUM_BASE);
         if (tmp_ptr == val || *tmp_ptr != '\0') {
             roce_err("alg para val must be unsigned int, now is %u, tail is %s", cfgdata, tmp_ptr);
@@ -498,14 +498,14 @@ static int dcqcn_param_max_des_shift(struct ds_dcqcn_info *info, char *val, char
     unsigned char cfgdata;
     char *tmp_ptr = NULL;
     int ret;
- 
+
     if (para == NULL) {
         cfgdata = (unsigned char)strtoul(val, &tmp_ptr, STR_NUM_BASE);
         if (tmp_ptr == val || *tmp_ptr != '\0') {
             roce_err("DCQCN para max_des_shift val must be unsigned int. (cur=%u; tail=%s)", cfgdata, tmp_ptr);
             return UDA_PARAM_INVALID_ERR;
         }
- 
+
         if (cfgdata > 9) { // max dcqcn_param max_des_shift is 9.
             roce_err("DCQCN param max_des_shift cfg trans failed. (cfgdata=%u)", cfgdata);
             return UDA_PARAM_INVALID_ERR;
@@ -561,18 +561,12 @@ struct dcqcn_param_info dcqcn_param_enable[] = {
 };
 
 struct dcqcn_param_info dcqcn_param_list[] = {
-    {"alg_mode", dcqcn_param_alg_mode},
-    {"f", dcqcn_param_iteration_count},
-    {"g_shift", dcqcn_param_update_g},
-    {"al", dcqcn_param_alpha_min},
-    {"tkp", dcqcn_param_update_token},
-    {"max_speed", dcqcn_param_max_speed},
-    {"ai", dcqcn_param_fixed_step},
-    {"tmp", dcqcn_param_update_timer},
-    {"alp", dcqcn_param_update_alpha},
-    {"cnp_time", dcqcn_param_cnp_time},
-    {"alp_shift", dcqcn_param_alp_shift},
-    {"max_des_shift", dcqcn_param_max_des_shift},
+    {"alg_mode", dcqcn_param_alg_mode},   {"f", dcqcn_param_iteration_count},
+    {"g_shift", dcqcn_param_update_g},    {"al", dcqcn_param_alpha_min},
+    {"tkp", dcqcn_param_update_token},    {"max_speed", dcqcn_param_max_speed},
+    {"ai", dcqcn_param_fixed_step},       {"tmp", dcqcn_param_update_timer},
+    {"alp", dcqcn_param_update_alpha},    {"cnp_time", dcqcn_param_cnp_time},
+    {"alp_shift", dcqcn_param_alp_shift}, {"max_des_shift", dcqcn_param_max_des_shift},
 };
 
 static int tool_write_alg_pare_conf(struct ds_dcqcn_info *info, struct tool_param *param)
@@ -697,7 +691,7 @@ int tool_set_dcqcn_alg_info(int argc, char **argv, struct tool_param *param, str
     char *inbuf = NULL;
     int ret, i;
     int cnt = 0;
-    char flag[12] = {0};    // Indicates the subcommand settings, total num is 12
+    char flag[12] = {0}; // Indicates the subcommand settings, total num is 12
 
     ret = check_dcqcn_param_data(argc, argv, param, info);
     if (ret != 0) {
@@ -717,8 +711,8 @@ int tool_set_dcqcn_alg_info(int argc, char **argv, struct tool_param *param, str
             }
             ret = memcpy_s(val, MAX_DCQCN_PARAM_LEN, argv[cnt + 1], strlen(argv[cnt + 1]));
             if (ret != 0) {
-                roce_err("Get param copy failed. ret[%d] max_len[%d] real_len[%d]",
-                    ret, MAX_DCQCN_PARAM_LEN, strlen(argv[cnt + 1]));
+                roce_err("Get param copy failed. ret[%d] max_len[%d] real_len[%d]", ret, MAX_DCQCN_PARAM_LEN,
+                         strlen(argv[cnt + 1]));
                 return UDA_PARAM_INVALID_ERR;
             }
 
@@ -1018,8 +1012,8 @@ int tool_cfg_dcqcn_alg_recovery(struct tool_param *param)
     char para_name[MAX_DCQCN_PARAM_LEN] = "";
     char *argv[DCQCN_ARGV_PARAM_NUM];
     struct ds_dcqcn_info info = {0};
-    char *para[MAX_DCQCN_PARA_NUM] = {"f", "g_shift", "al", "tkp", "max_speed",
-        "ai", "tmp", "alp", "cnp_time", "alp_shift", "max_des_shift"};
+    char *para[MAX_DCQCN_PARA_NUM] = {"f",   "g_shift", "al",       "tkp",       "max_speed",    "ai",
+                                      "tmp", "alp",     "cnp_time", "alp_shift", "max_des_shift"};
 
     for (j = 0; j < DCQCN_ARGV_PARAM_NUM; j++) {
         argv[j] = malloc(MAX_DCQCN_PARAM_LEN * sizeof(char));

@@ -43,18 +43,18 @@
 #include "npu_card_info.h"
 #include "npu_common.h"
 
-#define     HCCS_900_ARR_LANEID_MIN          1
-#define     HCCS_900_ARR_LANEID_MAX          7
-#define     HCCS_9000_ARR_LANEID_MIN         2
-#define     HCCS_9000_ARR_LANEID_MAX         7
-#define     HCCS_310P_ARR_LANEID             0
+#define HCCS_900_ARR_LANEID_MIN 1
+#define HCCS_900_ARR_LANEID_MAX 7
+#define HCCS_9000_ARR_LANEID_MIN 2
+#define HCCS_9000_ARR_LANEID_MAX 7
+#define HCCS_310P_ARR_LANEID 0
 
 enum npu_chip_type g_chip_type = NPU_CHIP_INVALID;
 int g_board_type_is_card = FALSE;
 int g_board_type_is_server = FALSE;
 enum npu_board_type g_board_type = NPU_BOARD_TYPE_INVALID;
 
-#define MINID_CONF_INI  "/home/data/ies/minid.ini"
+#define MINID_CONF_INI "/home/data/ies/minid.ini"
 
 int npu_ascii_to_num(char ch)
 {
@@ -207,7 +207,7 @@ int determine_hardware_support(struct npu_smi_type_map *type_map)
     }
     // windows仅支持200EP和300-3010场景
     bit = npu_board_type_is_model() ? CMD_SPT_MODEL_INDEX : CMD_SPT_310_INDEX;
- 
+
     return ((type_map->win_support_list & (1 << bit)) != 0);
 #else
     if (type_map->linux_support_list == CMD_SPT_ALL) {
@@ -227,8 +227,7 @@ int determine_run_env_support(struct npu_smi_type_map *type_map)
     }
 
     // 尽量跟以前的回显保持一致
-    if (((type_map->support_env & CMD_ENV_SPT_DOCKER) == 0) &&
-        ((type_map->support_env & CMD_ENV_SPT_VM) == 0)) {
+    if (((type_map->support_env & CMD_ENV_SPT_DOCKER) == 0) && ((type_map->support_env & CMD_ENV_SPT_VM) == 0)) {
         if (npu_is_run_in_vm_or_docker()) {
             printf("This command cannot be executed on a VM or container.\n");
             return NPU_ERR_CODE_OPER_NOT_PERMITTED;
@@ -294,7 +293,7 @@ int set_lane_id(struct npu_smi_operate_info *operate_info, const char *tmp_id)
     }
     // 天工环境 2-7； 非天工环境 1-7  判断lane输入是否合法
     if ((main_board_id == Atlas_9000_A3_SuperPoD_MAIN_BOARD_ID1) ||
-    (main_board_id == Atlas_9000_A3_SuperPoD_MAIN_BOARD_ID2)) {
+        (main_board_id == Atlas_9000_A3_SuperPoD_MAIN_BOARD_ID2)) {
         if ((tmp_lane_id < HCCS_9000_ARR_LANEID_MIN) || (tmp_lane_id > HCCS_9000_ARR_LANEID_MAX)) {
             gplog(LOG_ERR, "Hccs 9000 lane id not within the correct range,err id is:%d", tmp_lane_id);
             return NPU_ERR_CODE_INVALID_PARAMETER;
@@ -317,13 +316,13 @@ int set_phy_id(struct npu_smi_operate_info *operate_info, const char *tmp_id)
 #ifdef NPU_SMI_V2
     unsigned int dev_id;
 #endif
- 
+
     ret = str2ul(&operate_info->phy_id, tmp_id);
 #ifdef NPU_SMI_V2
     if (ret != NPU_OK) {
         return ret;
     }
- 
+
     ret = dcmiv2_get_dev_id_by_chip_phy_id((int)operate_info->phy_id, &dev_id);
     if (ret != DCMI_OK) {
         gplog(LOG_ERR, "dcmiv2_get_dev_id_by_chip_phy_id failed.(ret=%d)", ret);
@@ -431,8 +430,7 @@ int covert_file_path(const char *file, char *path, int len)
         return NPU_ERR_CODE_INVALID_PARAMETER;
     }
 
-    if ((file == NULL) || (strlen(file) > PATH_MAX) ||
-        ((realpath(file, path) == NULL) && (errno != ENOENT))) {
+    if ((file == NULL) || (strlen(file) > PATH_MAX) || ((realpath(file, path) == NULL) && (errno != ENOENT))) {
 #else
     if (len < MAX_PATH) {
         return NPU_ERR_CODE_INVALID_PARAMETER;
@@ -713,12 +711,12 @@ int set_create_vdev_param(struct npu_smi_operate_info *operate_info, const char 
 int check_vdev_exist(struct npu_smi_operate_info *operate_info, int vdev_id)
 {
     int ret;
-    struct dcmi_soc_total_resource soc_total_resource = { 0 };
+    struct dcmi_soc_total_resource soc_total_resource = {0};
     unsigned int resource_len = sizeof(soc_total_resource);
     unsigned int i;
 
     ret = dcmi_get_device_info(operate_info->id, operate_info->chip_id, DCMI_MAIN_CMD_VDEV_MNG,
-        DCMI_VMNG_SUB_CMD_GET_TOTAL_RESOURCE, &soc_total_resource, &resource_len);
+                               DCMI_VMNG_SUB_CMD_GET_TOTAL_RESOURCE, &soc_total_resource, &resource_len);
     if (ret != DCMI_OK) {
         gplog(LOG_ERR, "get total resource failed. ret is %d", ret);
         return dcmi_to_npu_error_code(ret);
@@ -759,7 +757,7 @@ int multi_param_check(const char *param_string, int param_size)
 {
 #define SPLIT_INIT 0
 #define SPLIT_PROC 1
-#define SPLIT_SET  2
+#define SPLIT_SET 2
     int i;
     int flag = SPLIT_INIT;
     bool check_result = false;
@@ -775,8 +773,8 @@ int multi_param_check(const char *param_string, int param_size)
             return NPU_ERR_CODE_INVALID_PARAMETER;
         }
 
-        check_result =
-            (((param_string[i] == ':') && (flag == SPLIT_INIT)) || ((param_string[i] == ':') && (flag == SPLIT_SET)));
+        check_result = (((param_string[i] == ':') && (flag == SPLIT_INIT)) ||
+                        ((param_string[i] == ':') && (flag == SPLIT_SET)));
         if (check_result) {
             return NPU_ERR_CODE_INVALID_PARAMETER;
         } else if (param_string[i] == ':' && flag == SPLIT_PROC) {
@@ -972,7 +970,7 @@ int npu_init_ep_chip_type(unsigned int venderid, unsigned int deviceid)
             case NPU_910_93_DEVICE_ID:
                 g_chip_type = NPU_CHIP_910_93;
                 break;
-            case NPU_950_DEVICE_ID:    // pcie场景
+            case NPU_950_DEVICE_ID: // pcie场景
                 g_chip_type = NPU_CHIP_950;
                 break;
             default:
@@ -983,7 +981,7 @@ int npu_init_ep_chip_type(unsigned int venderid, unsigned int deviceid)
     } else {
         ret = NPU_ERR_CODE_INNER_ERR;
     }
- 
+
     return ret;
 }
 
@@ -991,8 +989,8 @@ int npu_init_chip_type(int card_id, int device_id)
 {
     int ret;
     unsigned int mode = 0;
-    struct dcmi_pcie_info_all pcie_info = { 0 };
-    struct dcmi_board_info board_info = { 0 };
+    struct dcmi_pcie_info_all pcie_info = {0};
+    struct dcmi_board_info board_info = {0};
 
     if (dcmi_mainboard_is_a900_a5_ub(g_mainboard_info.mainboard_id)) {
         g_chip_type = NPU_CHIP_950;
@@ -1236,14 +1234,14 @@ STATIC void npu_init_board_type_by_mainboard_id()
             g_board_type = NPU_BOARD_TYPE_CARD;
         }
     } else if (((g_mainboard_info.mainboard_id >> DCMI_SHIFT_FIVE_BITS) & A5_MAINBOARD_ID_MASK) ==
-        MAINBOARD_ID_HIGH_3BIT_POD ||
-        ((g_mainboard_info.mainboard_id >> DCMI_SHIFT_FIVE_BITS) & A5_MAINBOARD_ID_MASK) ==
-        MAINBOARD_ID_HIGH_3BIT_A_K ||
-        ((g_mainboard_info.mainboard_id >> DCMI_SHIFT_FIVE_BITS) & A5_MAINBOARD_ID_MASK) ==
-        MAINBOARD_ID_HIGH_3BIT_A_X) {
+                   MAINBOARD_ID_HIGH_3BIT_POD ||
+               ((g_mainboard_info.mainboard_id >> DCMI_SHIFT_FIVE_BITS) & A5_MAINBOARD_ID_MASK) ==
+                   MAINBOARD_ID_HIGH_3BIT_A_K ||
+               ((g_mainboard_info.mainboard_id >> DCMI_SHIFT_FIVE_BITS) & A5_MAINBOARD_ID_MASK) ==
+                   MAINBOARD_ID_HIGH_3BIT_A_X) {
         g_board_type = NPU_BOARD_TYPE_SERVER;
     } else if (((g_mainboard_info.mainboard_id >> DCMI_SHIFT_FIVE_BITS) & A5_MAINBOARD_ID_MASK) ==
-        MAINBOARD_ID_HIGH_3BIT_EQU) {
+               MAINBOARD_ID_HIGH_3BIT_EQU) {
         ret = dcmi_get_rc_ep_mode(&mode);
         if (ret != DCMI_OK) {
             gplog(LOG_ERR, "dcmi_get_ep_rc_mode failed. ret is %d", ret);
@@ -1252,7 +1250,7 @@ STATIC void npu_init_board_type_by_mainboard_id()
         if (mode == DCMI_PCIE_RC_MODE) {
             g_board_type = NPU_BOARD_TYPE_SOC;
         } else {
-            g_board_type = NPU_BOARD_TYPE_SERVER;   // a+x装备
+            g_board_type = NPU_BOARD_TYPE_SERVER; // a+x装备
         }
     } else {
         g_board_type = NPU_BOARD_TYPE_INVALID;
@@ -1329,7 +1327,7 @@ int npu_get_board_type_by_board_id()
 #ifdef NPU_SMI_V2
     int device_logic_id;
 #endif
-    struct dcmi_board_info board_info = { 0 };
+    struct dcmi_board_info board_info = {0};
 
     ret = npu_get_first_ready_device(&card_id, &chip_id);
     if (ret != DCMI_OK) {
@@ -1340,8 +1338,10 @@ int npu_get_board_type_by_board_id()
 #ifdef NPU_SMI_V2
     ret = dcmiv2_get_device_logic_id(&device_logic_id, card_id, chip_id);
     if (ret != DCMI_OK) {
-        gplog (LOG_ERR, "dcmiv2_get_device_logic_id failed. "
-        "card_id is %d, chip_id is %d, err is %d", card_id, chip_id, ret);
+        gplog(LOG_ERR,
+              "dcmiv2_get_device_logic_id failed. "
+              "card_id is %d, chip_id is %d, err is %d",
+              card_id, chip_id, ret);
         return NPU_ERR_CODE_INNER_ERR;
     }
     card_id = device_logic_id;
@@ -1424,7 +1424,7 @@ int npu_check_is_has_mcu(void)
 int bytes_transform(unsigned long long bytes, enum bytes_transforms_type flag, unsigned long long *result)
 {
     /* KB = 1024 B, MB = 1024 *1024 B = 1048576B ,... */
-    unsigned long long transform[] = {1024, 1048576, 1073741824, 1099511627776 };
+    unsigned long long transform[] = {1024, 1048576, 1073741824, 1099511627776};
     *result = bytes / transform[flag];
     return NPU_OK;
 }
@@ -1545,7 +1545,7 @@ int npu_common_get_health_state_str(int status_index, char *health_state, int st
 {
     int ret;
     size_t length;
-    const char *health_state_list[] = { "OK", "Warning", "Alarm", "Critical", "UNKNOWN" };
+    const char *health_state_list[] = {"OK", "Warning", "Alarm", "Critical", "UNKNOWN"};
 
     if (status_index < 0 || status_index >= (int)(sizeof(health_state_list) / (sizeof(health_state_list[0])))) {
         return NPU_ERR_CODE_INVALID_PARAMETER;
@@ -1562,8 +1562,7 @@ int npu_common_get_health_state_str(int status_index, char *health_state, int st
 
 int check_watch_chip_parm(struct npu_smi_operate_info *operate_info)
 {
-    if ((operate_info->type != WATCH_INFO) || (operate_info->is_all == TRUE) ||
-        (operate_info->is_mapping == TRUE)) {
+    if ((operate_info->type != WATCH_INFO) || (operate_info->is_all == TRUE) || (operate_info->is_mapping == TRUE)) {
         printf("The parameter is invalid.\n");
         return NPU_ERR_CODE_INVALID_PARAMETER;
     }
@@ -1689,7 +1688,7 @@ int npu_close_nic_network(int card_id)
             status = system(command);
             if ((status == -1) || (WIFEXITED(status) == 0) || (WEXITSTATUS(status) != 0)) {
                 gplog(LOG_OP, "failed to shutdown device %d. status=%d, retry times=%d.", (device_num * card_id + i),
-                    status, j);
+                      status, j);
                 sleep(1);
                 continue;
             }
@@ -1704,13 +1703,13 @@ int npu_close_nic_network(int card_id)
 char *get_param_value(const char *filename, const char *param_name)
 {
     char line[MAX_LINE_LENGTH];
-    char* param_value = NULL;
+    char *param_value = NULL;
 
     if (filename == NULL || param_name == NULL) {
         gplog(LOG_ERR, "INPUT filename or param_name is NULL.");
         return NULL;
     }
-    FILE* file = fopen(filename, "r");
+    FILE *file = fopen(filename, "r");
     if (file == NULL) {
         gplog(LOG_ERR, "Failed to open file %s.", filename);
         return NULL;
@@ -1721,8 +1720,8 @@ char *get_param_value(const char *filename, const char *param_name)
         line[strlen(line) - 1] = '\0';
 
         // 查找参数名和值
-        char* name = strtok(line, "=");
-        char* value = strtok(NULL, "=");
+        char *name = strtok(line, "=");
+        char *value = strtok(NULL, "=");
 
         if (name != NULL && value != NULL && strcmp(name, param_name) == 0) {
             param_value = strdup(value);
@@ -1806,7 +1805,7 @@ int check_netmask_addr(unsigned int *ip_addr, int ip_max_len)
 int npu_get_elabel_pn_sn_items_info(int card_index, struct npu_all_info *npu_all_info)
 {
     int ret;
-    struct dcmi_elabel_info elabel_info = { { 0 } };
+    struct dcmi_elabel_info elabel_info = {{0}};
 
     if (card_index < 0 || card_index >= MAX_CARD_NUM) {
         gplog(LOG_ERR, "card index invalid .%d", card_index);
@@ -1832,13 +1831,13 @@ int npu_get_elabel_pn_sn_items_info(int card_index, struct npu_all_info *npu_all
         }
     } else {
         ret = strncpy_s(npu_all_info->card_info[card_index].serial_number, NPU_MAX_LENTH, elabel_info.serial_number,
-            strlen(elabel_info.serial_number));
+                        strlen(elabel_info.serial_number));
         if (ret != EOK) {
             gplog(LOG_ERR, "memcpy_s failed. err is %d", ret);
         }
 
         ret = strncpy_s(npu_all_info->card_info[card_index].product_name, NPU_MAX_LENTH, elabel_info.product_name,
-            strlen(elabel_info.serial_number));
+                        strlen(elabel_info.product_name));
         if (ret != EOK) {
             gplog(LOG_ERR, "strncpy_s failed. err is %d", ret);
         }
@@ -1958,14 +1957,13 @@ int npu_get_key_manage_path(char *real_path, int len)
         return ret;
     }
     ret = snprintf_s(script_path, PATH_MAX + 1, PATH_MAX, "%s/%s", driver_path,
-        "driver/script/ascend_driver_config.sh");
+                     "driver/script/ascend_driver_config.sh");
     if (ret <= 0) {
         gplog(LOG_ERR, "npu_get_key_manage_path call snprintf_s failed.%d\n", ret);
         return NPU_ERR_CODE_SECURE_FUN_FAIL;
     }
 
-    if ((check_file_path(script_path) != NPU_OK) ||
-        (check_filename(script_path, real_path, len) != NPU_OK) ||
+    if ((check_file_path(script_path) != NPU_OK) || (check_filename(script_path, real_path, len) != NPU_OK) ||
         (access(real_path, F_OK) != NPU_OK)) {
         gplog(LOG_ERR, "npu_get_key_manage_path file check fail.\n");
         return NPU_ERR_CODE_FILE_OPERATE_FAIL;
@@ -1978,8 +1976,8 @@ int check_confirm_info(void)
     char string[QUARTER_BUFF_LEN] = {0};
 
     while (scanf_s("%s", string, (QUARTER_BUFF_LEN - 1)) != EOF) {
-        if ((strlen(string) != 1) || ((string[0] != 'y') && (string[0] != 'n') &&
-            (string[0] != 'Y') && (string[0] != 'N'))) {
+        if ((strlen(string) != 1) ||
+            ((string[0] != 'y') && (string[0] != 'n') && (string[0] != 'Y') && (string[0] != 'N'))) {
             printf("Error! Please input 'y' or 'n'!\n");
             continue;
         }
@@ -2086,7 +2084,7 @@ int check_support_err_count_clear(struct npu_smi_operate_info *operate_info)
 int update_minid_conf(char *config_name, int config_value)
 {
     char buf[64] = {0};
-    FILE* resultFile;
+    FILE *resultFile;
     int ret;
 
     resultFile = fopen(MINID_CONF_INI, "w+");
@@ -2167,7 +2165,7 @@ int set_card_syslog_enable(struct npu_smi_operate_info *operate_info)
     ret = dcmi_set_syslog_persistence_mode(operate_info->enable_value);
     if (ret == DCMI_ERR_CODE_SYSLOG_CONFIG_ILLEGAL) {
         printf("ERROR: The configuration file has been maliciously modified, "
-                "please clear configuration and stop syslog collecting process first.\n");
+               "please clear configuration and stop syslog collecting process first.\n");
         gplog(LOG_ERR, "The configuration file has been maliciously modified, ret is %d", ret);
         return NPU_ERR_CODE_INNER_ERR;
     } else if (ret != DCMI_OK) {

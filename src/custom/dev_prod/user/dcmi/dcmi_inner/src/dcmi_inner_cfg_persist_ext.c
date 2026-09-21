@@ -27,7 +27,7 @@
 #include "dcmi_inner_cfg_persist.h"
 
 STATIC int dcmi_cfg_op_timeout_get_cfg_path(char *path, unsigned int path_size, char *path_bak,
-    unsigned int path_bak_size)
+                                            unsigned int path_bak_size)
 {
 #ifndef _WIN32
 
@@ -72,7 +72,7 @@ STATIC void dcmi_cfg_op_timeout_fix_empty_file()
         gplog(LOG_ERR, "file uid invalid.uid %u st_pid %u.", uid, buf.st_uid);
         return;
     }
-    
+
     ret = rename(path_bak, path);
     if (ret != DCMI_OK) {
         gplog(LOG_ERR, "rename error. errno is %d", errno);
@@ -252,8 +252,8 @@ static int dcmi_cfg_op_timeout_get_action(unsigned int start, unsigned int end, 
             if (ret != DCMI_CFG_DIFF_LINE) {
                 return ret;
             }
-            ret = sscanf_s((const char *)buf_tmp, "npu-smi set -t op-timeout-cfg -i %u -c %u -d %u ",
-                           &card_id_tmp, &chip_id_tmp, &enable_type_tmp);
+            ret = sscanf_s((const char *)buf_tmp, "npu-smi set -t op-timeout-cfg -i %u -c %u -d %u ", &card_id_tmp,
+                           &chip_id_tmp, &enable_type_tmp);
             if (ret < 1) {
                 gplog(LOG_ERR, "sscanf_s failed. ret is %d", ret);
                 return DCMI_ERR_CODE_OP_TIMEOUT_CONFIG_ILLEGAL;
@@ -281,14 +281,14 @@ int dcmi_cfg_insert_op_timeout_cmdline_to_buffer(const char *cmdline, FILE *fp, 
     char buf_tmp[DCMI_OP_TIMEOUT_CONF_ONE_LINE_MAX_LEN] = {0};
     unsigned int insert_flag = 0, line = 0, start_flag = 0, end_flag = 0;
     struct cfg_buf_info buf_info;
+    unsigned int tmp_len = 0;
 
     (void)fseek(fp, 0, SEEK_END);
     buf_info.buf_size = (unsigned int)ftell(fp) + DCMI_OP_TIMEOUT_CONF_ONE_LINE_MAX_LEN + 1;
     rewind(fp);
-    if (dcmi_cfg_malloc_buffer_and_init(buf_out, buf_info.buf_size) != DCMI_OK) {
+    if (dcmi_cfg_malloc_buffer_and_init(&buf_info.buf, buf_info.buf_size) != DCMI_OK) {
         return DCMI_ERR_CODE_INNER_ERR;
     }
-    buf_info.buf = *buf_out;
 
     while (!feof(fp)) {
         (void)memset_s(buf_tmp, sizeof(buf_tmp), 0, sizeof(buf_tmp));
@@ -297,7 +297,7 @@ int dcmi_cfg_insert_op_timeout_cmdline_to_buffer(const char *cmdline, FILE *fp, 
             break;
         }
         line++;
-        
+
         if (insert_flag != DCMI_CFG_INSERT_COMPLETE) {
             if (end_flag == DCMI_OP_TIMEOUT_FLAG_NOT_FIND) {
                 end_flag = (strcmp(buf_tmp, "[op-timeout-config end]\n") == 0) ? (line - 1) : end_flag;
@@ -305,9 +305,10 @@ int dcmi_cfg_insert_op_timeout_cmdline_to_buffer(const char *cmdline, FILE *fp, 
 
             action = dcmi_cfg_op_timeout_get_action(start_flag, end_flag, cmdline, buf_tmp);
             if (action == DCMI_ERR_CODE_OP_TIMEOUT_CONFIG_ILLEGAL) {
+                free(buf_info.buf);
                 return DCMI_ERR_CODE_OP_TIMEOUT_CONFIG_ILLEGAL;
             }
-            ret = dcmi_cfg_process_action(action, &buf_info, len, cmdline, buf_tmp);
+            ret = dcmi_cfg_process_action(action, &buf_info, &tmp_len, cmdline, buf_tmp);
             insert_flag = ((ret == DCMI_CFG_INSERT_OK) ? DCMI_CFG_INSERT_COMPLETE : insert_flag);
             if (ret == DCMI_ERR_CODE_SECURE_FUN_FAIL) {
                 goto SECURE_FUN_FAIL;
@@ -316,18 +317,25 @@ int dcmi_cfg_insert_op_timeout_cmdline_to_buffer(const char *cmdline, FILE *fp, 
                 start_flag = (strcmp(buf_tmp, "[op-timeout-config start]\n") == 0) ? (line - 1) : start_flag;
             }
         } else {
-            ret = strncat_s(*buf_out, buf_info.buf_size, buf_tmp, strlen(buf_tmp));
+            ret = strncat_s(buf_info.buf, buf_info.buf_size, buf_tmp, strlen(buf_tmp));
             if (ret != 0) {
                 goto SECURE_FUN_FAIL;
             }
-            *len += strlen(buf_tmp);
+            tmp_len += strlen(buf_tmp);
         }
     }
 
-    ret = (start_flag == 0) ? DCMI_ERR_CODE_OP_TIMEOUT_CONFIG_ILLEGAL : DCMI_OK;
-    return ret;
+    if (start_flag == 0) {
+        free(buf_info.buf);
+        return DCMI_ERR_CODE_OP_TIMEOUT_CONFIG_ILLEGAL;
+    }
+    *buf_out = buf_info.buf;
+    *len = tmp_len;
+    return DCMI_OK;
+
 SECURE_FUN_FAIL:
     gplog(LOG_ERR, "strncat_s failed. ret is %d", ret);
+    free(buf_info.buf);
     return DCMI_ERR_CODE_SECURE_FUN_FAIL;
 }
 
@@ -340,8 +348,7 @@ int dcmi_cfg_insert_set_op_timeout_cmdline(int card_id, int chip_id, unsigned in
     FILE *fp = NULL;
 
     ret = snprintf_s(cmdline_buf, sizeof(cmdline_buf), sizeof(cmdline_buf) - 1,
-        "npu-smi set -t op-timeout-cfg -i %d -c %d -d %u\n",
-         card_id, chip_id, timeout_value);
+                     "npu-smi set -t op-timeout-cfg -i %d -c %d -d %u\n", card_id, chip_id, timeout_value);
     if (ret <= 0) {
         gplog(LOG_ERR, "snprintf_s failed, ret is %d", ret);
         return DCMI_ERR_CODE_SECURE_FUN_FAIL;
@@ -361,8 +368,8 @@ int dcmi_cfg_insert_set_op_timeout_cmdline(int card_id, int chip_id, unsigned in
 
     ret = dcmi_cfg_insert_op_timeout_cmdline_to_buffer(cmdline_buf, fp, &buf, &buf_len);
     if (ret != DCMI_OK) {
-        gplog(LOG_ERR, "dcmi_cfg_insert_op_timeout_cmdline_to_buffer failed. ret is %d, cmdline_buf is %s\b",
-              ret, cmdline_buf);
+        gplog(LOG_ERR, "dcmi_cfg_insert_op_timeout_cmdline_to_buffer failed. ret is %d, cmdline_buf is %s\b", ret,
+              cmdline_buf);
         if (ret == DCMI_ERR_CODE_OP_TIMEOUT_CONFIG_ILLEGAL) {
             gplog(LOG_OP, "The configuraion file has been modified unexpectedly.");
         }
@@ -384,7 +391,7 @@ int dcmi_cfg_insert_set_op_timeout_cmdline(int card_id, int chip_id, unsigned in
 }
 
 STATIC int dcmi_cfg_device_share_get_cfg_path(char *path, unsigned int path_size, char *path_bak,
-    unsigned int path_bak_size)
+                                              unsigned int path_bak_size)
 {
     if (path_size > PATH_MAX + 1 || path_bak_size > PATH_MAX + 1) {
         return DCMI_ERR_CODE_INVALID_PARAMETER;
@@ -403,7 +410,7 @@ STATIC int dcmi_cfg_device_share_get_cfg_path(char *path, unsigned int path_size
 }
 
 STATIC int dcmi_cfg_multi_die_policy_get_cfg_path(char *path, unsigned int path_size, char *path_bak,
-    unsigned int path_bak_size)
+                                                  unsigned int path_bak_size)
 {
     if (path_size > PATH_MAX + 1 || path_bak_size > PATH_MAX + 1) {
         return DCMI_ERR_CODE_INVALID_PARAMETER;
@@ -446,7 +453,7 @@ STATIC void dcmi_cfg_device_share_fix_empty_file()
         gplog(LOG_ERR, "file uid invalid.uid %u st_pid %u.", uid, buf.st_uid);
         return;
     }
-    
+
     ret = rename(path_bak, path);
     if (ret != DCMI_OK) {
         gplog(LOG_ERR, "rename error. errno is %d", errno);
@@ -482,7 +489,7 @@ STATIC void dcmi_cfg_multi_die_policy_fix_empty_file()
         gplog(LOG_ERR, "file uid invalid.uid %u st_pid %u.", uid, buf.st_uid);
         return;
     }
-    
+
     ret = rename(path_bak, path);
     if (ret != DCMI_OK) {
         gplog(LOG_ERR, "rename error. errno is %d", errno);
@@ -588,7 +595,7 @@ int dcmi_cfg_multi_die_policy_open_file(FILE **fp)
 }
 
 int dcmi_cfg_check_device_share_config_context_is_delete(unsigned int start, unsigned int end, unsigned int mode,
-    unsigned set_flag, const char *buf)
+                                                         unsigned set_flag, const char *buf)
 {
     int cmp_flag = FALSE;
     if (strncmp(buf, "device-share-recover:", strlen("device-share-recover:")) == 0) {
@@ -610,7 +617,7 @@ int dcmi_cfg_check_device_share_config_context_is_delete(unsigned int start, uns
 }
 
 int dcmi_cfg_check_multi_die_policy_config_context_is_delete(unsigned int start, unsigned int end, unsigned int mode,
-    unsigned set_flag, const char *buf)
+                                                             unsigned set_flag, const char *buf)
 {
     int cmp_flag = FALSE;
     if (strncmp(buf, "multi-die-policy-recover:", strlen("multi-die-policy-recover:")) == 0) {
@@ -631,8 +638,8 @@ int dcmi_cfg_check_multi_die_policy_config_context_is_delete(unsigned int start,
     }
 }
 
-int dcmi_cfg_set_device_share_recover_to_buffer(const char *cmdline, unsigned int mode, FILE *fp,
-    char **buf_out, unsigned int *buf_len)
+int dcmi_cfg_set_device_share_recover_to_buffer(const char *cmdline, unsigned int mode, FILE *fp, char **buf_out,
+                                                unsigned int *buf_len)
 {
     unsigned int start_flag = DCMI_DEVICE_SHARE_FLAG_NOT_FIND, end_flag = DCMI_DEVICE_SHARE_FLAG_NOT_FIND;
     char buf_tmp[DCMI_DEVICE_SHARE_CONF_ONE_LINE_MAX_LEN] = {0};
@@ -661,8 +668,8 @@ int dcmi_cfg_set_device_share_recover_to_buffer(const char *cmdline, unsigned in
             end_flag = (strcmp(buf_tmp, "[device-share-config end]\n") == 0) ? (line - 1) : end_flag;
         }
 
-        action =
-            dcmi_cfg_check_device_share_config_context_is_delete(start_flag, end_flag, mode, set_complete, buf_tmp);
+        action = dcmi_cfg_check_device_share_config_context_is_delete(start_flag, end_flag, mode, set_complete,
+                                                                      buf_tmp);
         if (action == DCMI_CFG_NEED_DELETE) {
             continue;
         } else if (action == DCMI_CFG_NEED_INSERT) {
@@ -693,8 +700,8 @@ int dcmi_cfg_set_device_share_recover_to_buffer(const char *cmdline, unsigned in
     return DCMI_OK;
 }
 
-int dcmi_cfg_set_multi_die_policy_recover_to_buffer(const char *cmdline, unsigned int mode, FILE *fp,
-    char **buf_out, unsigned int *buf_len)
+int dcmi_cfg_set_multi_die_policy_recover_to_buffer(const char *cmdline, unsigned int mode, FILE *fp, char **buf_out,
+                                                    unsigned int *buf_len)
 {
     unsigned int start_flag = DCMI_MULTI_DIE_POLICY_FLAG_NOT_FIND, end_flag = DCMI_MULTI_DIE_POLICY_FLAG_NOT_FIND;
     char buf_tmp[DCMI_MULTI_DIE_POLICY_CONF_ONE_LINE_MAX_LINE] = {0};
@@ -723,8 +730,8 @@ int dcmi_cfg_set_multi_die_policy_recover_to_buffer(const char *cmdline, unsigne
             end_flag = (strcmp(buf_tmp, "[multi-die-policy-config end]\n") == 0) ? (line - 1) : end_flag;
         }
 
-        action =
-            dcmi_cfg_check_multi_die_policy_config_context_is_delete(start_flag, end_flag, mode, set_complete, buf_tmp);
+        action = dcmi_cfg_check_multi_die_policy_config_context_is_delete(start_flag, end_flag, mode, set_complete,
+                                                                          buf_tmp);
         if (action == DCMI_CFG_NEED_DELETE) {
             continue;
         } else if (action == DCMI_CFG_NEED_INSERT) {
@@ -778,7 +785,7 @@ int dcmi_cfg_device_share_check_cfg_path(char *path, unsigned int path_size, cha
 }
 
 int dcmi_cfg_multi_die_policy_check_cfg_path(char *path, unsigned int path_size, char *path_bak,
-    unsigned int path_bak_size)
+                                             unsigned int path_bak_size)
 {
     int ret;
 
@@ -853,7 +860,7 @@ write_fail:
 
 int dcmi_cfg_multi_die_policy_write_to_file(const char *buf, unsigned int buf_len)
 {
-    #ifdef _WIN32
+#ifdef _WIN32
     return DCMI_ERR_CODE_NOT_SUPPORT;
 #else
     FILE *fp = NULL;
@@ -912,10 +919,10 @@ int dcmi_cfg_insert_set_device_share_cmdline(int card_id, int chip_id, int enabl
 
     if (dcmi_board_chip_type_is_ascend_950()) {
         ret = snprintf_s(cmdline_buf, sizeof(cmdline_buf), sizeof(cmdline_buf) - 1,
-            "npu-smi set -t device-share -i %d -d %d\n", card_id, enable_value);
+                         "npu-smi set -t device-share -i %d -d %d\n", card_id, enable_value);
     } else {
         ret = snprintf_s(cmdline_buf, sizeof(cmdline_buf), sizeof(cmdline_buf) - 1,
-            "npu-smi set -t device-share -i %d -c %d -d %d\n", card_id, chip_id, enable_value);
+                         "npu-smi set -t device-share -i %d -c %d -d %d\n", card_id, chip_id, enable_value);
     }
     if (ret <= 0) {
         gplog(LOG_ERR, "Snprintf_s failed. ret is %d", ret);
@@ -937,8 +944,8 @@ int dcmi_cfg_insert_set_device_share_cmdline(int card_id, int chip_id, int enabl
 
     ret = dcmi_cfg_insert_device_share_cmdline_to_buffer(cmdline_buf, fp, &buf, &buf_len);
     if (ret != DCMI_OK) {
-        gplog(LOG_ERR, "dcmi_cfg_insert_device_share_cmdline_to_buffer failed. ret is %d, cmdline_buf is %s\b",
-              ret, cmdline_buf);
+        gplog(LOG_ERR, "dcmi_cfg_insert_device_share_cmdline_to_buffer failed. ret is %d, cmdline_buf is %s\b", ret,
+              cmdline_buf);
         if (ret == DCMI_ERR_CODE_DEVICE_SHARE_CONFIG_ILLEGAL) {
             gplog(LOG_OP, "The configuration file was modified unexpectedly.");
         }
@@ -967,7 +974,7 @@ int dcmi_cfg_insert_set_multi_die_policy_cmdline(int enable_value)
     FILE *fp = NULL;
 
     ret = snprintf_s(cmdline_buf, sizeof(cmdline_buf), sizeof(cmdline_buf) - 1,
-        "npu-smi set -t multi-die-policy -d %d\n", enable_value);
+                     "npu-smi set -t multi-die-policy -d %d\n", enable_value);
     if (ret <= 0) {
         gplog(LOG_ERR, "snprintf_s failed, ret is %d", ret);
         return DCMI_ERR_CODE_SECURE_FUN_FAIL;
@@ -988,8 +995,8 @@ int dcmi_cfg_insert_set_multi_die_policy_cmdline(int enable_value)
 
     ret = dcmi_cfg_insert_multi_die_policy_cmdline_to_buffer(cmdline_buf, fp, &buf, &buf_len);
     if (ret != DCMI_OK) {
-        gplog(LOG_ERR, "dcmi_cfg_insert_multi_die_policy_cmdline_to_buffer failed. ret is %d, cmdline_buf is %s\b",
-              ret, cmdline_buf);
+        gplog(LOG_ERR, "dcmi_cfg_insert_multi_die_policy_cmdline_to_buffer failed. ret is %d, cmdline_buf is %s\b", ret,
+              cmdline_buf);
         if (ret == DCMI_ERR_CODE_MULTI_DIE_POLIC_CONFIG_ILLEGAL) {
             gplog(LOG_OP, "The configuration file was modified unexpectedly.");
         }
@@ -1106,7 +1113,7 @@ static int dcmi_cfg_device_share_get_action(unsigned int start, unsigned int end
     int ret;
 
     ret = sscanf_s(cmdline, "npu-smi set -t device-share -i %u -c %u -d %u ", &card_id_cmd, &chip_id_cmd,
-        &enable_type_cmd);
+                   &enable_type_cmd);
     if (ret < 1) {
         gplog(LOG_ERR, "Snprintf_s failed. ret is %d", ret);
         return DCMI_CFG_NOT_NEED_INSERT;
@@ -1125,7 +1132,7 @@ static int dcmi_cfg_device_share_get_action(unsigned int start, unsigned int end
 
             // 再次校验，防止文件被修改
             ret = sscanf_s(buf_tmp, "npu-smi set -t device-share -i %u -c %u -d %u ", &card_id_tmp, &chip_id_tmp,
-                &enable_type_tmp);
+                           &enable_type_tmp);
             if (ret < 1) {
                 gplog(LOG_ERR, "Snprintf_s failed. ret is %d", ret);
                 return DCMI_ERR_CODE_DEVICE_SHARE_CONFIG_ILLEGAL;
@@ -1173,7 +1180,7 @@ static int dcmiv2_cfg_device_share_get_action(unsigned int start, unsigned int e
         gplog(LOG_ERR, "Snprintf_s failed. ret is %d", ret);
         return DCMI_CFG_NOT_NEED_INSERT;
     }
- 
+
     if (start != DCMI_DEVICE_SHARE_FLAG_NOT_FIND) {
         if (end == DCMI_DEVICE_SHARE_FLAG_NOT_FIND) {
             ret = dcmiv2_cfg_device_share_check_is_cover(cmdline, buf_tmp);
@@ -1184,7 +1191,7 @@ static int dcmiv2_cfg_device_share_get_action(unsigned int start, unsigned int e
             if (ret != DCMI_CFG_DIFF_LINE) {
                 return ret;
             }
- 
+
             ret = sscanf_s(buf_tmp, "npu-smi set -t device-share -i %u -d %u ", &card_id_tmp, &enable_type_tmp);
             if (ret < 1) {
                 gplog(LOG_ERR, "Snprintf_s failed. ret is %d", ret);
@@ -1227,7 +1234,7 @@ int dcmi_cfg_insert_device_share_cmdline_to_buffer(const char *cmdline, FILE *fp
             break;
         }
         line++;
-        
+
         if (insert_flag == DCMI_CFG_INSERT_COMPLETE) {
             ret = strncat_s(*buf_out, buf_info.buf_size, buf_tmp, strlen(buf_tmp));
             if (ret != 0) {
@@ -1240,9 +1247,9 @@ int dcmi_cfg_insert_device_share_cmdline_to_buffer(const char *cmdline, FILE *fp
             end_flag = (strcmp(buf_tmp, "[device-share-config end]\n") == 0) ? (line - 1) : end_flag;
         }
 
-        action = (!dcmi_board_chip_type_is_ascend_950())
-        ? dcmi_cfg_device_share_get_action(start_flag, end_flag, cmdline, buf_tmp)
-        : dcmiv2_cfg_device_share_get_action(start_flag, end_flag, cmdline, buf_tmp);
+        action = (!dcmi_board_chip_type_is_ascend_950()) ?
+                     dcmi_cfg_device_share_get_action(start_flag, end_flag, cmdline, buf_tmp) :
+                     dcmiv2_cfg_device_share_get_action(start_flag, end_flag, cmdline, buf_tmp);
         if (action == DCMI_ERR_CODE_DEVICE_SHARE_CONFIG_ILLEGAL) {
             return DCMI_ERR_CODE_DEVICE_SHARE_CONFIG_ILLEGAL;
         }
@@ -1286,7 +1293,7 @@ int dcmi_cfg_insert_multi_die_policy_cmdline_to_buffer(const char *cmdline, FILE
             break;
         }
         line++;
-        
+
         if (insert_flag != DCMI_CFG_INSERT_COMPLETE) {
             if (end_flag == DCMI_MULTI_DIE_POLICY_FLAG_NOT_FIND) {
                 end_flag = (strcmp(buf_tmp, "[multi-die-policy-config end]\n") == 0) ? (line - 1) : end_flag;
@@ -1389,7 +1396,7 @@ int dcmi_cfg_get_device_share_config_recover_mode(unsigned int *enable_flag)
     }
 
     ret = DCMI_ERR_CODE_DEVICE_SHARE_CONFIG_ILLEGAL;
-    
+
     while (!feof(fp)) {
         (void)memset_s(buf_tmp, sizeof(buf_tmp), 0, sizeof(buf_tmp));
         str = fgets(buf_tmp, sizeof(buf_tmp), fp);
@@ -1424,8 +1431,8 @@ int dcmi_cfg_set_device_share_config_recover_mode(unsigned int enable_flag)
     char *buf = NULL;
     int lock_fd;
     unsigned int buf_len = 0;
-    ret = snprintf_s(cmdline_buf, sizeof(cmdline_buf), sizeof(cmdline_buf) - 1,
-        "device-share-recover:%s\n", (enable_flag == DCMI_CFG_RECOVER_ENABLE) ? "enable" : "disable");
+    ret = snprintf_s(cmdline_buf, sizeof(cmdline_buf), sizeof(cmdline_buf) - 1, "device-share-recover:%s\n",
+                     (enable_flag == DCMI_CFG_RECOVER_ENABLE) ? "enable" : "disable");
     if (ret <= 0) {
         gplog(LOG_ERR, "snprintf_s failed, ret is %d, enable_flag is %u", ret, enable_flag);
         return DCMI_ERR_CODE_SECURE_FUN_FAIL;
@@ -1472,8 +1479,8 @@ int dcmi_cfg_set_multi_die_policy_config_recover_mode(unsigned int enable_flag)
     char *buf = NULL;
     int lock_fd;
     unsigned int buf_len = 0;
-    ret = snprintf_s(cmdline_buf, sizeof(cmdline_buf), sizeof(cmdline_buf) - 1,
-        "multi-die-policy-recover:%s\n", (enable_flag == DCMI_CFG_RECOVER_ENABLE) ? "enable" : "disable");
+    ret = snprintf_s(cmdline_buf, sizeof(cmdline_buf), sizeof(cmdline_buf) - 1, "multi-die-policy-recover:%s\n",
+                     (enable_flag == DCMI_CFG_RECOVER_ENABLE) ? "enable" : "disable");
     if (ret <= 0) {
         gplog(LOG_ERR, "snprintf_s failed, ret is %d, enable_flag is %u", ret, enable_flag);
         return DCMI_ERR_CODE_SECURE_FUN_FAIL;
@@ -1514,8 +1521,8 @@ int dcmi_cfg_set_multi_die_policy_config_recover_mode(unsigned int enable_flag)
 int dcmi_cfg_qos_master_get_cfg_path(char *path, unsigned int path_size, char *path_bak, unsigned int path_bak_size)
 {
     if (path_size > PATH_MAX + 1 || path_bak_size > PATH_MAX + 1) {
-        gplog(LOG_ERR, "path_size or path_bak_size is invalid. path_size is %u, path_bak_size is %u",
-            path_size, path_bak_size);
+        gplog(LOG_ERR, "path_size or path_bak_size is invalid. path_size is %u, path_bak_size is %u", path_size,
+              path_bak_size);
         return DCMI_ERR_CODE_INVALID_PARAMETER;
     }
     if (realpath(DCMI_QOS_MASTER_CONF, path) == NULL && errno != ENOENT) {
@@ -1691,13 +1698,12 @@ int dcmi_cfg_insert_set_qos_master_cmdline(int card_id, int chip_id, struct dcmi
     char cmdline_buf[DCMI_QOS_MASTER_CFG_CMD_MAX_LEN] = {0};
     FILE *fp = NULL;
 
-    ret = snprintf_s(cmdline_buf, sizeof(cmdline_buf), sizeof(cmdline_buf) - 1,
-        "npu-smi set -t qos-master-config -i %d -c %d -s %d %d %d 0x%llx 0x%llx 0x%llx 0x%llx %u\n",
-            card_id, chip_id, qos_cfg.master, qos_cfg.mpamid, qos_cfg.qos,
-            qos_cfg.bitmap[DCMI_QOS_BITMAP_0 - DCMI_QOS_BITMAP_0],
-            qos_cfg.bitmap[DCMI_QOS_BITMAP_1 - DCMI_QOS_BITMAP_0],
-            qos_cfg.bitmap[DCMI_QOS_BITMAP_2 - DCMI_QOS_BITMAP_0],
-            qos_cfg.bitmap[DCMI_QOS_BITMAP_3 - DCMI_QOS_BITMAP_0], qos_cfg.mode);
+    ret = snprintf_s(
+        cmdline_buf, sizeof(cmdline_buf), sizeof(cmdline_buf) - 1,
+        "npu-smi set -t qos-master-config -i %d -c %d -s %d %d %d 0x%llx 0x%llx 0x%llx 0x%llx %u\n", card_id, chip_id,
+        qos_cfg.master, qos_cfg.mpamid, qos_cfg.qos, qos_cfg.bitmap[DCMI_QOS_BITMAP_0 - DCMI_QOS_BITMAP_0],
+        qos_cfg.bitmap[DCMI_QOS_BITMAP_1 - DCMI_QOS_BITMAP_0], qos_cfg.bitmap[DCMI_QOS_BITMAP_2 - DCMI_QOS_BITMAP_0],
+        qos_cfg.bitmap[DCMI_QOS_BITMAP_3 - DCMI_QOS_BITMAP_0], qos_cfg.mode);
     if (ret <= DCMI_QOS_MAX + 1) {
         gplog(LOG_ERR, "call snprintf_s failed, ret is %d", ret);
         return DCMI_ERR_CODE_SECURE_FUN_FAIL;
@@ -1718,8 +1724,8 @@ int dcmi_cfg_insert_set_qos_master_cmdline(int card_id, int chip_id, struct dcmi
 
     ret = dcmi_cfg_insert_qos_master_cmdline_to_buffer(cmdline_buf, fp, &buf, &buf_len);
     if (ret != DCMI_OK) {
-        gplog(LOG_ERR, "dcmi_cfg_insert_qos_master_cmdline_to_buffer failed. ret is %d, cmdline_buf is %s\b",
-              ret, cmdline_buf);
+        gplog(LOG_ERR, "dcmi_cfg_insert_qos_master_cmdline_to_buffer failed. ret is %d, cmdline_buf is %s\b", ret,
+              cmdline_buf);
         if (ret == DCMI_ERR_CODE_QOS_MASTER_CONFIG_ILLEGAL) {
             gplog(LOG_OP, "The configuration file was modified unexpectedly.");
         }
@@ -1747,17 +1753,17 @@ int dcmi_cfg_qos_master_check_is_cover(const char *cmdline, char *buf_tmp)
     unsigned int card_id_cmd, chip_id_cmd, master_id_cmd;
     int ret = 0;
     ret = sscanf_s(buf_tmp,
-        "npu-smi set -t qos-master-config -i %u -c %u -s %u %*d %*d 0x%*llx 0x%*llx 0x%*llx 0x%*llx %*u\n",
-        &card_id_tmp, &chip_id_tmp, &master_id_tmp); // 进行排序，只需要前三个参数
-    if (ret < 3U) { // sscanf_s返回值为入参个数
+                   "npu-smi set -t qos-master-config -i %u -c %u -s %u %*d %*d 0x%*llx 0x%*llx 0x%*llx 0x%*llx %*u\n",
+                   &card_id_tmp, &chip_id_tmp, &master_id_tmp); // 进行排序，只需要前三个参数
+    if (ret < 3U) {                                             // sscanf_s返回值为入参个数
         gplog(LOG_ERR, "call sscanf_s failed. ret is %d", ret);
         return ret;
     }
 
     ret = sscanf_s(cmdline,
-        "npu-smi set -t qos-master-config -i %u -c %u -s %u %*d %*d 0x%*llx 0x%*llx 0x%*llx 0x%*llx %*u\n",
-        &card_id_cmd, &chip_id_cmd, &master_id_cmd); // 进行排序，只需要前三个参数
-    if (ret < 3U) { // sscanf_s返回值为入参个数
+                   "npu-smi set -t qos-master-config -i %u -c %u -s %u %*d %*d 0x%*llx 0x%*llx 0x%*llx 0x%*llx %*u\n",
+                   &card_id_cmd, &chip_id_cmd, &master_id_cmd); // 进行排序，只需要前三个参数
+    if (ret < 3U) {                                             // sscanf_s返回值为入参个数
         gplog(LOG_ERR, "call sscanf_s failed. ret is %d", ret);
         return ret;
     }
@@ -1773,28 +1779,33 @@ int dcmi_cfg_qos_master_check_is_cover(const char *cmdline, char *buf_tmp)
     return ret;
 }
 
-int dcmi_cfg_check_qos_master_cmdline_is_correct(const char *cmdline, unsigned int *card_id,
-    unsigned int  *chip_id, unsigned int *master_id)
+int dcmi_cfg_check_qos_master_cmdline_is_correct(const char *cmdline, unsigned int *card_id, unsigned int *chip_id,
+                                                 unsigned int *master_id)
 {
     int ret = 0;
     ret = sscanf_s(cmdline,
-        "npu-smi set -t qos-master-config -i %u -c %u -s %u %*d %*d 0x%*llx 0x%*llx 0x%*llx 0x%*llx %*u\n",
-        card_id, chip_id, master_id); // 进行排序，只需要前三个参数
-    if (ret < 3U) { // sscanf_s返回值为入参个数
+                   "npu-smi set -t qos-master-config -i %u -c %u -s %u %*d %*d 0x%*llx 0x%*llx 0x%*llx 0x%*llx %*u\n",
+                   card_id, chip_id, master_id); // 进行排序，只需要前三个参数
+    if (ret < 3U) {                              // sscanf_s返回值为入参个数
         gplog(LOG_ERR, "call sscanf_s failed. ret is %d", ret);
     }
     return ret;
 }
 
-static bool config_id_greater(const qos_cmd_id* tmp, const qos_cmd_id* cmd)
+static bool config_id_greater(const qos_cmd_id *tmp, const qos_cmd_id *cmd)
 {
-    if (tmp->card_id > cmd->card_id) return true;
-    if (tmp->card_id < cmd->card_id) return false;
- 
-    if (tmp->chip_id > cmd->chip_id) return true;
-    if (tmp->chip_id < cmd->chip_id) return false;
- 
-    if (tmp->master_id > cmd->master_id) return true;
+    if (tmp->card_id > cmd->card_id)
+        return true;
+    if (tmp->card_id < cmd->card_id)
+        return false;
+
+    if (tmp->chip_id > cmd->chip_id)
+        return true;
+    if (tmp->chip_id < cmd->chip_id)
+        return false;
+
+    if (tmp->master_id > cmd->master_id)
+        return true;
     return false;
 }
 
@@ -1829,7 +1840,7 @@ int dcmi_cfg_qos_master_get_action(unsigned int start, unsigned int end, const c
             }
             qos_cmd_id tmp_cfg = {card_id_tmp, chip_id_tmp, master_id_tmp};
             qos_cmd_id cmd_cfg = {card_id_cmd, chip_id_cmd, master_id_cmd};
- 
+
             if (config_id_greater(&tmp_cfg, &cmd_cfg)) {
                 return DCMI_CFG_NEED_INSERT;
             } else {

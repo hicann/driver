@@ -27,17 +27,17 @@
 #include <time.h>
 #include <errno.h>
 #include <string.h>
-#include<ctype.h>
-#include<stdbool.h>
+#include <ctype.h>
+#include <stdbool.h>
 
 #include "securec.h"
 #include "ioctl_comm_def.h"
 #include "lingqu-dcmi-log.h"
 
 #ifndef STATIC_SKIP
-    #define STATIC static
+#define STATIC static
 #else
-    #define STATIC
+#define STATIC
 #endif
 
 #ifdef __cplusplus
@@ -154,7 +154,7 @@ int lq_dcmi_get_log_dir(char *log_dir, int log_dir_size)
     }
 
 #else
-        ret = strcpy_s(log_dir, log_dir_size, COMMON_LOG_DIR);
+    ret = strcpy_s(log_dir, log_dir_size, COMMON_LOG_DIR);
 #endif
     if (ret != EOK) {
         return -1;
@@ -184,7 +184,7 @@ STATIC int lq_dcmi_get_user_name_linux(char *user_name, int name_len)
 // 只检查ip的字符合法性
 bool check_ip_valid(const char *ip, int ip_len)
 {
-    int  i;
+    int i;
 
     for (i = 0; i < ip_len; i++) {
         // ipv4点分加10进制数表示，ipv6点分或冒分加16进制表示。
@@ -335,6 +335,7 @@ STATIC int lq_dcmi_get_user_name_and_ip_win(char *user_name, int name_len, char 
     if (!WTSQuerySessionInformation(WTS_CURRENT_SERVER_HANDLE, WTS_CURRENT_SESSION, WTSUserName, &wuser, &user_size)) {
         last_err = GetLastError();
         printf("call WTSQuerySessionInformation query WTSUserName failed, Err=%d\n", last_err);
+        return -1;
     }
     ret = WideCharToMultiByte(CP_ACP, 0, wuser, -1, NULL, 0, NULL, FALSE);
     ret = ((ret < name_len) ? ret : name_len);
@@ -346,21 +347,17 @@ STATIC int lq_dcmi_get_user_name_and_ip_win(char *user_name, int name_len, char 
         return -1;
     }
     if (GetSystemMetrics(SM_REMOTESESSION)) {
-        if (!WTSQuerySessionInformation(
-            WTS_CURRENT_SERVER_HANDLE, WTS_CURRENT_SESSION, WTSClientAddress, &buf, &size)) {
+        if (!WTSQuerySessionInformation(WTS_CURRENT_SERVER_HANDLE, WTS_CURRENT_SESSION, WTSClientAddress, &buf,
+                                        &size)) {
             last_err = GetLastError();
             printf("call WTSQuerySessionInformation query WTSClientAddress failed, Err=%d\n", last_err);
             WTSFreeMemory(wuser);
             return -1;
         }
         WTS_CLIENT_ADDRESS *pAddr = (WTS_CLIENT_ADDRESS *)buf;
-        sprintf_s(user_ip,
-            ip_len,
-            "%u.%u.%u.%u",
-            pAddr->Address[USER_IP_FIRST_INDEX],
-            pAddr->Address[USER_IP_SECOND_INDEX],
-            pAddr->Address[USER_IP_THIRD_INDEX],
-            pAddr->Address[USER_IP_FORTH_INDEX]);
+        sprintf_s(user_ip, ip_len, "%u.%u.%u.%u", pAddr->Address[USER_IP_FIRST_INDEX],
+                  pAddr->Address[USER_IP_SECOND_INDEX], pAddr->Address[USER_IP_THIRD_INDEX],
+                  pAddr->Address[USER_IP_FORTH_INDEX]);
         WTSFreeMemory(buf);
     } else {
         sprintf_s(user_ip, ip_len, "%s", "localhost");
@@ -392,12 +389,8 @@ STATIC void lq_dcmi_get_curr_time_str(char *curr_time_str, int curr_time_str_siz
     }
 
     ret = snprintf_s(curr_time_str, curr_time_str_size, curr_time_str_size - 1, "[%04d/%02d/%02d %02d:%02d:%02d]",
-        curr_time->tm_year + DCMI_LOG_BASE_TIME,
-        curr_time->tm_mon + 1,
-        curr_time->tm_mday,
-        curr_time->tm_hour,
-        curr_time->tm_min,
-        curr_time->tm_sec);
+                     curr_time->tm_year + DCMI_LOG_BASE_TIME, curr_time->tm_mon + 1, curr_time->tm_mday,
+                     curr_time->tm_hour, curr_time->tm_min, curr_time->tm_sec);
     if (ret == -1) {
         return;
     }
