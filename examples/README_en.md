@@ -1,5 +1,7 @@
 # Example Usage Guide
 
+English | [简体中文](./README.md)
+
 The examples directory provides a series of Driver interface examples, including device management, DCMI, and so on, for developer reference to help developers quickly get started and master Driver key features.
 
 ## Example List
@@ -21,13 +23,13 @@ If you have customizations to the source code in the driver repository src direc
 
   1. Download the example code and upload it to the environment where CANN software is installed. Switch to the example directory.
 
-  ```bash
-  # Using 0_device_p2p example as an example
-  cd ${git_clone_path}/examples/devmng/0_device_p2p
-  ```
+     ```bash
+     # Using 0_device_p2p example as an example
+     cd ${git_clone_path}/examples/devmng/0_device_p2p
+     ```
 
   2. Execute the following command to run the example.
 
-  ```bash
-  bash run.sh
-  ```
+     ```bash
+     bash run.sh
+     ```

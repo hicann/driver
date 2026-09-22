@@ -1,5 +1,7 @@
 # driver
 
+English | [简体中文](./README.md)
+
 ## 🔥Latest News
 
 - **[2026/06] Added support for the Ascend A5 chip (in UB)**.

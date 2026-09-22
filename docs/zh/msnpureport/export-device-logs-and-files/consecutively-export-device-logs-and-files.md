@@ -4,22 +4,22 @@
 
 <!-- npu="950" id1 -->
 
-- Ascend 950PR/Ascend 950DT：支持
+- Ascend 950PR&950DT系列产品：支持
 <!-- end id1 -->
 <!-- npu="A3" id2 -->
-- Atlas A3 训练系列产品/Atlas A3 推理系列产品：支持
+- Atlas A3系列产品：支持
 <!-- end id2 -->
 <!-- npu="910b" id3 -->
-- Atlas A2 训练系列产品/Atlas A2 推理系列产品：支持
+- Atlas A2系列产品：支持
 <!-- end id3 -->
 <!-- npu="310b" id4 -->
-- Atlas 200I/500 A2 推理产品：支持
+- Atlas 200I/500 A2推理产品：支持
 <!-- end id4 -->
 <!-- npu="310p" id5 -->
-- Atlas 推理系列产品：支持
+- Atlas推理系列产品：支持
 <!-- end id5 -->
 <!-- npu="910" id6 -->
-- Atlas 训练系列产品：支持
+- Atlas训练系列产品：支持
 <!-- end id6 -->
 
 ## 功能说明
@@ -98,7 +98,7 @@ Device侧的相关日志和文件被导出到Host侧，并存储到当前目录�
 │       │   ├── device-app-pid
 │       │   │   └── device-app-pid.log  //Device侧应用进程产生的运行日志，仅在回传到Host失败时生成
 │       │   ├── device-os
-│       │   │   └── device-os_*.log  //Device侧系统进程产生的运行日志  
+│       │   │   └── device-os_*.log  //Device侧系统进程产生的运行日志
 │       │   └── event
 │       │       └── event_*.log  //Device侧系统进程产生的EVENT日志
 │       ├── security
@@ -124,23 +124,23 @@ Device侧的相关日志和文件被导出到Host侧，并存储到当前目录�
 <!-- npu="950" id7 -->
 Device ID在如下场景，表示逻辑ID。
 
-Ascend 950PR/Ascend 950DT
+Ascend 950PR&950DT系列产品
 <!-- end id7 -->
 
 <!-- npu="A3,910b,910,310p,310b" id8 -->
 Device ID在如下场景，表示物理ID。
 <!-- end id8 -->
 <!-- npu="310b" id9 -->
-Atlas 200I/500 A2 推理产品
+Atlas 200I/500 A2推理产品
 <!-- end id9 -->
 <!-- npu="310p" id10 -->
-Atlas 推理系列产品
+Atlas推理系列产品
 <!-- end id10 -->
 <!-- npu="910" id11 -->
-Atlas 训练系列产品
+Atlas训练系列产品
 <!-- end id11 -->
 <!-- npu="910b" id12 -->
-Atlas A2 训练系列产品/Atlas A2 推理系列产品
+Atlas A2系列产品
 <!-- end id12 -->
 
-<!-- npu="A3" id13 -->Atlas A3 训练系列产品/Atlas A3 推理系列产品<!-- end id13 -->
+<!-- npu="A3" id13 -->Atlas A3系列产品<!-- end id13 -->

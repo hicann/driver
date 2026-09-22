@@ -1,5 +1,7 @@
 # 样例使用指导
 
+简体中文 | [English](./README_en.md)
+
 examples目录下提供了一系列Driver接口样例，包括设备管理、DCMI等，供开发者参考，帮助开发者快速入门，进而掌握Driver关键特性。
 
 ## 样例列表
@@ -21,9 +23,9 @@ examples目录下提供了一系列Driver接口样例，包括设备管理、DCM
 
   1.下载样例代码并上传至安装CANN软件的环境，切换到样例目录。
 
-  ```bash
-  # 此处以0_device_p2p样例为例
-  cd ${git_clone_path}/examples/devmng/0_device_p2p
+   ```bash
+    # 此处以0_device_p2p样例为例
+    cd ${git_clone_path}/examples/devmng/0_device_p2p
   ```
 
   2.执行以下命令运行样例。

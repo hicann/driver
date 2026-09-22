@@ -4,22 +4,22 @@
 
 <!-- npu="950" id1 -->
 
-- Ascend 950PR/Ascend 950DT：支持
+- Ascend 950PR&950DT系列产品：支持
 <!-- end id1 -->
 <!-- npu="A3" id2 -->
-- Atlas A3 训练系列产品/Atlas A3 推理系列产品：支持
+- Atlas A3系列产品：支持
 <!-- end id2 -->
 <!-- npu="910b" id3 -->
-- Atlas A2 训练系列产品/Atlas A2 推理系列产品：支持
+- Atlas A2系列产品：支持
 <!-- end id3 -->
 <!-- npu="310b" id4 -->
-- Atlas 200I/500 A2 推理产品：支持
+- Atlas 200I/500 A2推理产品：支持
 <!-- end id4 -->
 <!-- npu="310p" id5 -->
-- Atlas 推理系列产品：支持
+- Atlas推理系列产品：支持
 <!-- end id5 -->
 <!-- npu="910" id6 -->
-- Atlas 训练系列产品：支持
+- Atlas训练系列产品：支持
 <!-- end id6 -->
 
 ## 功能说明
@@ -123,90 +123,90 @@ msnpureport [options]
 
 - 2：黑匣子日志、黑匣子设备事件信息、黑匣子存储空间中的历史维测信息。`-t 2`不支持多进程并发执行。<!-- npu="A3,910b" id7 --><br>对于以下产品，还支持导出当前硬件寄存器信息，导出后建议执行`npu-smi set -t reset -i id -c chip_id`复位芯片，详细请参考[《 npu-smi 命令参考》](https://support.huawei.com/enterprise/zh/ascend-computing/ascend-hdk-pid-252764743?category=reference-guides)。<!-- end id7 -->
   <!-- npu="910b" id8 -->
-  - Atlas A2 训练系列产品/Atlas A2 推理系列产品
+  - Atlas A2系列产品
   <!-- end id8 -->
   <!-- npu="A3" id9 -->
-  - Atlas A3 训练系列产品/Atlas A3 推理系列产品
+  - Atlas A3系列产品
   <!-- end id9 -->
 - 3：Device侧进程coredump时的调用栈信息
 <!-- npu="950,A3,910b" id10 -->
 - 4：vmcore文件。对于以下产品，当Device OS心跳丢失时，会同时生成vmcore文件和黑匣子日志，其他产品不会生成vmcore文件。`-t 4`不支持多进程并发执行。
   <!-- npu="910b" id11 -->
-  - Atlas A2 训练系列产品/Atlas A2 推理系列产品
+  - Atlas A2系列产品
    <!-- end id11 -->
   <!-- npu="A3" id12 -->
    - A3 训练系列产品/Atlas A3 推理系列产品
   <!-- end id12 -->
 
   <!-- npu="950" id13 -->
-   - Ascend 950PR/Ascend 950DT
+   - Ascend 950PR&950DT系列产品
   <!-- end id13 -->
 
- <!-- end id10 --> 
+ <!-- end id10 -->
 - 5：其他模块日志，如DVPP、TEE日志、驱动proc日志等，不同产品型号支持导出的日志类型略有差异，请以实际为准
 - 6：Unified Bus统一总线的维测信息。
   <!-- npu="310b" id14 -->
-  - Atlas 200I/500 A2 推理产品：不支持
+  - Atlas 200I/500 A2推理产品：不支持
   <!-- end id14 -->
   <!-- npu="310p" id15 -->
-  - Atlas 推理系列产品：不支持
+  - Atlas推理系列产品：不支持
   <!-- end id15 -->
   <!-- npu="910b" id16 -->
-  - Atlas A2 训练系列产品/Atlas A2 推理系列产品：不支持
+  - Atlas A2系列产品：不支持
   <!-- end id16 -->
   <!-- npu="A3" id17 -->
-  - Atlas A3 训练系列产品/Atlas A3 推理系列产品：不支持
+  - Atlas A3系列产品：不支持
   <!-- end id17 -->
   <!-- npu="950" id18 -->
-  - Ascend 950PR/Ascend 950DT：支持
+  - Ascend 950PR&950DT系列产品：支持
   <!-- end id18 -->
 - 7：AO(Always Online)区的日志信息。
   <!-- npu="310b" id26 -->
-  - Atlas 200I/500 A2 推理产品：不支持
+  - Atlas 200I/500 A2推理产品：不支持
   <!-- end id26 -->
   <!-- npu="310p" id27 -->
-  - Atlas 推理系列产品：不支持
+  - Atlas推理系列产品：不支持
   <!-- end id27 -->
   <!-- npu="910b" id28 -->
-  - Atlas A2 训练系列产品/Atlas A2 推理系列产品：不支持
+  - Atlas A2系列产品：不支持
   <!-- end id28 -->
   <!-- npu="A3" id29 -->
-  - Atlas A3 训练系列产品/Atlas A3 推理系列产品：不支持
+  - Atlas A3系列产品：不支持
   <!-- end id29 -->
   <!-- npu="950" id30 -->
-  - Ascend 950PR/Ascend 950DT：支持
+  - Ascend 950PR&950DT系列产品：支持
   <!-- end id30 -->
 - 8：AO计数。
   <!-- npu="310b" id31 -->
-  - Atlas 200I/500 A2 推理产品：不支持
+  - Atlas 200I/500 A2推理产品：不支持
   <!-- end id31 -->
   <!-- npu="310p" id32 -->
-  - Atlas 推理系列产品：不支持
+  - Atlas推理系列产品：不支持
   <!-- end id32 -->
   <!-- npu="910b" id33 -->
-  - Atlas A2 训练系列产品/Atlas A2 推理系列产品：不支持
+  - Atlas A2系列产品：不支持
   <!-- end id33 -->
   <!-- npu="A3" id34 -->
-  - Atlas A3 训练系列产品/Atlas A3 推理系列产品：不支持
+  - Atlas A3系列产品：不支持
   <!-- end id34 -->
   <!-- npu="950" id35 -->
-  - Ascend 950PR/Ascend 950DT：支持
+  - Ascend 950PR&950DT系列产品：支持
   <!-- end id35 -->
 - 9：串口录音。
   <!-- npu="310b" id36 -->
-  - Atlas 200I/500 A2 推理产品：不支持
+  - Atlas 200I/500 A2推理产品：不支持
   <!-- end id36 -->
   <!-- npu="310p" id37 -->
-  - Atlas 推理系列产品：不支持
+  - Atlas推理系列产品：不支持
   <!-- end id37 -->
   <!-- npu="910b" id38 -->
-  - Atlas A2 训练系列产品/Atlas A2 推理系列产品：不支持
+  - Atlas A2系列产品：不支持
   <!-- end id38 -->
   <!-- npu="A3" id39 -->
-  - Atlas A3 训练系列产品/Atlas A3 推理系列产品：不支持
+  - Atlas A3系列产品：不支持
   <!-- end id39 -->
   <!-- npu="950" id40 -->
-  - Ascend 950PR/Ascend 950DT：支持
+  - Ascend 950PR&950DT系列产品：支持
   <!-- end id40 -->
 
 ## 使用示例
@@ -246,7 +246,7 @@ Device侧的相关日志和文件被导出到Host侧，并存储到当前目录�
 │       │   ├── device-app-pid
 │       │   │   └── device-app-pid.log  //Device侧应用进程产生的运行日志，仅在回传到Host失败时生成
 │       │   ├── device-os
-│       │   │   └── device-os_*.log  //Device侧系统进程产生的运行日志  
+│       │   │   └── device-os_*.log  //Device侧系统进程产生的运行日志
 │       │   └── event
 │       │       └── event_*.log  //Device侧系统进程产生的EVENT日志
 │       ├── security
@@ -279,7 +279,7 @@ Device侧的相关日志和文件被导出到Host侧，并存储到当前目录�
 │           ├── ubmem_daw.bin
 │           ├── ubtpl_acl.bin
 │           ├── sl_to_vl.bin
-│           └── ...     
+│           └── ...
 ├── ao_info // AO领域的维测信息。
 │   └── dev-os-{id}
 │       ├── ao_self //AO区日志
@@ -294,23 +294,23 @@ Device侧的相关日志和文件被导出到Host侧，并存储到当前目录�
 <!-- npu="950" id19 -->
 Device ID在如下场景，表示逻辑ID。
 
-Ascend 950PR/Ascend 950DT
+Ascend 950PR&950DT系列产品
 <!-- end id19 -->
 <!-- npu="A3,910b,910,310p,310b" id20 -->
 Device ID在如下场景，表示物理ID。
 <!-- end id20 -->
 <!-- npu="310b" id21 -->
-- Atlas 200I/500 A2 推理产品
+- Atlas 200I/500 A2推理产品
 <!-- end id21 -->
 <!-- npu="310p" id22 -->
-- Atlas 推理系列产品
+- Atlas推理系列产品
 <!-- end id22 -->
 <!-- npu="910" id23 -->
-- Atlas 训练系列产品
+- Atlas训练系列产品
 <!-- end id23 -->
 <!-- npu="910b" id24 -->
-- Atlas A2 训练系列产品/Atlas A2 推理系列产品
+- Atlas A2系列产品
 <!-- end id24 -->
 <!-- npu="A3" id25 -->
-- Atlas A3 训练系列产品/Atlas A3 推理系列产品
+- Atlas A3系列产品
 <!-- end id25 -->
