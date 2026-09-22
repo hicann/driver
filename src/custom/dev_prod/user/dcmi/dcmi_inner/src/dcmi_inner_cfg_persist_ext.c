@@ -1218,14 +1218,14 @@ int dcmi_cfg_insert_device_share_cmdline_to_buffer(const char *cmdline, FILE *fp
     char buf_tmp[DCMI_DEVICE_SHARE_CONF_ONE_LINE_MAX_LEN] = {0};
     unsigned int insert_flag = 0, line = 0, start_flag = 0, end_flag = 0;
     struct cfg_buf_info buf_info;
+    unsigned int tmp_len = 0;
 
     (void)fseek(fp, 0, SEEK_END);
     buf_info.buf_size = (unsigned int)ftell(fp) + DCMI_DEVICE_SHARE_CONF_ONE_LINE_MAX_LEN + 1;
     rewind(fp);
-    if (dcmi_cfg_malloc_buffer_and_init(buf_out, buf_info.buf_size) != DCMI_OK) {
+    if (dcmi_cfg_malloc_buffer_and_init(&buf_info.buf, buf_info.buf_size) != DCMI_OK) {
         return DCMI_ERR_CODE_INNER_ERR;
     }
-    buf_info.buf = *buf_out;
 
     while (!feof(fp)) {
         (void)memset_s(buf_tmp, sizeof(buf_tmp), 0, sizeof(buf_tmp));
@@ -1236,11 +1236,11 @@ int dcmi_cfg_insert_device_share_cmdline_to_buffer(const char *cmdline, FILE *fp
         line++;
 
         if (insert_flag == DCMI_CFG_INSERT_COMPLETE) {
-            ret = strncat_s(*buf_out, buf_info.buf_size, buf_tmp, strlen(buf_tmp));
+            ret = strncat_s(buf_info.buf, buf_info.buf_size, buf_tmp, strlen(buf_tmp));
             if (ret != 0) {
                 goto SECURE_FUN_FAIL;
             }
-            *len += strlen(buf_tmp);
+            tmp_len += strlen(buf_tmp);
         }
 
         if (end_flag == DCMI_DEVICE_SHARE_FLAG_NOT_FIND) {
@@ -1251,10 +1251,11 @@ int dcmi_cfg_insert_device_share_cmdline_to_buffer(const char *cmdline, FILE *fp
                      dcmi_cfg_device_share_get_action(start_flag, end_flag, cmdline, buf_tmp) :
                      dcmiv2_cfg_device_share_get_action(start_flag, end_flag, cmdline, buf_tmp);
         if (action == DCMI_ERR_CODE_DEVICE_SHARE_CONFIG_ILLEGAL) {
+            free(buf_info.buf);
             return DCMI_ERR_CODE_DEVICE_SHARE_CONFIG_ILLEGAL;
         }
 
-        ret = dcmi_cfg_process_action(action, &buf_info, len, cmdline, buf_tmp);
+        ret = dcmi_cfg_process_action(action, &buf_info, &tmp_len, cmdline, buf_tmp);
         insert_flag = ((ret == DCMI_CFG_INSERT_OK) ? DCMI_CFG_INSERT_COMPLETE : insert_flag);
         if (ret == DCMI_ERR_CODE_SECURE_FUN_FAIL) {
             goto SECURE_FUN_FAIL;
@@ -1264,10 +1265,17 @@ int dcmi_cfg_insert_device_share_cmdline_to_buffer(const char *cmdline, FILE *fp
         }
     }
 
-    return (start_flag == 0) ? DCMI_ERR_CODE_DEVICE_SHARE_CONFIG_ILLEGAL : DCMI_OK;
+    if (start_flag == 0) {
+        free(buf_info.buf);
+        return DCMI_ERR_CODE_DEVICE_SHARE_CONFIG_ILLEGAL;
+    }
+    *buf_out = buf_info.buf;
+    *len = tmp_len;
+    return DCMI_OK;
 
 SECURE_FUN_FAIL:
     gplog(LOG_ERR, "strncat_s failed. ret is %d", ret);
+    free(buf_info.buf);
     return DCMI_ERR_CODE_SECURE_FUN_FAIL;
 }
 
@@ -1277,14 +1285,14 @@ int dcmi_cfg_insert_multi_die_policy_cmdline_to_buffer(const char *cmdline, FILE
     char buf_tmp[DCMI_MULTI_DIE_POLICY_CONF_ONE_LINE_MAX_LINE] = {0};
     unsigned int insert_flag = 0, line = 0, start_flag = 0, end_flag = 0;
     struct cfg_buf_info buf_info;
+    unsigned int tmp_len = 0;
 
     (void)fseek(fp, 0, SEEK_END);
     buf_info.buf_size = (unsigned int)ftell(fp) + DCMI_MULTI_DIE_POLICY_CONF_ONE_LINE_MAX_LINE + 1;
     rewind(fp);
-    if (dcmi_cfg_malloc_buffer_and_init(buf_out, buf_info.buf_size) != DCMI_OK) {
+    if (dcmi_cfg_malloc_buffer_and_init(&buf_info.buf, buf_info.buf_size) != DCMI_OK) {
         return DCMI_ERR_CODE_INNER_ERR;
     }
-    buf_info.buf = *buf_out;
 
     while (!feof(fp)) {
         (void)memset_s(buf_tmp, sizeof(buf_tmp), 0, sizeof(buf_tmp));
@@ -1300,9 +1308,10 @@ int dcmi_cfg_insert_multi_die_policy_cmdline_to_buffer(const char *cmdline, FILE
             }
             action = dcmi_cfg_multi_die_get_action(start_flag, end_flag, cmdline, buf_tmp);
             if (action == DCMI_ERR_CODE_MULTI_DIE_POLIC_CONFIG_ILLEGAL) {
+                free(buf_info.buf);
                 return DCMI_ERR_CODE_MULTI_DIE_POLIC_CONFIG_ILLEGAL;
             }
-            ret = dcmi_cfg_process_action(action, &buf_info, len, cmdline, buf_tmp);
+            ret = dcmi_cfg_process_action(action, &buf_info, &tmp_len, cmdline, buf_tmp);
             insert_flag = ((ret == DCMI_CFG_INSERT_OK) ? DCMI_CFG_INSERT_COMPLETE : insert_flag);
             if (ret == DCMI_ERR_CODE_SECURE_FUN_FAIL) {
                 goto SECURE_FUN_FAIL;
@@ -1311,18 +1320,26 @@ int dcmi_cfg_insert_multi_die_policy_cmdline_to_buffer(const char *cmdline, FILE
                 start_flag = (strcmp(buf_tmp, "[multi-die-policy-config start]\n") == 0) ? (line - 1) : start_flag;
             }
         } else {
-            ret = strncat_s(*buf_out, buf_info.buf_size, buf_tmp, strlen(buf_tmp));
+            ret = strncat_s(buf_info.buf, buf_info.buf_size, buf_tmp, strlen(buf_tmp));
             if (ret != 0) {
                 goto SECURE_FUN_FAIL;
             }
-            *len += strlen(buf_tmp);
+            tmp_len += strlen(buf_tmp);
         }
     }
 
-    ret = (start_flag == 0) ? DCMI_ERR_CODE_MULTI_DIE_POLIC_CONFIG_ILLEGAL : DCMI_OK;
-    return ret;
+    if (start_flag == 0) {
+        free(buf_info.buf);
+        return DCMI_ERR_CODE_MULTI_DIE_POLIC_CONFIG_ILLEGAL;
+    }
+
+    *buf_out = buf_info.buf;
+    *len = tmp_len;
+    return DCMI_OK;
+
 SECURE_FUN_FAIL:
     gplog(LOG_ERR, "strncat_s failed. ret is %d", ret);
+    free(buf_info.buf);
     return DCMI_ERR_CODE_SECURE_FUN_FAIL;
 }
 
@@ -1861,14 +1878,14 @@ int dcmi_cfg_insert_qos_master_cmdline_to_buffer(const char *cmdline, FILE *fp, 
     char buf_tmp[DCMI_QOS_MASTER_CFG_CMD_MAX_LEN] = {0};
     unsigned int insert_flag = 0, line = 0, start_flag = 0, end_flag = 0;
     struct cfg_buf_info buf_info;
+    unsigned int tmp_len = 0;
 
     (void)fseek(fp, 0, SEEK_END);
     buf_info.buf_size = (unsigned int)ftell(fp) + DCMI_QOS_MASTER_CFG_CMD_MAX_LEN + 1;
     rewind(fp);
-    if (dcmi_cfg_malloc_buffer_and_init(buf_out, buf_info.buf_size) != DCMI_OK) {
+    if (dcmi_cfg_malloc_buffer_and_init(&buf_info.buf, buf_info.buf_size) != DCMI_OK) {
         return DCMI_ERR_CODE_INNER_ERR;
     }
-    buf_info.buf = *buf_out;
 
     while (!feof(fp)) {
         (void)memset_s(buf_tmp, sizeof(buf_tmp), 0, sizeof(buf_tmp));
@@ -1884,9 +1901,10 @@ int dcmi_cfg_insert_qos_master_cmdline_to_buffer(const char *cmdline, FILE *fp, 
 
             action = dcmi_cfg_qos_master_get_action(start_flag, end_flag, cmdline, buf_tmp);
             if (action == DCMI_ERR_CODE_QOS_MASTER_CONFIG_ILLEGAL) {
+                free(buf_info.buf);
                 return action;
             }
-            ret = dcmi_cfg_process_action(action, &buf_info, len, cmdline, buf_tmp);
+            ret = dcmi_cfg_process_action(action, &buf_info, &tmp_len, cmdline, buf_tmp);
             insert_flag = ret == DCMI_CFG_INSERT_OK ? DCMI_CFG_INSERT_COMPLETE : insert_flag;
             if (ret == DCMI_ERR_CODE_SECURE_FUN_FAIL) {
                 goto secure_func_fail;
@@ -1895,18 +1913,25 @@ int dcmi_cfg_insert_qos_master_cmdline_to_buffer(const char *cmdline, FILE *fp, 
                 start_flag = (strcmp(buf_tmp, "[qos-master-config start]\n") == 0) ? line : start_flag;
             }
         } else {
-            ret = strncat_s(*buf_out, buf_info.buf_size, buf_tmp, strlen(buf_tmp));
+            ret = strncat_s(buf_info.buf, buf_info.buf_size, buf_tmp, strlen(buf_tmp));
             if (ret != 0) {
                 goto secure_func_fail;
             }
-            *len += strlen(buf_tmp);
+            tmp_len += strlen(buf_tmp);
         }
     }
 
-    ret = (start_flag == 0) ? DCMI_ERR_CODE_QOS_MASTER_CONFIG_ILLEGAL : DCMI_OK;
-    return ret;
+    if (start_flag == 0) {
+        free(buf_info.buf);
+        return DCMI_ERR_CODE_QOS_MASTER_CONFIG_ILLEGAL;
+    }
+
+    *buf_out = buf_info.buf;
+    *len = tmp_len;
+    return DCMI_OK;
+
 secure_func_fail:
     gplog(LOG_ERR, "call strncat_s failed. ret is %d", ret);
-    free(*buf_out);
+    free(buf_info.buf);
     return DCMI_ERR_CODE_SECURE_FUN_FAIL;
 }
