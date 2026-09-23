@@ -22,15 +22,15 @@ Refer to the [Ascend Community](https://www.hiascend.com/cann) for the position 
 
 ## 📖Module Introduction
 
-- [RoCE (RDMA over Converged Ethernet)](./src/ascend_hal/roce/README.md): The RoCE module in the Ascend AI processor platform reduces latency and improves data transmission efficiency.
-- [SVM (Shared Virtual Memory)](./src/ascend_hal/svm/README.md): The memory management module in the Ascend AI processor platform for efficient management of device-side memory.
+- [RoCE (RDMA over Converged Ethernet)](./src/ascend_hal/roce/README_en.md): The RoCE module in the Ascend AI processor platform reduces latency and improves data transmission efficiency.
+- [SVM (Shared Virtual Memory)](./src/ascend_hal/svm/README_en.md): The memory management module in the Ascend AI processor platform for efficient management of device-side memory.
 
 ## ⚡️Quick Start
 
 If you want to quickly experience the invocation and development process of driver, visit the following documents for a simple tutorial.
 
-- [QUICKSTART](./docs/zh/QUICKSTART.md): End-to-end quick start guide, including setting up the environment, compilation deployment, source code development, debugging, contribution, and other processes.
-- [Reference Examples](./examples/README.md): Introduction to basic examples of modules such as device management.
+- [QUICKSTART](./docs/en/QUICKSTART.md): End-to-end quick start guide, including setting up the environment, compilation deployment, source code development, debugging, contribution, and other processes.
+- [Reference Examples](./examples/README_en.md): Introduction to basic examples of modules such as device management.
 
 ## 📝Directory Structure
 
@@ -120,12 +120,12 @@ Key directory structure is as follows:
 
 ## 🔍FAQ
 
-- [FAQ](./docs/zh/FAQ.md): Summary of source code compilation, installation deployment, and other problems.
+- [FAQ](./docs/en/FAQ.md): Summary of source code compilation, installation deployment, and other problems.
 
 ## Related Information
 
-- [Contributing Guide](./CONTRIBUTING.md)
-- [Security Statement](./SECURITY.md)
+- [Contributing Guide](./CONTRIBUTING_en.md)
+- [Security Statement](./SECURITY_en.md)
 - License
 
 &emsp;&emsp;&emsp;[CANN Open Software License Agreement Version 2.0](./LICENSES/CANN-V2.0)
