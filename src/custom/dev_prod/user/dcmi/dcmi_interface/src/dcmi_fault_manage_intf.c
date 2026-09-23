@@ -7,7 +7,7 @@
  * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
  * See LICENSE in the root of the software repository for the full text of the License.
  */
- 
+
 #include <stdio.h>
 #include <time.h>
 #include <limits.h>
@@ -16,7 +16,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <fcntl.h>
- 
+
 #include "securec.h"
 #include "dsmi_common_interface.h"
 #include "dcmi_interface_api.h"
@@ -33,25 +33,25 @@
 
 struct err_code_map_node g_err_code_map[DCMI_ERR_CODE_MAX_NUM] = {
     {DSMI_OK, DCMI_OK},
-    {DSMI_ERR_NO_DEVICE,           DCMI_ERR_CODE_DEVICE_NOT_EXIST},
-    {DSMI_ERR_INVALID_DEVICE,      DCMI_ERR_CODE_INVALID_DEVICE_ID},
-    {DSMI_ERR_INVALID_VALUE,       DCMI_ERR_CODE_INVALID_PARAMETER},
-    {DSMI_ERR_INVALID_HANDLE,      DCMI_ERR_CODE_INVALID_PARAMETER},
-    {DSMI_ERR_INNER_ERR,           DCMI_ERR_CODE_INNER_ERR},
-    {DSMI_ERR_PARA_ERROR,          DCMI_ERR_CODE_INVALID_PARAMETER},
-    {DSMI_ERR_NOT_EXIST,           DCMI_ERR_CODE_DEVICE_NOT_EXIST},
-    {DSMI_ERR_DEVICE_BUSY,         DCMI_ERR_CODE_NOT_SUPPORT_IN_CONTAINER},
-    {DSMI_ERR_WAIT_TIMEOUT,        DCMI_ERR_CODE_TIME_OUT},
-    {DSMI_ERR_PARA_INVALID,        DCMI_ERR_CODE_INVALID_PARAMETER},
-    {DSMI_ERR_IOCRL_FAIL,          DCMI_ERR_CODE_IOCTL_FAIL},
-    {DSMI_ERR_SEND_MESG,           DCMI_ERR_CODE_SEND_MSG_FAIL},
-    {DSMI_ERR_OPER_NOT_PERMITTED,  DCMI_ERR_CODE_OPER_NOT_PERMITTED},
-    {DSMI_ERR_TRY_AGAIN,           DCMI_ERR_CODE_NOT_REDAY},
-    {DSMI_ERR_FILE_OPS,            DCMI_ERR_CODE_FILE_OPERATE_FAIL},
-    {DSMI_ERR_MEMORY_OPT_FAIL,     DCMI_ERR_CODE_MEM_OPERATE_FAIL},
+    {DSMI_ERR_NO_DEVICE, DCMI_ERR_CODE_DEVICE_NOT_EXIST},
+    {DSMI_ERR_INVALID_DEVICE, DCMI_ERR_CODE_INVALID_DEVICE_ID},
+    {DSMI_ERR_INVALID_VALUE, DCMI_ERR_CODE_INVALID_PARAMETER},
+    {DSMI_ERR_INVALID_HANDLE, DCMI_ERR_CODE_INVALID_PARAMETER},
+    {DSMI_ERR_INNER_ERR, DCMI_ERR_CODE_INNER_ERR},
+    {DSMI_ERR_PARA_ERROR, DCMI_ERR_CODE_INVALID_PARAMETER},
+    {DSMI_ERR_NOT_EXIST, DCMI_ERR_CODE_DEVICE_NOT_EXIST},
+    {DSMI_ERR_DEVICE_BUSY, DCMI_ERR_CODE_NOT_SUPPORT_IN_CONTAINER},
+    {DSMI_ERR_WAIT_TIMEOUT, DCMI_ERR_CODE_TIME_OUT},
+    {DSMI_ERR_PARA_INVALID, DCMI_ERR_CODE_INVALID_PARAMETER},
+    {DSMI_ERR_IOCRL_FAIL, DCMI_ERR_CODE_IOCTL_FAIL},
+    {DSMI_ERR_SEND_MESG, DCMI_ERR_CODE_SEND_MSG_FAIL},
+    {DSMI_ERR_OPER_NOT_PERMITTED, DCMI_ERR_CODE_OPER_NOT_PERMITTED},
+    {DSMI_ERR_TRY_AGAIN, DCMI_ERR_CODE_NOT_REDAY},
+    {DSMI_ERR_FILE_OPS, DCMI_ERR_CODE_FILE_OPERATE_FAIL},
+    {DSMI_ERR_MEMORY_OPT_FAIL, DCMI_ERR_CODE_MEM_OPERATE_FAIL},
     {DSMI_ERR_PARTITION_NOT_RIGHT, DCMI_ERR_CODE_PARTITION_NOT_RIGHT},
-    {DSMI_ERR_RESOURCE_OCCUPIED,   DCMI_ERR_CODE_RESOURCE_OCCUPIED},
-    {DSMI_ERR_NOT_SUPPORT,         DCMI_ERR_CODE_NOT_SUPPORT},
+    {DSMI_ERR_RESOURCE_OCCUPIED, DCMI_ERR_CODE_RESOURCE_OCCUPIED},
+    {DSMI_ERR_NOT_SUPPORT, DCMI_ERR_CODE_NOT_SUPPORT},
 };
 
 int dcmi_convert_error_code(int dsmi_err_code)
@@ -67,21 +67,19 @@ int dcmi_convert_error_code(int dsmi_err_code)
     return DCMI_ERR_CODE_INNER_ERR;
 }
 
-int dcmi_get_device_errorcode_950(
-    int card_id, int device_id, int *error_count, unsigned int *error_code_list, unsigned int list_len)
+int dcmi_get_device_errorcode_950(int card_id, int device_id, int *error_count, unsigned int *error_code_list,
+                                  unsigned int list_len)
 {
     int ret, remain, ao_count;
     int ao_err_code_count = 0;
     unsigned int ao_err_code_list[DCMI_ERROR_CODE_MAX_COUNT] = {0};
 
-    ret = dcmi_get_npu_device_errorcode(card_id, device_id, error_count, error_code_list,
-        list_len);
+    ret = dcmi_get_npu_device_errorcode(card_id, device_id, error_count, error_code_list, list_len);
     if (ret != DCMI_OK) {
         gplog(LOG_ERR, "dcmi_get_npu_device_errorcode failed. err is %d.", ret);
         return ret;
     }
-    ret = dcmi_mcu_get_device_errorcode(card_id, &ao_err_code_count,
-        ao_err_code_list, list_len);
+    ret = dcmi_mcu_get_device_errorcode(card_id, &ao_err_code_count, ao_err_code_list, list_len);
     if (ret != DCMI_OK) {
         gplog(LOG_ERR, "dcmi_mcu_get_device_errorcode failed. err is %d.", ret);
         return ret;
@@ -92,7 +90,7 @@ int dcmi_get_device_errorcode_950(
 
     if (ao_count > 0) {
         ret = memcpy_s(&error_code_list[*error_count], remain * sizeof(unsigned int), ao_err_code_list,
-        ao_count * sizeof(unsigned int));
+                       ao_count * sizeof(unsigned int));
         if (ret != EOK) {
             gplog(LOG_ERR, "memcpy_s failed. err is %d.", ret);
             return DCMI_ERR_CODE_SECURE_FUN_FAIL;
@@ -105,20 +103,20 @@ int dcmi_get_device_errorcode_950(
 
 #if defined DCMI_VERSION_2
 int dcmi_get_device_errorcode_based_on_type(int card_id, int device_id, enum dcmi_unit_type device_type,
-    unsigned int *err_code_count, unsigned int *err_code_list)
+                                            unsigned int *err_code_count, unsigned int *err_code_list)
 {
     int err;
-    
+
     if (device_type == NPU_TYPE) {
         err = dcmi_get_npu_device_errorcode(card_id, device_id, (int *)(void *)err_code_count, err_code_list,
-        DCMI_ERROR_CODE_MAX_COUNT);
+                                            DCMI_ERROR_CODE_MAX_COUNT);
     } else if (device_type == MCU_TYPE) {
         err = dcmi_mcu_get_device_errorcode(card_id, (int *)(void *)err_code_count, err_code_list,
-        DCMI_ERROR_CODE_MAX_COUNT);
+                                            DCMI_ERROR_CODE_MAX_COUNT);
 #ifndef _WIN32
     } else if (device_type == CPU_TYPE) {
         err = dcmi_cpu_get_device_errorcode(card_id, (int *)(void *)err_code_count, err_code_list,
-        DCMI_ERROR_CODE_MAX_COUNT);
+                                            DCMI_ERROR_CODE_MAX_COUNT);
 #endif
     } else {
         gplog(LOG_ERR, "device_type %d is error.", device_type);
@@ -129,7 +127,7 @@ int dcmi_get_device_errorcode_based_on_type(int card_id, int device_id, enum dcm
 }
 
 int dcmi_get_device_errorcode_v2(int card_id, int device_id, int *error_count, unsigned int *error_code_list,
-    unsigned int list_len)
+                                 unsigned int list_len)
 {
     int err;
     enum dcmi_unit_type device_type = NPU_TYPE;
@@ -166,7 +164,7 @@ int dcmi_get_device_errorcode_v2(int card_id, int device_id, int *error_count, u
     }
 
     err = memcpy_s(error_code_list, list_len * sizeof(unsigned int), err_code_list,
-        err_code_count * sizeof(unsigned int));
+                   err_code_count * sizeof(unsigned int));
     if (err != EOK) {
         gplog(LOG_ERR, "memcpy_s failed. err is  %d.", err);
         return DCMI_ERR_CODE_SECURE_FUN_FAIL;
@@ -176,7 +174,7 @@ int dcmi_get_device_errorcode_v2(int card_id, int device_id, int *error_count, u
 }
 
 int dcmi_get_device_errorcode_string(int card_id, int device_id, unsigned int error_code, unsigned char *error_info,
-    int buf_size)
+                                     int buf_size)
 {
     int err;
     enum dcmi_unit_type device_type = NPU_TYPE;
@@ -242,8 +240,8 @@ int dcmi_get_driver_errorcode(int *error_count, unsigned int *error_code_list, u
             }
         }
         err_count = filtered_count;
-        err = memcpy_s(err_code_list, DCMI_ERROR_CODE_MAX_COUNT * sizeof(unsigned int),
-                       filtered_list, err_count * sizeof(unsigned int));
+        err = memcpy_s(err_code_list, DCMI_ERROR_CODE_MAX_COUNT * sizeof(unsigned int), filtered_list,
+                       err_count * sizeof(unsigned int));
         if (err != EOK) {
             gplog(LOG_ERR, "memcpy_s failed. err is %d.", err);
             return DCMI_ERR_CODE_SECURE_FUN_FAIL;
@@ -268,14 +266,13 @@ int dcmi_get_driver_errorcode(int *error_count, unsigned int *error_code_list, u
 }
 
 int dcmi_get_fault_event(int card_id, int device_id, int timeout, struct dcmi_event_filter filter,
-    struct dcmi_event *event)
+                         struct dcmi_event *event)
 {
     int err;
     enum dcmi_unit_type device_type = NPU_TYPE;
 
     if (dcmi_check_run_in_docker() && dcmi_check_run_not_root()) {
-        gplog(LOG_OP, "Operation not permitted, only root user on physical or virtual machine"
-            " or privileged docker can call this api.");
+        gplog(LOG_OP, "Operation not permitted. Only root is allowed in Docker.");
         return DCMI_ERR_CODE_OPER_NOT_PERMITTED;
     }
 
@@ -308,21 +305,21 @@ int dcmi_get_fault_event(int card_id, int device_id, int timeout, struct dcmi_ev
 }
 
 int dcmi_get_device_current_fault_event(int card_id, int device_id, struct dcmi_event *event_buf,
-    int input_event_buf_length, int *output_event_cnt)
+                                        int input_event_buf_length, int *output_event_cnt)
 {
     gplog(LOG_OP, "This product does not support this api.");
     return DCMI_ERR_CODE_NOT_SUPPORT;
 }
 
 int dcmi_subscribe_fault_event(int card_id, int device_id, struct dcmi_event_filter filter,
-    dcmi_fault_event_callback handler)
+                               dcmi_fault_event_callback handler)
 {
     int err;
     enum dcmi_unit_type device_type = NPU_TYPE;
 
+    /* 需求设计上该接口支持物理root和普通用户，虚拟机root和普通用户，容器只支持root用户 */
     if (dcmi_check_run_in_docker() && dcmi_check_run_not_root()) {
-        gplog(LOG_OP, "Operation not permitted, only root user on physical or virtual machine"
-            " or privileged docker can call this api.");
+        gplog(LOG_OP, "Operation not permitted. Only root is allowed in Docker.");
         return DCMI_ERR_CODE_OPER_NOT_PERMITTED;
     }
 
@@ -406,8 +403,8 @@ int dcmi_get_device_errorinfo(int card_id, int device_id, int error_code, unsign
     return dcmi_get_device_errorcode_string(card_id, device_id, error_code, error_info, buf_size);
 }
 
-int dcmi_get_device_errorcode(
-    int card_id, int device_id, int *error_count, unsigned int *error_code_list, int *error_width)
+int dcmi_get_device_errorcode(int card_id, int device_id, int *error_count, unsigned int *error_code_list,
+                              int *error_width)
 {
     int err;
     unsigned int err_code_list[DCMI_ERROR_CODE_MAX_COUNT] = {0};
@@ -431,7 +428,7 @@ int dcmi_get_device_errorcode(
     }
 
     err = memcpy_s(error_code_list, DCMI_ERROR_CODE_MAX_COUNT * sizeof(unsigned int), err_code_list,
-        (*error_count) * (sizeof(unsigned int)));
+                   (*error_count) * (sizeof(unsigned int)));
     if (err != EOK) {
         gplog(LOG_ERR, "memcpy_s failed. err is %d.", err);
         return DCMI_ERR_CODE_SECURE_FUN_FAIL;
@@ -443,7 +440,7 @@ int dcmi_get_device_errorcode(
 
 // 解析告警信息内容
 int dcmi_get_alarm_info(char *alarm_line, size_t str_len, char section_info[][CPU_ALARM_SECTION_LEN],
-    int section_array_len, int *sec_count)
+                        int section_array_len, int *sec_count)
 {
     char *tmp_str = NULL;
     int section_count = 0;
@@ -477,8 +474,8 @@ int dcmi_get_alarm_info(char *alarm_line, size_t str_len, char section_info[][CP
         }
         ++section_count;
     } else {
-        gplog(LOG_ERR, "last_pos(%lld, %lu) section_count(%d, %d)!",
-              last_pos, str_len, section_count, section_array_len);
+        gplog(LOG_ERR, "last_pos(%lld, %lu) section_count(%d, %d)!", last_pos, str_len, section_count,
+              section_array_len);
         gplog(LOG_ERR, "alarm_line(%s) format invalid!", alarm_line);
         return DCMI_ERR_CODE_INNER_ERR;
     }
@@ -493,7 +490,7 @@ int dcmi_hilens_cpu_get_device_errorcode(int *error_count, unsigned int *error_c
     size_t str_len;
     int alarm_count = 0;
     // 单个告警信息最大为6个字段，每个字段不超过256字符
-    char alarm_section_info[CPU_ALARM_KEY_SECTION_NUM][BOARD_INFO_LINE_LEN] = { { 0 } };
+    char alarm_section_info[CPU_ALARM_KEY_SECTION_NUM][BOARD_INFO_LINE_LEN] = {{0}};
     int ret = 0;
     int section_count = 0;
 
@@ -552,7 +549,7 @@ int dcmi_hilens_cpu_get_device_errorcode(int *error_count, unsigned int *error_c
     return ret;
 }
 
-int dcmi_cpu_get_device_errorcode(int card_id, int* error_count, unsigned int *error_code_list, unsigned int list_len)
+int dcmi_cpu_get_device_errorcode(int card_id, int *error_count, unsigned int *error_code_list, unsigned int list_len)
 {
     if (dcmi_board_type_is_hilens()) {
         return dcmi_hilens_cpu_get_device_errorcode(error_count, error_code_list, list_len);
@@ -561,8 +558,8 @@ int dcmi_cpu_get_device_errorcode(int card_id, int* error_count, unsigned int *e
     return dcmi_mcu_get_device_errorcode(card_id, error_count, error_code_list, list_len);
 }
 
-int dcmi_get_npu_device_errorcode(
-    int card_id, int device_id, int *error_count, unsigned int *error_code_list, unsigned int list_len)
+int dcmi_get_npu_device_errorcode(int card_id, int device_id, int *error_count, unsigned int *error_code_list,
+                                  unsigned int list_len)
 {
     int ret;
     int device_logic_id = 0;
@@ -591,8 +588,8 @@ int dcmi_get_npu_device_errorcode(
     return dcmi_convert_error_code(ret);
 }
 
-int dcmi_get_npu_device_errorcode_string(
-    int card_id, int device_id, int error_code, unsigned char *error_info, int buff_size)
+int dcmi_get_npu_device_errorcode_string(int card_id, int device_id, int error_code, unsigned char *error_info,
+                                         int buff_size)
 {
     int ret;
     int device_logic_id = 0;
@@ -620,7 +617,7 @@ int dcmi_get_npu_device_errorcode_string(
 }
 
 int dcmi_subscribe_npu_fault_event(int card_id, int device_id, struct dcmi_event_filter filter,
-    dcmi_fault_event_callback handler)
+                                   dcmi_fault_event_callback handler)
 {
     int ret;
     int device_logic_id = 0;
@@ -638,7 +635,7 @@ int dcmi_subscribe_npu_fault_event(int card_id, int device_id, struct dcmi_event
             return ret;
         }
     }
-    
+
     if (dcmi_board_chip_type_is_ascend_950()) {
         ret = dcmi_get_card_list(&card_num, card_list, sizeof(card_list) / sizeof(card_list[0]));
         if (card_num <= 0 || ret != DCMI_OK) {
@@ -660,7 +657,7 @@ int dcmi_subscribe_npu_fault_event(int card_id, int device_id, struct dcmi_event
     }
 
     ret = dsmi_subscribe_fault_event(device_logic_id, *(struct dsmi_event_filter *)&filter,
-    (fault_event_callback)handler);
+                                     (fault_event_callback)handler);
     if ((ret != DSMI_OK) && (ret != DSMI_ERR_NOT_SUPPORT)) {
         gplog(LOG_ERR, "call dcmi_subscribe_npu_fault_event failed. err is %d.", ret);
     }
