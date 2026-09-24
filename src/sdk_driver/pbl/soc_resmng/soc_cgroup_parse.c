@@ -23,12 +23,11 @@
 #define CPU_INFO_SIZE 256
 #define CPU_BITMAP_LEN 32
 #ifndef EMU_ST
-STATIC int dbl_get_available_cpumask(const char *file_path, ka_cpumask_var_t *cpumask)
+STATIC int dbl_read_cpuset_content(const char *file_path, char *buf)
 {
     ka_file_t *file = NULL;
-    char *buf = NULL;
     loff_t pos = 0;
-    int len, ret;
+    int len;
 
     /* read cpuset info from file */
     file = ka_fs_filp_open(file_path, KA_O_RDONLY, 0);
@@ -36,49 +35,56 @@ STATIC int dbl_get_available_cpumask(const char *file_path, ka_cpumask_var_t *cp
         soc_err("Failed to ka_fs_filp_open. \n");
         return -ENOENT;
     }
-    /* ka_mm_kzalloc */
-    buf = ka_mm_kzalloc(CPU_INFO_SIZE, KA_GFP_KERNEL | __KA_GFP_ACCOUNT);
-    if (buf == NULL) {
-        soc_err("Failed to ka_mm_kzalloc. \n");
-        ka_fs_filp_close(file, NULL);
-        file = NULL;
-        return -ENOMEM;
-    }
-    /* read cpumask config */
     len = ka_fs_kernel_read(file, buf, CPU_INFO_SIZE - 1, &pos);
     ka_fs_filp_close(file, NULL);
-    file = NULL;
-    /* if len small or equal 0, return */
     if (len <= 0) {
-        soc_err("Failed to read len. (len=%d)\n", len);
-        ka_mm_kfree(buf);
-        buf = NULL;
+        soc_err("Failed to get length. (len=%d)\n", len);
         return -ENOENT;
     }
-    /* alloc cpumask var */
-    if (!ka_base_zalloc_cpumask_var(cpumask, KA_GFP_KERNEL)) {
+    return 0;
+}
+
+STATIC int dbl_parse_cpumask_to_bitmap(const char *buf, u32 *available_bitmap)
+{
+    ka_cpumask_var_t cpumask;
+    u32 i = 0;
+    int ret;
+
+    if (!ka_base_zalloc_cpumask_var(&cpumask, KA_GFP_KERNEL)) {
         soc_err("Failed to ka_base_zalloc_cpumask_var. \n");
-        ka_mm_kfree(buf);
-        buf = NULL;
         return -ENOMEM;
     }
-    /* parse the cpumask */
-    ret = ka_base_cpulist_parse(buf, *cpumask);
+    ret = ka_base_cpulist_parse(buf, cpumask);
     if (ret != 0) {
-        ka_base_free_cpumask_var(*cpumask);
+        soc_err("Failed to parse cpulist. (ret=%d)\n", ret);
+        ka_base_free_cpumask_var(cpumask);
+        return ret;
     }
-    ka_mm_kfree(buf);
-    buf = NULL;
+    ka_base_for_each_cpu(i, cpumask)
+    {
+        *available_bitmap |= (1U << i);
+    }
+    ka_base_free_cpumask_var(cpumask);
     return 0;
+}
+
+STATIC int dbl_get_available_cpumask(const char *file_path, u32 *available_bitmap)
+{
+    char buf[CPU_INFO_SIZE] = {0};
+    int ret;
+
+    ret = dbl_read_cpuset_content(file_path, buf);
+    if (ret != 0) {
+        return ret;
+    }
+    return dbl_parse_cpumask_to_bitmap(buf, available_bitmap);
 }
 #endif
 
 void dbl_get_available_cpu(u64 phy_bitmap, u32 *number, u64 *bitmap)
 {
-    ka_cpumask_var_t available_cpumask;
     unsigned long bitmap_tmp = 0;
     u32 available_bitmap = 0;
-    u32 i = 0;
     int ret;
 
     if (number == NULL) {
@@ -92,15 +98,10 @@ void dbl_get_available_cpu(u64 phy_bitmap, u32 *number, u64 *bitmap)
     }
 
 #ifndef EMU_ST
-    ret = dbl_get_available_cpumask(CGOUP_CPUSET_PATH, &available_cpumask);
+    ret = dbl_get_available_cpumask(CGOUP_CPUSET_PATH, &available_bitmap);
     if (ret != 0) {
         soc_err("Failed to get available cpumask. (ret=%d)\n", ret);
         return;
-    }
-
-    ka_base_for_each_cpu(i, available_cpumask)
-    {
-        available_bitmap |= (1U << i);
     }
 #endif
 

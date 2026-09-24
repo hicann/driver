@@ -418,6 +418,9 @@ static int ka_mm_va_to_pa_pmd_range(ka_pmd_t *pmd, u64 start, u64 end, u64 *pas,
 #else
     pte = ka_mm_pte_offset_map(pmd, va);
 #endif
+    if (pte == NULL) {
+        return -ERANGE;
+    }
 
     for (; va != end; pte++, va += KA_MM_PAGE_SIZE) {
         if ((ka_mm_pte_none(*pte) != 0) || (ka_mm_pte_present(*pte) == 0)) {

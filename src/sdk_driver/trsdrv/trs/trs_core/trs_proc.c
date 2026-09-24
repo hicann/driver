@@ -802,7 +802,7 @@ void trs_proc_leak_res_show(struct trs_proc_ctx *proc_ctx, struct trs_core_ts_in
             if (num == trs_get_proc_res_num(proc_ctx, inst->tsid, i)) {
                 break;
             }
-            if (trs_is_id_pid_match(&res_mng->ids[i], proc_ctx->pid, proc_ctx->task_id)) {
+            if (trs_is_id_pid_match(&res_mng->ids[j], proc_ctx->pid, proc_ctx->task_id)) {
                 num++;
                 trs_warn("Leak res. (devid=%u; tsid=%u; res_type=%d; res_id=%d; proc_res_num=%d)\n", inst->devid,
                          inst->tsid, i, j, trs_get_proc_res_num(proc_ctx, inst->tsid, i));

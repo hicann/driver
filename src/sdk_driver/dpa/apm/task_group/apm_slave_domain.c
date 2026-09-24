@@ -436,9 +436,7 @@ static bool apm_slave_domain_is_exit_synchronized(int tgid, enum apm_exit_stage 
 
     ret = apm_query_master_info_by_slave(tgid, &master_tgid, &udevid, &mode, &proc_type_bitmap);
     if (ret != 0) {
-#ifndef EMU_ST
         return true; /* no sync needed if none bind relation exist */
-#endif
     }
     ret = slave_ops[mode]->get_tast_group_exit_stage(master_tgid, tgid, udevid, proc_type_bitmap,
                                                      &task_group_exit_stage);
