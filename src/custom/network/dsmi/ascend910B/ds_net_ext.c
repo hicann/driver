@@ -79,7 +79,7 @@ static unsigned short reverse_8_bits(unsigned short value)
 static int dgid_to_ip(char *ip, int ip_address_len, unsigned int *qpc, int is_ipv4_flag)
 {
     int ret;
-    int dgid_offset = 7; //dgid 偏移地址
+    int dgid_offset = 7; // dgid 偏移地址
 
     int offset_1 = 1;
     int offset_2 = 2;
@@ -89,25 +89,24 @@ static int dgid_to_ip(char *ip, int ip_address_len, unsigned int *qpc, int is_ip
     int offset_24 = 24;
 
     if (is_ipv4_flag) {
-        ret = sprintf_s(ip, (size_t)ip_address_len, "%u.%u.%u.%u",
-            *(qpc + dgid_offset + offset_3) & 0xFF,
-            (*(qpc + dgid_offset + offset_3) >> offset_8) & 0xFF,
-            (*(qpc + dgid_offset + offset_3) >> offset_16) & 0xFF,
-            (*(qpc + dgid_offset + offset_3) >> offset_24) & 0xFF);
+        ret = sprintf_s(ip, (size_t)ip_address_len, "%u.%u.%u.%u", *(qpc + dgid_offset + offset_3) & 0xFF,
+                        (*(qpc + dgid_offset + offset_3) >> offset_8) & 0xFF,
+                        (*(qpc + dgid_offset + offset_3) >> offset_16) & 0xFF,
+                        (*(qpc + dgid_offset + offset_3) >> offset_24) & 0xFF);
         if (ret <= 0) {
             roce_err("Dsmi sprintf ip_v4 failed. (ret=%d)\n", ret);
             return -ENOMEM;
         }
     } else {
         ret = sprintf_s(ip, (size_t)ip_address_len, "%x:%x:%x:%x:%x:%x:%x:%x",
-            reverse_8_bits(*(qpc + dgid_offset) & 0xFFFF),
-            reverse_8_bits((*(qpc + dgid_offset) >> offset_16) & 0xFFFF),
-            reverse_8_bits(*(qpc + dgid_offset + offset_1) & 0xFFFF),
-            reverse_8_bits((*(qpc + dgid_offset + offset_1) >> offset_16) & 0xFFFF),
-            reverse_8_bits(*(qpc + dgid_offset + offset_2) & 0xFFFF),
-            reverse_8_bits((*(qpc + dgid_offset + offset_2) >> offset_16) & 0xFFFF),
-            reverse_8_bits(*(qpc + dgid_offset + offset_3) & 0xFFFF),
-            reverse_8_bits((*(qpc + dgid_offset + offset_3) >> offset_16) & 0xFFFF));
+                        reverse_8_bits(*(qpc + dgid_offset) & 0xFFFF),
+                        reverse_8_bits((*(qpc + dgid_offset) >> offset_16) & 0xFFFF),
+                        reverse_8_bits(*(qpc + dgid_offset + offset_1) & 0xFFFF),
+                        reverse_8_bits((*(qpc + dgid_offset + offset_1) >> offset_16) & 0xFFFF),
+                        reverse_8_bits(*(qpc + dgid_offset + offset_2) & 0xFFFF),
+                        reverse_8_bits((*(qpc + dgid_offset + offset_2) >> offset_16) & 0xFFFF),
+                        reverse_8_bits(*(qpc + dgid_offset + offset_3) & 0xFFFF),
+                        reverse_8_bits((*(qpc + dgid_offset + offset_3) >> offset_16) & 0xFFFF));
         if (ret <= 0) {
             roce_err("Dsmi sprintf ip_v6 failed. (ret=%d)\n", ret);
             return -ENOMEM;
@@ -124,12 +123,12 @@ static int dsmi_parse_qp_info(unsigned int qpn, char *context, struct ds_qp_info
     char ip[IP_ADDRESS_LEN] = {0};
     qpc = (unsigned int *)context;
 
-    unsigned char status = (unsigned char)((*(qpc + 14) >>29) & 0x07);       //bypte_60_qpst bit 29-31
-    unsigned char type = (unsigned char)((*(qpc + 19) >> 24) & 0x01);        //byte_80_xrc_qp_type bit 24
-    unsigned short src_port = (unsigned short)((*(qpc + 12) >> 16) & 0xFFFF); //byte_52_updspn bit 16-31
-    unsigned int dst_qpn = (unsigned int)(*(qpc + 13) & 0xFFFFFF);          //byte_56_dqpn bit 0-23
-    unsigned int send_psn = (unsigned int)((*(qpc + 42) >> 8) & 0xFFFFFF);  //byte_172_sq_cur_psn bit 8-31
-    unsigned int recv_psn = (unsigned int)((*(qpc + 26) >> 8) & 0xFFFFFF);  //byte_108_rap_psn bit 8-31
+    unsigned char status = (unsigned char)((*(qpc + 14) >> 29) & 0x07);       // bypte_60_qpst bit 29-31
+    unsigned char type = (unsigned char)((*(qpc + 19) >> 24) & 0x01);         // byte_80_xrc_qp_type bit 24
+    unsigned short src_port = (unsigned short)((*(qpc + 12) >> 16) & 0xFFFF); // byte_52_updspn bit 16-31
+    unsigned int dst_qpn = (unsigned int)(*(qpc + 13) & 0xFFFFFF);            // byte_56_dqpn bit 0-23
+    unsigned int send_psn = (unsigned int)((*(qpc + 42) >> 8) & 0xFFFFFF);    // byte_172_sq_cur_psn bit 8-31
+    unsigned int recv_psn = (unsigned int)((*(qpc + 26) >> 8) & 0xFFFFFF);    // byte_108_rap_psn bit 8-31
 
     if (is_ipv6_v4_mapped((struct in6_addr *)(qpc + dgid_offset))) {
         ret = dgid_to_ip(ip, sizeof(ip), qpc, 1);
@@ -191,8 +190,8 @@ int dsmi_set_optical_loopback(int logic_id, int port_id, int mode, int is_write)
     }
 
     if ((trans_data.result != 0) && (trans_data.result != DSMI_OPTICAL_LOOPBACK_RUNNING)) {
-        roce_err("Dsmi set optical loopback mode %d failed. (result=%d; logic_id=%d)", mode,
-            trans_data.result, logic_id);
+        roce_err("Dsmi set optical loopback mode %d failed. (result=%d; logic_id=%d)", mode, trans_data.result,
+                 logic_id);
     }
 
     return trans_data.result;
@@ -209,7 +208,7 @@ int dsmi_get_mac_type(int logic_id, int port_id, unsigned int *mac_type)
         roce_err("Logic id is invalid! expect [0]-[%d]. (logic_id=%d)", DS_MAX_LOGIC_ID, logic_id);
         return -EINVAL;
     }
-    if (port_id < 0 ||  port_id > MAX_PORT_ID) {
+    if (port_id < 0 || port_id > MAX_PORT_ID) {
         roce_err("Port id is invalid! expect [0]-[%d]. (port_id=%d)", MAX_PORT_ID, port_id);
         return -EINVAL;
     }
@@ -236,7 +235,7 @@ int dsmi_set_tls_machine_type(int logic_id, struct tls_enable_info *enable_info)
 {
     long int val;
     int ret;
- 
+
     ret = halGetDeviceInfo((unsigned int)logic_id, MODULE_TYPE_SYSTEM, INFO_TYPE_RUN_MACH, &val);
     if (ret != 0) {
         roce_err("HalGetDeviceInfo failed. (ret=%d; logic_id=%d)", ret, logic_id);
@@ -249,7 +248,7 @@ int dsmi_set_tls_machine_type(int logic_id, struct tls_enable_info *enable_info)
 bool is_ATLAS_900_A3_SUPERPOD(unsigned int mainboard_id)
 {
     if (mainboard_id == ATLAS_900_A3_MAINBOARD_ID_1 || mainboard_id == ATLAS_900_A3_MAINBOARD_ID_2 ||
-        mainboard_id == ATLAS_900_A3_MAINBOARD_A_X  || mainboard_id == ATLAS_900_A3_MAINBOARD_A_K) {
+        mainboard_id == ATLAS_900_A3_MAINBOARD_A_X || mainboard_id == ATLAS_900_A3_MAINBOARD_A_K) {
         roce_info("Detect Atlas_900_a3_superpod success.(mainboard_id=%u)", mainboard_id);
         return true;
     }
@@ -277,7 +276,7 @@ int dsmi_get_tls_ca_cfg(int logic_id, int port_id, struct tls_ca_new_certs *ca_c
     }
 
     size = (unsigned int)sizeof(struct tls_ca_new_certs) * num;
-    DSMI_SET_TRANS_DATA(trans_data, DS_GET_TLS_CA_CFG, NULL, 0, (char*)ca_cert_info, &size);
+    DSMI_SET_TRANS_DATA(trans_data, DS_GET_TLS_CA_CFG, NULL, 0, (char *)ca_cert_info, &size);
 
     ret = dsmi_network_transmission_channel(logic_id, &trans_data);
     if (ret != 0) {
@@ -304,7 +303,7 @@ int dsmi_set_tls_ca_cfg(int logic_id, int port_id, struct tls_ca_new_certs *ca_c
     }
 
     size = 0;
-    DSMI_SET_TRANS_DATA(trans_data, DS_SET_TLS_CA_CFG, (char*)ca_cert_info, sizeof(struct tls_ca_new_certs) * num,
+    DSMI_SET_TRANS_DATA(trans_data, DS_SET_TLS_CA_CFG, (char *)ca_cert_info, sizeof(struct tls_ca_new_certs) * num,
                         NULL, &size);
 
     ret = dsmi_network_transmission_channel(logic_id, &trans_data);
@@ -332,8 +331,7 @@ int dsmi_clear_tls_ca_cfg(int logic_id, unsigned int save_mode)
     }
 
     size = 0;
-    DSMI_SET_TRANS_DATA(trans_data, DS_CLEAR_TLS_CA_CFG, (char*)&save_mode,
-        sizeof(unsigned int), NULL, &size);
+    DSMI_SET_TRANS_DATA(trans_data, DS_CLEAR_TLS_CA_CFG, (char *)&save_mode, sizeof(unsigned int), NULL, &size);
 
     ret = dsmi_network_transmission_channel(logic_id, &trans_data);
     if (ret != 0) {
@@ -361,31 +359,30 @@ int dsmi_get_port_shaping(int logic_id, unsigned int port_id, struct dsmi_shapin
     DSMI_CHECK_PTR_VALID_RETURN_VAL(shaping_info, -EINVAL);
 
     size = sizeof(struct dsmi_shaping_info);
-    DSMI_SET_TRANS_DATA(trans_data, DS_GET_TM_SHAPING_PORT, (char *)&port_id, sizeof(port_id),
-                        (char*)shaping_info, &size);
+    DSMI_SET_TRANS_DATA(trans_data, DS_GET_TM_SHAPING_PORT, (char *)&port_id, sizeof(port_id), (char *)shaping_info,
+                        &size);
 
     ret = dsmi_network_transmission_channel(logic_id, &trans_data);
     if (ret) {
-        roce_err("dsmi shaping port get fail fail ret[%d] logic_id[%d] port_id[%u]",
-                 ret, logic_id, port_id);
+        roce_err("dsmi shaping port get fail fail ret[%d] logic_id[%d] port_id[%u]", ret, logic_id, port_id);
         return ret;
     }
 
     if (trans_data.result != 0) {
         roce_err("dsmi shaping port get fail result[%d] logic_id[%d] port_id[%u]", trans_data.result, logic_id,
-            port_id);
+                 port_id);
     }
 
     return trans_data.result;
 }
 
 int dsmi_get_hccs_ping_result(int logic_id, hccs_ping_operate_info *operate_info,
-                   hccs_ping_reply_info_ext *reply_info_ext)
+                              hccs_ping_reply_info_ext *reply_info_ext)
 {
     int time_val, ret;
     unsigned int reply_len;
     struct ds_trans_data trans_data;
- 
+
     operate_info->get_info = 1;
     for (time_val = 0; time_val < TASK_WAIT_MAX_TIME; time_val++) {
         sleep(1);
@@ -489,8 +486,8 @@ int dsmi_get_traceroute_status(int logic_id, int *troute_status)
     char *p_tmp = NULL;
 
     if ((logic_id > DS_MAX_LOGIC_ID) || (logic_id < 0)) {
-        roce_err("Logic id in dsmi get traceroute status is invalid! expect [0]-[%d]. (logic_id=%d)",
-                 DS_MAX_LOGIC_ID, logic_id);
+        roce_err("Logic id in dsmi get traceroute status is invalid! expect [0]-[%d]. (logic_id=%d)", DS_MAX_LOGIC_ID,
+                 logic_id);
         return -EINVAL;
     }
 
@@ -513,9 +510,8 @@ int dsmi_get_traceroute_status(int logic_id, int *troute_status)
 
     return 0;
 }
- 
-int dsmi_start_traceroute(int logic_id, struct dsmi_traceroute_info *traceroute_info_send,
-    int *troute_start_result)
+
+int dsmi_start_traceroute(int logic_id, struct dsmi_traceroute_info *traceroute_info_send, int *troute_start_result)
 {
     int ret;
     unsigned int size = ARGC_NUM_10;
@@ -524,14 +520,14 @@ int dsmi_start_traceroute(int logic_id, struct dsmi_traceroute_info *traceroute_
     char *p_tmp = NULL;
 
     if ((logic_id > DS_MAX_LOGIC_ID) || (logic_id < 0)) {
-        roce_err("Logic id in dsmi start traceroute is invalid! expect [0]-[%d]. (logic_id=%d)",
-                 DS_MAX_LOGIC_ID, logic_id);
+        roce_err("Logic id in dsmi start traceroute is invalid! expect [0]-[%d]. (logic_id=%d)", DS_MAX_LOGIC_ID,
+                 logic_id);
         return -EINVAL;
     }
 
     DSMI_CHECK_PTR_VALID_RETURN_VAL(traceroute_info_send, -EINVAL);
     DSMI_SET_TRANS_DATA(trans_data, DS_START_TRACEROUTE, (char *)(uintptr_t)traceroute_info_send,
-        sizeof(struct dsmi_traceroute_info), result, &size);
+                        sizeof(struct dsmi_traceroute_info), result, &size);
 
     ret = dsmi_network_transmission_channel(logic_id, &trans_data);
     if (ret != 0) {
@@ -550,7 +546,7 @@ int dsmi_start_traceroute(int logic_id, struct dsmi_traceroute_info *traceroute_
 
     return trans_data.result;
 }
- 
+
 int dsmi_get_traceroute_info(int logic_id, char *troute_info_show, unsigned int info_size, int cmd_type)
 {
     int ret;
@@ -558,14 +554,14 @@ int dsmi_get_traceroute_info(int logic_id, char *troute_info_show, unsigned int 
     unsigned int size;
 
     if ((logic_id > DS_MAX_LOGIC_ID) || (logic_id < 0)) {
-        roce_err("Logic id in dsmi get traceroute info is invalid! expect [0]-[%d]. (logic_id=%d)",
-                 DS_MAX_LOGIC_ID, logic_id);
+        roce_err("Logic id in dsmi get traceroute info is invalid! expect [0]-[%d]. (logic_id=%d)", DS_MAX_LOGIC_ID,
+                 logic_id);
         return -EINVAL;
     }
 
     size = info_size;
-    DSMI_SET_TRANS_DATA(trans_data, DS_GET_TRACEROUTE_INFO, (char *)(uintptr_t)cmd_type,
-                        sizeof(cmd_type), troute_info_show, &size);
+    DSMI_SET_TRANS_DATA(trans_data, DS_GET_TRACEROUTE_INFO, (char *)(uintptr_t)&cmd_type, sizeof(cmd_type),
+                        troute_info_show, &size);
     ret = dsmi_network_transmission_channel(logic_id, &trans_data);
     if (ret != 0) {
         roce_err("Dsmi channel got traceroute info failed. (ret=%d; logic_id=%d)", ret, logic_id);
@@ -578,7 +574,7 @@ int dsmi_get_traceroute_info(int logic_id, char *troute_info_show, unsigned int 
 
     return trans_data.result;
 }
- 
+
 int dsmi_reset_traceroute(int logic_id, int *troute_reset)
 {
     int ret;
@@ -588,8 +584,8 @@ int dsmi_reset_traceroute(int logic_id, int *troute_reset)
     char *p_tmp = NULL;
 
     if ((logic_id > DS_MAX_LOGIC_ID) || (logic_id < 0)) {
-        roce_err("Logic id in dsmi reset traceroute is invalid! expect [0]-[%d]. (logic_id=%d)",
-                 DS_MAX_LOGIC_ID, logic_id);
+        roce_err("Logic id in dsmi reset traceroute is invalid! expect [0]-[%d]. (logic_id=%d)", DS_MAX_LOGIC_ID,
+                 logic_id);
         return -EINVAL;
     }
 
@@ -647,12 +643,11 @@ int dsmi_prbs_adapt_in_order(unsigned int mode, unsigned int logic_id, unsigned 
     struct prbs_adapt_mode_info mode_info = {0};
 
     mode_info.mode = mode;
-    mode_info.master_flag =master_flag;
+    mode_info.master_flag = master_flag;
 
-    roce_info("prbs adapt in order start. (mode=%u, logic_id=%u, master_flag=%d)",
-        mode, logic_id, master_flag);
-    DSMI_SET_TRANS_DATA(trans_data, DS_SET_PRBS_ADAPT_IN_ORDER,
-                        (char *)&mode_info, sizeof(struct prbs_adapt_mode_info), NULL, &size);
+    roce_info("prbs adapt in order start. (mode=%u, logic_id=%u, master_flag=%d)", mode, logic_id, master_flag);
+    DSMI_SET_TRANS_DATA(trans_data, DS_SET_PRBS_ADAPT_IN_ORDER, (char *)&mode_info, sizeof(struct prbs_adapt_mode_info),
+                        NULL, &size);
     ret = dsmi_network_transmission_channel((int)logic_id, &trans_data);
     if (ret) {
         roce_err("dsmi set prbs adapt in order failed. (mode=%u, ret=%d; logic_id=%d)", mode, ret, logic_id);
@@ -660,8 +655,8 @@ int dsmi_prbs_adapt_in_order(unsigned int mode, unsigned int logic_id, unsigned 
     }
 
     if (trans_data.result != 0) {
-        roce_err("dsmi set prbs adapt in order failed. (mode=%u, result=%d; logic_id=%d)",
-            mode, trans_data.result, logic_id);
+        roce_err("dsmi set prbs adapt in order failed. (mode=%u, result=%d; logic_id=%d)", mode, trans_data.result,
+                 logic_id);
     }
 
     return trans_data.result;
@@ -678,7 +673,8 @@ int dsmi_set_cdr_mode_cmd(int logic_id, int port, struct ds_cdr_mode_info *info)
         return -EINVAL;
     }
 
-    DSMI_SET_TRANS_DATA(trans_data, DS_SET_CDR_MODE_CMD, (char *)info, sizeof(struct ds_cdr_mode_info), NULL, &size_out);
+    DSMI_SET_TRANS_DATA(trans_data, DS_SET_CDR_MODE_CMD, (char *)info, sizeof(struct ds_cdr_mode_info), NULL,
+                        &size_out);
     ret = dsmi_network_transmission_channel(logic_id, &trans_data);
     if (ret) {
         roce_err("Dsmi set cdr mode fail. (ret=%d; logic_id=%d)", ret, logic_id);
@@ -835,7 +831,7 @@ int dsmi_get_qpn_list(int logic_id, int port_id, struct ds_qpn_list *list)
 
     return trans_data.result;
 }
- 
+
 int dsmi_get_qp_info(int logic_id, int port_id, unsigned int qpn, struct ds_qp_info *qp_info)
 {
     int ret;
@@ -986,7 +982,8 @@ int dsmi_set_device_offline_nic_down_flag(int logic_id, int enable_flag)
         roce_err("logic id is invalid, expect [0]-[%d]. (logic_id=%d)", DS_MAX_LOGIC_ID, logic_id);
         return -EINVAL;
     }
-    DSMI_SET_TRANS_DATA(trans_data, DS_SET_DEVICE_OFFLINE_NET_DOWN, (char *)(&enable_flag), sizeof(int), NULL, &size_out);
+    DSMI_SET_TRANS_DATA(trans_data, DS_SET_DEVICE_OFFLINE_NET_DOWN, (char *)(&enable_flag), sizeof(int), NULL,
+                        &size_out);
     ret = dsmi_network_transmission_channel(logic_id, &trans_data);
     if (ret != 0) {
         roce_err("Dsmi set device offline net down flag failed. (ret=%d; logic_id=%d)", ret, logic_id);
@@ -998,7 +995,6 @@ int dsmi_set_device_offline_nic_down_flag(int logic_id, int enable_flag)
     }
     return trans_data.result;
 }
-
 
 int dsmi_get_extra_statistics_info(int logic_id, int port_id, struct ds_extra_statistics_info *info)
 {
@@ -1023,120 +1019,177 @@ int dsmi_get_extra_statistics_info(int logic_id, int port_id, struct ds_extra_st
     }
 
     if (trans_data.result != 0) {
-        roce_err("Dsmi get extra statistics fail. (result=%d; logic_id=%d; port=%d)",
-                 trans_data.result, logic_id, port_id);
+        roce_err("Dsmi get extra statistics fail. (result=%d; logic_id=%d; port=%d)", trans_data.result, logic_id,
+                 port_id);
     }
     return trans_data.result;
 }
 
 int dsmi_get_ub_bandwidth(int a, int b, int c, unsigned int d, struct ub_bandwidth_t *e)
 {
-    (void)a; (void)b; (void)c; (void)d; (void)e;
+    (void)a;
+    (void)b;
+    (void)c;
+    (void)d;
+    (void)e;
     return DRV_ERROR_NOT_SUPPORT;
 }
 
 int dsmi_get_port_pkt_stats_info(int a, int b, int c, struct ds_port_pkt_stats_info *d)
 {
-    (void)a; (void)b; (void)c; (void)d;
+    (void)a;
+    (void)b;
+    (void)c;
+    (void)d;
     return DRV_ERROR_NOT_SUPPORT;
 }
 
 int dsmi_get_port_avail_credit_info(int a, int b, int c, struct dsmi_credit_info *d)
 {
-    (void)a; (void)b; (void)c; (void)d;
+    (void)a;
+    (void)b;
+    (void)c;
+    (void)d;
     return DRV_ERROR_NOT_SUPPORT;
 }
 
 int dsmi_get_device_netdev_list_info(int a, struct dsmi_netdev_list_info *b)
 {
-    (void)a; (void)b;
+    (void)a;
+    (void)b;
     return DRV_ERROR_NOT_SUPPORT;
 }
 
-int dsmi_get_device_bond_ip_address(int a, const char *b, unsigned int c, struct dsmi_ip_addr *d, struct dsmi_ip_addr *e)
+int dsmi_get_device_bond_ip_address(int a, const char *b, unsigned int c, struct dsmi_ip_addr *d,
+                                    struct dsmi_ip_addr *e)
 {
-    (void)a; (void)b; (void)c; (void)d; (void)e;
+    (void)a;
+    (void)b;
+    (void)c;
+    (void)d;
+    (void)e;
     return DRV_ERROR_NOT_SUPPORT;
 }
 
-int dsmi_set_device_bond_ip_address(int a, const char *b, unsigned int c, struct dsmi_ip_addr *d, struct dsmi_ip_addr *e)
+int dsmi_set_device_bond_ip_address(int a, const char *b, unsigned int c, struct dsmi_ip_addr *d,
+                                    struct dsmi_ip_addr *e)
 {
-    (void)a; (void)b; (void)c; (void)d; (void)e;
+    (void)a;
+    (void)b;
+    (void)c;
+    (void)d;
+    (void)e;
     return DRV_ERROR_NOT_SUPPORT;
 }
 
 int dsmi_exec_bond_traceroute(int a, const char *b, unsigned int c, struct dsmi_traceroute_param *d,
-                            struct traceroute_result *e, unsigned int f)
+                              struct traceroute_result *e, unsigned int f)
 {
-    (void)a; (void)b; (void)c; (void)d; (void)e; (void)f;
+    (void)a;
+    (void)b;
+    (void)c;
+    (void)d;
+    (void)e;
+    (void)f;
     return DRV_ERROR_NOT_SUPPORT;
 }
 
 #ifndef CFG_FEATURE_UB_INFO
 int dsmi_get_device_ub_ping_info(int a, struct dcmi_ub_ping_operate *b, struct ub_ping_result *c)
 {
-    (void)a; (void)b; (void)c;
+    (void)a;
+    (void)b;
+    (void)c;
     return DRV_ERROR_NOT_SUPPORT;
 }
 #endif
 
 int dsmi_get_netdev_gateway(int a, const char *b, unsigned int c, struct dsmi_ip_addr *d)
 {
-    (void)a; (void)b; (void)c; (void)d;
+    (void)a;
+    (void)b;
+    (void)c;
+    (void)d;
     return DRV_ERROR_NOT_SUPPORT;
 }
 
 int dsmi_set_netdev_gateway(int a, const char *b, unsigned int c, struct dsmi_ip_addr *d)
 {
-    (void)a; (void)b; (void)c; (void)d;
+    (void)a;
+    (void)b;
+    (void)c;
+    (void)d;
     return DRV_ERROR_NOT_SUPPORT;
 }
 
 int dsmi_get_device_mac_addr(int a, const char *b, unsigned int c, char *d, unsigned int e)
 {
-    (void)a; (void)b; (void)c; (void)d; (void)e;
+    (void)a;
+    (void)b;
+    (void)c;
+    (void)d;
+    (void)e;
     return DRV_ERROR_NOT_SUPPORT;
 }
 
 int dsmi_set_device_mac_addr(int a, const char *b, unsigned int c, const char *d, unsigned int e)
 {
-    (void)a; (void)b; (void)c; (void)d; (void)e;
+    (void)a;
+    (void)b;
+    (void)c;
+    (void)d;
+    (void)e;
     return DRV_ERROR_NOT_SUPPORT;
 }
 
 int dsmi_get_netdev_mac_addr(int a, const char *b, unsigned int c, char *d, unsigned int e)
 {
-    (void)a; (void)b; (void)c; (void)d; (void)e;
+    (void)a;
+    (void)b;
+    (void)c;
+    (void)d;
+    (void)e;
     return DRV_ERROR_NOT_SUPPORT;
 }
 
 int dsmi_set_netdev_mac_addr(int a, const char *b, unsigned int c, const char *d, unsigned int e)
 {
-    (void)a; (void)b; (void)c; (void)d; (void)e;
+    (void)a;
+    (void)b;
+    (void)c;
+    (void)d;
+    (void)e;
     return DRV_ERROR_NOT_SUPPORT;
 }
 
 int dsmi_get_netdev_pfc_duration_info(int a, const char *b, unsigned int c, struct dcmi_bond_pfc_duration_info *d)
 {
-    (void)a; (void)b; (void)c; (void)d;
+    (void)a;
+    (void)b;
+    (void)c;
+    (void)d;
     return DRV_ERROR_NOT_SUPPORT;
 }
 
 int dsmi_clear_netdev_pfc_duration_info(int a, const char *b, unsigned int c)
 {
-    (void)a; (void)b; (void)c;
+    (void)a;
+    (void)b;
+    (void)c;
     return DRV_ERROR_NOT_SUPPORT;
 }
 
 int dsmi_start_ubping_mesh_proc(int a, struct ubping_mesh_operate *b)
 {
-    (void)a; (void)b;
+    (void)a;
+    (void)b;
     return DRV_ERROR_NOT_SUPPORT;
 }
 
 int dsmi_get_ubping_mesh_state_proc(int a, unsigned int *b)
 {
-    (void)a; (void)b;
+    (void)a;
+    (void)b;
     return DRV_ERROR_NOT_SUPPORT;
 }
 
@@ -1148,6 +1201,7 @@ int dsmi_stop_ubping_mesh_proc(int a)
 
 int dsmi_get_ubping_mesh_info_proc(int a, struct ubping_mesh_info *b)
 {
-    (void)a; (void)b;
+    (void)a;
+    (void)b;
     return DRV_ERROR_NOT_SUPPORT;
 }
