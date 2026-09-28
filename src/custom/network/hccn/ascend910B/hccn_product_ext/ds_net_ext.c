@@ -48,7 +48,7 @@ int dsmi_start_roce_perftest(int device_id, struct perftest_cmd_info cmd_info[],
 
     size_in = sizeof(struct perftest_cmd_info) * in_len;
     size_out = PERFTEST_FLAG_LEN;
-    DSMI_SET_TRANS_DATA(trans_data, DS_START_PERFTEST, (char*)cmd_info, size_in, (char*)out_s, &size_out);
+    DSMI_SET_TRANS_DATA(trans_data, DS_START_PERFTEST, (char *)cmd_info, size_in, (char *)out_s, &size_out);
 
     ret = dsmi_network_transmission_channel(device_id, &trans_data);
     if (ret) {
@@ -78,7 +78,7 @@ int dsmi_get_roce_perftest_status(int device_id, unsigned int is_client, struct 
         roce_err("device id:%d is invalid! expect [0]-[%d]", device_id, DS_MAX_LOGIC_ID);
         return (-EINVAL);
     }
-    if (perftest_curr  == NULL) {
+    if (perftest_curr == NULL) {
         roce_err("Invalid input param. (dev_id=%d)", device_id);
         return -EINVAL;
     }
@@ -89,7 +89,7 @@ int dsmi_get_roce_perftest_status(int device_id, unsigned int is_client, struct 
     }
     size_in = sizeof(unsigned int);
     size_out = sizeof(struct perftest_curr_stat);
-    DSMI_SET_TRANS_DATA(trans_data, DS_GET_PERFTEST_STATUS, (char*)is_client_s, size_in, (char*)perftest_curr,
+    DSMI_SET_TRANS_DATA(trans_data, DS_GET_PERFTEST_STATUS, (char *)is_client_s, size_in, (char *)perftest_curr,
                         &size_out);
     ret = dsmi_network_transmission_channel(device_id, &trans_data);
     if (ret) {
@@ -130,7 +130,7 @@ int dsmi_get_roce_perftest_report(int device_id, unsigned int is_client, char *r
     }
 
     size_in = sizeof(unsigned int);
-    DSMI_SET_TRANS_DATA(trans_data, DS_GET_PERFTEST_REPORT, (char*)is_client_s, size_in, report, &len);
+    DSMI_SET_TRANS_DATA(trans_data, DS_GET_PERFTEST_REPORT, (char *)is_client_s, size_in, report, &len);
 
     ret = dsmi_network_transmission_channel(device_id, &trans_data);
     if (ret) {
@@ -166,7 +166,7 @@ int dsmi_stop_roce_perftest(int device_id, unsigned int is_client)
 
     size_in = sizeof(unsigned int);
     size_out = 0;
-    DSMI_SET_TRANS_DATA(trans_data, DS_STOP_PERFTEST, (char*)is_client_s, size_in, NULL, &size_out);
+    DSMI_SET_TRANS_DATA(trans_data, DS_STOP_PERFTEST, (char *)is_client_s, size_in, NULL, &size_out);
 
     ret = dsmi_network_transmission_channel(device_id, &trans_data);
     if (ret) {
@@ -230,7 +230,7 @@ int dsmi_get_eth_speed(int logic_id, int *speed)
     }
 
     size_out = sizeof(int);
-    DSMI_SET_TRANS_DATA(trans_data, DS_GET_ETH_SPEED, NULL, 0, (char*)speed, &size_out);
+    DSMI_SET_TRANS_DATA(trans_data, DS_GET_ETH_SPEED, NULL, 0, (char *)speed, &size_out);
 
     ret = dsmi_network_transmission_channel(logic_id, &trans_data);
     if (ret) {
@@ -260,7 +260,7 @@ int dsmi_get_eth_duplex(int logic_id, int *duplex)
     }
 
     size_out = sizeof(int);
-    DSMI_SET_TRANS_DATA(trans_data, DS_GET_ETH_DUPLEX, NULL, 0, (char*)duplex, &size_out);
+    DSMI_SET_TRANS_DATA(trans_data, DS_GET_ETH_DUPLEX, NULL, 0, (char *)duplex, &size_out);
 
     ret = dsmi_network_transmission_channel(logic_id, &trans_data);
     if (ret) {
@@ -290,7 +290,7 @@ int dsmi_get_ssu_reg(int logic_id, unsigned int *reg, unsigned int reg_size)
     }
 
     size_out = sizeof(unsigned int) * reg_size;
-    DSMI_SET_TRANS_DATA(trans_data, DS_GET_ETH_SSU_REG, NULL, 0, (char*)reg, &size_out);
+    DSMI_SET_TRANS_DATA(trans_data, DS_GET_ETH_SSU_REG, NULL, 0, (char *)reg, &size_out);
 
     ret = dsmi_network_transmission_channel(logic_id, &trans_data);
     if (ret) {
@@ -320,7 +320,7 @@ int dsmi_get_serdes_ctle_info(int logic_id, struct hilink_ctle_data *info)
     }
 
     size_out = sizeof(struct hilink_ctle_data) * MAX_SERDES_NUM;
-    DSMI_SET_TRANS_DATA(trans_data, DS_GET_SERDES_CTLE_INFO, NULL, 0, (char*)info, &size_out);
+    DSMI_SET_TRANS_DATA(trans_data, DS_GET_SERDES_CTLE_INFO, NULL, 0, (char *)info, &size_out);
 
     ret = dsmi_network_transmission_channel(logic_id, &trans_data);
     if (ret) {
@@ -350,7 +350,7 @@ int dsmi_get_serdes_dfe_info(int logic_id, struct hilink_dfe_data *info)
     }
 
     size_out = sizeof(struct hilink_dfe_data) * MAX_SERDES_NUM;
-    DSMI_SET_TRANS_DATA(trans_data, DS_GET_SERDES_DFE_INFO, NULL, 0, (char*)info, &size_out);
+    DSMI_SET_TRANS_DATA(trans_data, DS_GET_SERDES_DFE_INFO, NULL, 0, (char *)info, &size_out);
 
     ret = dsmi_network_transmission_channel(logic_id, &trans_data);
     if (ret) {
@@ -380,7 +380,7 @@ int dsmi_get_serdes_ffe_info(int logic_id, struct hilink_ffe_data *info)
     }
 
     size_out = sizeof(struct hilink_ffe_data) * MAX_SERDES_NUM;
-    DSMI_SET_TRANS_DATA(trans_data, DS_GET_SERDES_FFE_INFO, NULL, 0, (char*)info, &size_out);
+    DSMI_SET_TRANS_DATA(trans_data, DS_GET_SERDES_FFE_INFO, NULL, 0, (char *)info, &size_out);
 
     ret = dsmi_network_transmission_channel(logic_id, &trans_data);
     if (ret) {
@@ -410,7 +410,7 @@ int dsmi_get_fec_info(int logic_id, int *info)
     }
 
     size_out = sizeof(int);
-    DSMI_SET_TRANS_DATA(trans_data, DS_GET_FEC_INFO, NULL, 0, (char*)info, &size_out);
+    DSMI_SET_TRANS_DATA(trans_data, DS_GET_FEC_INFO, NULL, 0, (char *)info, &size_out);
 
     ret = dsmi_network_transmission_channel(logic_id, &trans_data);
     if (ret) {
@@ -447,7 +447,7 @@ int dsmi_set_fec_info(int logic_id, char mode)
         roce_err("Dsmi set fec enabled failed. (ret=%d; logic_id=%d)", ret, logic_id);
         return ret;
     }
- 
+
     if (trans_data.result != 0) {
         roce_err("Dsmi set fec mode failed. (result=%d; logic_id=%d)", trans_data.result, logic_id);
     }
@@ -471,7 +471,7 @@ int dsmi_get_pcs_info(int logic_id, struct hilink_port_info *info)
     }
 
     size_out = sizeof(struct hilink_port_info);
-    DSMI_SET_TRANS_DATA(trans_data, DS_GET_PCS_INFO, NULL, 0, (char*)info, &size_out);
+    DSMI_SET_TRANS_DATA(trans_data, DS_GET_PCS_INFO, NULL, 0, (char *)info, &size_out);
 
     ret = dsmi_network_transmission_channel(logic_id, &trans_data);
     if (ret) {
@@ -497,8 +497,8 @@ int dsmi_get_adapt_status_info(int logic_id, int port_id, struct hilink_adapt_st
     }
 
     size_out = sizeof(struct hilink_adapt_status_info);
-    DSMI_SET_TRANS_DATA(trans_data, DS_GET_ADAPT_STATUS_INFO, (char *)(&port_id), sizeof(port_id),
-        (char*)info, &size_out);
+    DSMI_SET_TRANS_DATA(trans_data, DS_GET_ADAPT_STATUS_INFO, (char *)(&port_id), sizeof(port_id), (char *)info,
+                        &size_out);
 
     ret = dsmi_network_transmission_channel(logic_id, &trans_data);
     if (ret) {
@@ -519,7 +519,7 @@ int dsmi_trig_query_cdr_info(int logic_id, struct trig_get_cdr_info *info)
     unsigned int size_out;
 
     size_out = sizeof(struct trig_get_cdr_info);
-    DSMI_SET_TRANS_DATA(trans_data, DS_TRIG_GET_CDR_INFO, (char *)info, size_out, (char*)info, &size_out);
+    DSMI_SET_TRANS_DATA(trans_data, DS_TRIG_GET_CDR_INFO, (char *)info, size_out, (char *)info, &size_out);
 
     ret = dsmi_network_transmission_channel(logic_id, &trans_data);
     if (ret) {
@@ -540,7 +540,7 @@ int dsmi_query_mac_lane_cdr_info(int logic_id, struct query_mac_lane_info *info)
     unsigned int size_out;
 
     size_out = sizeof(struct query_mac_lane_info);
-    DSMI_SET_TRANS_DATA(trans_data, DS_GET_MAC_LANE_INFO, NULL, 0, (char*)info, &size_out);
+    DSMI_SET_TRANS_DATA(trans_data, DS_GET_MAC_LANE_INFO, NULL, 0, (char *)info, &size_out);
 
     ret = dsmi_network_transmission_channel(logic_id, &trans_data);
     if (ret) {
@@ -561,8 +561,8 @@ int dsmi_get_cdr_reg_info(int logic_id, struct query_cdr_reg_info *info)
     unsigned int size_out;
 
     size_out = sizeof(struct query_cdr_reg_info);
-    DSMI_SET_TRANS_DATA(trans_data, DS_GET_CDR_REG_INFO, (char *)info, sizeof(struct query_cdr_reg_info),
-        (char*)info, &size_out);
+    DSMI_SET_TRANS_DATA(trans_data, DS_GET_CDR_REG_INFO, (char *)info, sizeof(struct query_cdr_reg_info), (char *)info,
+                        &size_out);
 
     ret = dsmi_network_transmission_channel(logic_id, &trans_data);
     if (ret) {
@@ -587,7 +587,7 @@ int dsmi_send_data(int logic_id, int port_id, struct send_data_info *data_info)
     }
 
     DSMI_SET_TRANS_DATA(trans_data, data_info->cmd, data_info->in_buf, data_info->size_in, data_info->out_buf,
-        &data_info->size_out);
+                        &data_info->size_out);
 
     if (data_info->size_out != 0) {
         trans_data.pid = getpid();
@@ -632,7 +632,7 @@ int dsmi_get_pfc_enabled(int logic_id, int port_id, char *pfc_enabled)
 
     return trans_data.result;
 }
- 
+
 int dsmi_set_pfc_enabled(int logic_id, int port_id, char *pfc_enabled, unsigned int priority_num)
 {
     int ret;
@@ -734,7 +734,7 @@ int dsmi_get_current_tc_used(int logic_id, int port_id, int tc_id, unsigned int 
     }
 
     size_out = sizeof(unsigned int);
-    DSMI_SET_TRANS_DATA(trans_data, DS_GET_CURR_TC_USED, (char *)(&tc_id), sizeof(int), (char*)tc_used, &size_out);
+    DSMI_SET_TRANS_DATA(trans_data, DS_GET_CURR_TC_USED, (char *)(&tc_id), sizeof(int), (char *)tc_used, &size_out);
 
     ret = dsmi_network_transmission_channel(logic_id, &trans_data);
     if (ret) {
@@ -753,58 +753,58 @@ int dsmi_get_prio_tc_info(int logic_id, int port_id, char *prio_tc)
     int ret;
     struct ds_trans_data trans_data = {0};
     unsigned int size = PRIORITY_NUM;
- 
+
     if ((logic_id > DS_MAX_LOGIC_ID) || (logic_id < 0) || (port_id > MAX_PORT_ID) || (port_id < 0)) {
         roce_err("Logic id or port id is invalid. (logic_id=%d; port_id=%d)", logic_id, port_id);
         return -EINVAL;
     }
- 
+
     DSMI_SET_TRANS_DATA(trans_data, DS_GET_PRIO_TC_INFO, NULL, 0, prio_tc, &size);
     ret = dsmi_network_transmission_channel(logic_id, &trans_data);
     if (ret) {
         roce_err("Dsmi trans info failed. (ret=%d; logic_id=%d)", ret, logic_id);
         return ret;
     }
- 
+
     if (trans_data.result != 0) {
         roce_err("Dsmi get prio_tc info failed. (result=%d; logic_id=%d)", trans_data.result, logic_id);
     }
- 
+
     return trans_data.result;
 }
- 
+
 int dsmi_set_prio_tc_info(int logic_id, int port_id, char *prio_tc, unsigned int priority_num)
 {
     int ret;
     struct ds_trans_data trans_data = {0};
     unsigned int size = 0;
- 
+
     if ((logic_id > DS_MAX_LOGIC_ID) || (logic_id < 0) || (port_id > MAX_PORT_ID) || (port_id < 0)) {
         roce_err("Logic id or port id is invalid. (logic_id=%d; port_id=%d)", logic_id, port_id);
         return -EINVAL;
     }
- 
+
     ret = hccn_check_usr_identify();
     if (ret) {
         roce_err("Check usr identify failed. (ret=%d; logic_id=%d)", ret, logic_id);
         return ret;
     }
- 
+
     DSMI_SET_TRANS_DATA(trans_data, DS_SET_PRIO_TC_INFO, prio_tc, priority_num, NULL, &size);
     ret = dsmi_network_transmission_channel(logic_id, &trans_data);
     if (ret) {
         roce_err("Dsmi trans info failed. (ret=%d; logic_id=%d)", ret, logic_id);
         return ret;
     }
- 
+
     if (trans_data.result != 0) {
         roce_err("Dsmi set prio_tc info failed. (result=%d; logic_id=%d)", trans_data.result, logic_id);
     }
- 
+
     return trans_data.result;
 }
 
-#define PING_OUTBUFF_LEN  2000
+#define PING_OUTBUFF_LEN 2000
 int dsmi_ping_fun(int logic_id, int phy_id, char *inbuf, struct ping_operate_info *operate_info,
                   unsigned int inbuf_size)
 {
@@ -817,7 +817,7 @@ int dsmi_ping_fun(int logic_id, int phy_id, char *inbuf, struct ping_operate_inf
         roce_err("Logic id is invalid. (logic_id=%d)", logic_id);
         return -EINVAL;
     }
- 
+
     DSMI_SET_TRANS_DATA(trans_data, DS_PING, (char *)operate_info, inbuf_size, (char *)outbuf, &size);
     ret = dsmi_network_transmission_channel(logic_id, &trans_data);
     if (ret != 0) {
@@ -835,12 +835,12 @@ int dsmi_ping_fun(int logic_id, int phy_id, char *inbuf, struct ping_operate_inf
         TOOL_PRINT_INFO("device %d PING %s\n%s", phy_id, operate_info->str_ip, outbuf);
     }
 
-    if (strstr(outbuf, "Message too long") != NULL || strstr(outbuf, "recv time out seq") != NULL
-               || strstr(outbuf, "Destination Host Unreachable") != NULL) {
+    if (strstr(outbuf, "Message too long") != NULL || strstr(outbuf, "recv time out seq") != NULL ||
+        strstr(outbuf, "Destination Host Unreachable") != NULL) {
         roce_err("Ping inner error.");
         trans_data.result = PING_INNER_ERROR;
     }
- 
+
     return trans_data.result;
 }
 
@@ -889,8 +889,7 @@ int dsmi_get_hccs_ping_result(int logic_id, hccs_ping_operate_info *operate_info
     return ret;
 }
 
-int dsmi_hccs_ping(int logic_id, int port_id, hccs_ping_operate_info *operate_info,
-                   hccs_ping_reply_info *reply_info)
+int dsmi_hccs_ping(int logic_id, int port_id, hccs_ping_operate_info *operate_info, hccs_ping_reply_info *reply_info)
 {
     int ret, reply_len;
     struct ds_trans_data trans_data = {0};
@@ -956,8 +955,8 @@ int dsmi_get_gratuitous_arp_info(int logic_id, struct gratuitous_arp_info *info)
     }
 
     size_out = sizeof(struct gratuitous_arp_info);
-    DSMI_SET_TRANS_DATA(trans_data, DS_GET_GRATUIT_ARP_INFO, (char *)(&logic_id), sizeof(logic_id),
-        (char*)info, &size_out);
+    DSMI_SET_TRANS_DATA(trans_data, DS_GET_GRATUIT_ARP_INFO, (char *)(&logic_id), sizeof(logic_id), (char *)info,
+                        &size_out);
 
     ret = dsmi_network_transmission_channel(logic_id, &trans_data);
     if (ret != 0) {
@@ -999,7 +998,7 @@ int dsmi_set_gratuitous_arp_info(int logic_id, struct gratuitous_arp_info *info)
     if (trans_data.result != 0) {
         roce_err("Dsmi set gratuitous arp info result fail. (result=%d)", trans_data.result);
     }
-    
+
     return trans_data.result;
 }
 
@@ -1059,7 +1058,7 @@ int dsmi_get_route_table_ipv6(int logic_id, int port_id, char *route, unsigned i
 }
 
 int dsmi_add_route_table_ipv6(int logic_id, int port_id, struct ds_ipv6_route_table_value *route_param, char *outbuf,
-    unsigned int len)
+                              unsigned int len)
 {
     int ret;
     struct ds_trans_data trans_data = {0};
@@ -1069,7 +1068,7 @@ int dsmi_add_route_table_ipv6(int logic_id, int port_id, struct ds_ipv6_route_ta
         return -EINVAL;
     }
 
-    if (port_id < 0 ||  port_id > MAX_PORT_ID) {
+    if (port_id < 0 || port_id > MAX_PORT_ID) {
         roce_err("port id:%d is invalid! expect [0]-[%d]", port_id, MAX_PORT_ID);
         return -EINVAL;
     }
@@ -1086,8 +1085,8 @@ int dsmi_add_route_table_ipv6(int logic_id, int port_id, struct ds_ipv6_route_ta
     }
     DSMI_CHECK_PTR_VALID_RETURN_VAL(outbuf, -EINVAL);
     DSMI_CHECK_PTR_VALID_RETURN_VAL(route_param, -EINVAL);
-    DSMI_SET_TRANS_DATA(trans_data, DS_ADD_ROUTE_TABLE_INET6, (char*)route_param,
-        sizeof(struct ds_ipv6_route_table_value), outbuf, &len);
+    DSMI_SET_TRANS_DATA(trans_data, DS_ADD_ROUTE_TABLE_INET6, (char *)route_param,
+                        sizeof(struct ds_ipv6_route_table_value), outbuf, &len);
 
     ret = dsmi_network_transmission_channel(logic_id, &trans_data);
     if (ret) {
@@ -1102,8 +1101,8 @@ int dsmi_add_route_table_ipv6(int logic_id, int port_id, struct ds_ipv6_route_ta
     return trans_data.result;
 }
 
-int dsmi_del_route_table_ipv6(int logic_id, int port_id, struct ds_ipv6_route_table_value *route_param,
-    char *outbuf, unsigned int len)
+int dsmi_del_route_table_ipv6(int logic_id, int port_id, struct ds_ipv6_route_table_value *route_param, char *outbuf,
+                              unsigned int len)
 {
     int ret;
     struct ds_trans_data trans_data = {0};
@@ -1113,7 +1112,7 @@ int dsmi_del_route_table_ipv6(int logic_id, int port_id, struct ds_ipv6_route_ta
         return -EINVAL;
     }
 
-    if (port_id < 0 ||  port_id > MAX_PORT_ID) {
+    if (port_id < 0 || port_id > MAX_PORT_ID) {
         roce_err("port id:%d is invalid! expect [0]-[%d]", port_id, MAX_PORT_ID);
         return (-EINVAL);
     }
@@ -1129,8 +1128,8 @@ int dsmi_del_route_table_ipv6(int logic_id, int port_id, struct ds_ipv6_route_ta
     }
     DSMI_CHECK_PTR_VALID_RETURN_VAL(outbuf, -EINVAL);
     DSMI_CHECK_PTR_VALID_RETURN_VAL(route_param, -EINVAL);
-    DSMI_SET_TRANS_DATA(trans_data, DS_DELETE_ROUTE_TABLE_INET6, (char*)route_param,
-        sizeof(struct ds_ipv6_route_table_value), outbuf, &len);
+    DSMI_SET_TRANS_DATA(trans_data, DS_DELETE_ROUTE_TABLE_INET6, (char *)route_param,
+                        sizeof(struct ds_ipv6_route_table_value), outbuf, &len);
 
     ret = dsmi_network_transmission_channel(logic_id, &trans_data);
     if (ret) {
@@ -1182,7 +1181,8 @@ int dsmi_set_cdr_mode_cmd(int logic_id, int port, struct ds_cdr_mode_info *info)
         roce_err("Logic id or port id is invalid. (logic_id=%d; port_id=%d)", logic_id, port);
         return -EINVAL;
     }
-    DSMI_SET_TRANS_DATA(trans_data, DS_SET_CDR_MODE_CMD, (char*)info, sizeof(struct ds_cdr_mode_info), NULL, &size_out);
+    DSMI_SET_TRANS_DATA(trans_data, DS_SET_CDR_MODE_CMD, (char *)info, sizeof(struct ds_cdr_mode_info), NULL,
+                        &size_out);
 
     ret = dsmi_network_transmission_channel(logic_id, &trans_data);
     if (ret) {
@@ -1209,7 +1209,7 @@ int dsmi_set_prbs_flag(int logic_id, int prbs_flag)
     }
 
     roce_info("in dsmi_set_prbs_flag, (logic_id=%d, prbs_flag=%d)", logic_id, prbs_flag);
-    DSMI_SET_TRANS_DATA(trans_data, DS_SET_NPU_PRBS_FLAG, (char*)&prbs_flag, sizeof(prbs_flag), NULL, &size);
+    DSMI_SET_TRANS_DATA(trans_data, DS_SET_NPU_PRBS_FLAG, (char *)&prbs_flag, sizeof(prbs_flag), NULL, &size);
 
     ret = dsmi_network_transmission_channel(logic_id, &trans_data);
     if (ret) {
@@ -1234,10 +1234,9 @@ int dsmi_prbs_adapt_in_order(unsigned int mode, unsigned int logic_id, unsigned 
     mode_info.mode = mode;
     mode_info.master_flag = master_flag;
 
-    roce_info("prbs adapt in order start. (mode=%u, logic_id=%u, master_flag=%d)",
-        mode, logic_id, master_flag);
-    DSMI_SET_TRANS_DATA(trans_data, DS_SET_PRBS_ADAPT_IN_ORDER,
-                        (char*)&mode_info, sizeof(struct prbs_adapt_mode_info), NULL, &size);
+    roce_info("prbs adapt in order start. (mode=%u, logic_id=%u, master_flag=%d)", mode, logic_id, master_flag);
+    DSMI_SET_TRANS_DATA(trans_data, DS_SET_PRBS_ADAPT_IN_ORDER, (char *)&mode_info, sizeof(struct prbs_adapt_mode_info),
+                        NULL, &size);
     ret = dsmi_network_transmission_channel(logic_id, &trans_data);
     if (ret) {
         roce_err("dsmi set prbs adapt in order failed. (mode=%u, ret=%d; logic_id=%d)", mode, ret, logic_id);
@@ -1245,8 +1244,8 @@ int dsmi_prbs_adapt_in_order(unsigned int mode, unsigned int logic_id, unsigned 
     }
 
     if (trans_data.result != 0) {
-        roce_err("dsmi set prbs adapt in order failed. (mode=%u, result=%d; logic_id=%d)",
-            mode, trans_data.result, logic_id);
+        roce_err("dsmi set prbs adapt in order failed. (mode=%u, result=%d; logic_id=%d)", mode, trans_data.result,
+                 logic_id);
     }
 
     return trans_data.result;
@@ -1264,7 +1263,7 @@ int dsmi_get_cdr_version(int logic_id, int port_id, struct ds_cdr_version_info *
     DSMI_CHECK_PTR_VALID_RETURN_VAL(info, -EINVAL);
 
     size = sizeof(struct ds_cdr_version_info);
-    DSMI_SET_TRANS_DATA(trans_data, DS_GET_CDR_VERSION_INFO_CMD, NULL, 0, (char*)info, &size);
+    DSMI_SET_TRANS_DATA(trans_data, DS_GET_CDR_VERSION_INFO_CMD, NULL, 0, (char *)info, &size);
 
     ret = dsmi_network_transmission_channel(logic_id, &trans_data);
     if (ret) {
@@ -1273,8 +1272,8 @@ int dsmi_get_cdr_version(int logic_id, int port_id, struct ds_cdr_version_info *
     }
 
     if (trans_data.result != 0) {
-        roce_err("Dsmi get cdr version info fail. (result=%d; logic_id=%d; port=%d)",
-                 trans_data.result, logic_id, port_id);
+        roce_err("Dsmi get cdr version info fail. (result=%d; logic_id=%d; port=%d)", trans_data.result, logic_id,
+                 port_id);
     }
 
     return trans_data.result;
@@ -1285,26 +1284,26 @@ int dsmi_get_eth_down_data(int logic_id, struct ds_link_down_data *down_data)
     struct ds_trans_data trans_data = {0};
     unsigned int size_out;
     int ret;
- 
+
     if ((logic_id > DS_MAX_LOGIC_ID) || (logic_id < 0) || (down_data == NULL)) {
         roce_err("Logic id or down_data is invalid. (logic_id=%d)", logic_id);
         return -EINVAL;
     }
- 
+
     size_out = sizeof(struct ds_link_down_data);
-    DSMI_SET_TRANS_DATA(trans_data, DS_GET_LINK_DOWN_INFO_CMD, (char *)(&logic_id), sizeof(logic_id),
-        (char*)down_data, &size_out);
- 
+    DSMI_SET_TRANS_DATA(trans_data, DS_GET_LINK_DOWN_INFO_CMD, (char *)(&logic_id), sizeof(logic_id), (char *)down_data,
+                        &size_out);
+
     ret = dsmi_network_transmission_channel(logic_id, &trans_data);
     if (ret) {
         roce_err("Dsmi get eth down data fail fail. (ret=%d; logic_id=%d)", ret, logic_id);
         return ret;
     }
- 
+
     if (trans_data.result != 0) {
         roce_err("Dsmi get eth down data result failed. (result=%d; logic_id=%d)", trans_data.result, logic_id);
     }
- 
+
     return trans_data.result;
 }
 
@@ -1317,13 +1316,13 @@ int dsmi_get_traceroute_status(int logic_id, int *troute_status)
     char *p_tmp = NULL;
 
     if ((logic_id > DS_MAX_LOGIC_ID) || (logic_id < 0)) {
-        roce_err("Logic id in dsmi get traceroute status is invalid! expect [0]-[%d]. (logic_id=%d)",
-                 DS_MAX_LOGIC_ID, logic_id);
+        roce_err("Logic id in dsmi get traceroute status is invalid! expect [0]-[%d]. (logic_id=%d)", DS_MAX_LOGIC_ID,
+                 logic_id);
         return -EINVAL;
     }
 
     DSMI_SET_TRANS_DATA(trans_data, DS_GET_TRACEROUTE_STATUS, NULL, 0, status, &size);
-    
+
     ret = dsmi_network_transmission_channel(logic_id, &trans_data);
     if (ret != 0) {
         roce_err("Dsmi channel got traceroute status failed. (ret=%d; logic_id=%d)", ret, logic_id);
@@ -1342,8 +1341,7 @@ int dsmi_get_traceroute_status(int logic_id, int *troute_status)
     return 0;
 }
 
-int dsmi_start_traceroute(int logic_id, struct dsmi_traceroute_info *traceroute_info_send,
-    int *troute_start_result)
+int dsmi_start_traceroute(int logic_id, struct dsmi_traceroute_info *traceroute_info_send, int *troute_start_result)
 {
     int ret;
     unsigned int size = ARGC_NUM_10;
@@ -1352,14 +1350,14 @@ int dsmi_start_traceroute(int logic_id, struct dsmi_traceroute_info *traceroute_
     char *p_tmp = NULL;
 
     if ((logic_id > DS_MAX_LOGIC_ID) || (logic_id < 0)) {
-        roce_err("Logic id in dsmi start traceroute is invalid! expect [0]-[%d]. (logic_id=%d)",
-                 DS_MAX_LOGIC_ID, logic_id);
+        roce_err("Logic id in dsmi start traceroute is invalid! expect [0]-[%d]. (logic_id=%d)", DS_MAX_LOGIC_ID,
+                 logic_id);
         return -EINVAL;
     }
 
     DSMI_CHECK_PTR_VALID_RETURN_VAL(traceroute_info_send, -EINVAL);
     DSMI_SET_TRANS_DATA(trans_data, DS_START_TRACEROUTE, (char *)(void *)traceroute_info_send,
-        sizeof(struct dsmi_traceroute_info), result, &size);
+                        sizeof(struct dsmi_traceroute_info), result, &size);
 
     ret = dsmi_network_transmission_channel(logic_id, &trans_data);
     if (ret != 0) {
@@ -1390,7 +1388,7 @@ int dsmi_get_extra_statistics_info(int logic_id, int port_id, struct ds_extra_st
     DSMI_CHECK_PTR_VALID_RETURN_VAL(info, -EINVAL);
 
     size = sizeof(struct ds_extra_statistics_info);
-    DSMI_SET_TRANS_DATA(trans_data, DS_GET_EXTRA_STAT_INFO, NULL, 0, (char*)info, &size);
+    DSMI_SET_TRANS_DATA(trans_data, DS_GET_EXTRA_STAT_INFO, NULL, 0, (char *)info, &size);
 
     ret = dsmi_network_transmission_channel(logic_id, &trans_data);
     if (ret) {
@@ -1399,8 +1397,8 @@ int dsmi_get_extra_statistics_info(int logic_id, int port_id, struct ds_extra_st
     }
 
     if (trans_data.result != 0) {
-        roce_err("Dsmi get extra statistics fail. (result=%d; logic_id=%d; port=%d)",
-                 trans_data.result, logic_id, port_id);
+        roce_err("Dsmi get extra statistics fail. (result=%d; logic_id=%d; port=%d)", trans_data.result, logic_id,
+                 port_id);
     }
 
     return trans_data.result;
@@ -1419,7 +1417,7 @@ int dsmi_get_fec_error_info(int logic_id, struct ds_fec_error_info *info, int ma
     DSMI_CHECK_PTR_VALID_RETURN_VAL(info, -EINVAL);
     size_in = sizeof(int);
     size_out = sizeof(struct ds_fec_error_info);
-    DSMI_SET_TRANS_DATA(trans_data, DS_GET_FEC_ERROR_INFO, (char*)(&mac_id), size_in, (char*)info, &size_out);
+    DSMI_SET_TRANS_DATA(trans_data, DS_GET_FEC_ERROR_INFO, (char *)(&mac_id), size_in, (char *)info, &size_out);
     ret = dsmi_network_transmission_channel(logic_id, &trans_data);
     if (ret != 0) {
         roce_err("Dsmi get FEC error info fail. (ret=%d; logic_id=%d)", ret, logic_id);
@@ -1427,8 +1425,7 @@ int dsmi_get_fec_error_info(int logic_id, struct ds_fec_error_info *info, int ma
     }
 
     if (trans_data.result != 0) {
-        roce_err("Dsmi get FEC error info fail. (result=%d; logic_id=%d)",
-                 trans_data.result, logic_id);
+        roce_err("Dsmi get FEC error info fail. (result=%d; logic_id=%d)", trans_data.result, logic_id);
     }
 
     return trans_data.result;
@@ -1467,14 +1464,14 @@ int dsmi_get_traceroute_info(int logic_id, char *troute_info_show, unsigned int 
     unsigned int size;
 
     if ((logic_id > DS_MAX_LOGIC_ID) || (logic_id < 0)) {
-        roce_err("Logic id in dsmi get traceroute info is invalid! expect [0]-[%d]. (logic_id=%d)",
-            DS_MAX_LOGIC_ID, logic_id);
+        roce_err("Logic id in dsmi get traceroute info is invalid! expect [0]-[%d]. (logic_id=%d)", DS_MAX_LOGIC_ID,
+                 logic_id);
         return -EINVAL;
     }
 
     size = info_size;
-    DSMI_SET_TRANS_DATA(trans_data, DS_GET_TRACEROUTE_INFO, (char *)(void *)&cmd_type,
-                        sizeof(cmd_type), troute_info_show, &size);
+    DSMI_SET_TRANS_DATA(trans_data, DS_GET_TRACEROUTE_INFO, (char *)(void *)&cmd_type, sizeof(cmd_type),
+                        troute_info_show, &size);
     ret = dsmi_network_transmission_channel(logic_id, &trans_data);
     if (ret != 0) {
         roce_err("Dsmi channel got traceroute info failed. (ret=%d; logic_id=%d)", ret, logic_id);
@@ -1497,8 +1494,8 @@ int dsmi_reset_traceroute(int logic_id, int *troute_reset)
     char *p_tmp = NULL;
 
     if ((logic_id > DS_MAX_LOGIC_ID) || (logic_id < 0)) {
-        roce_err("Logic id in dsmi reset traceroute is invalid! expect [0]-[%d]. (logic_id=%d)",
-                 DS_MAX_LOGIC_ID, logic_id);
+        roce_err("Logic id in dsmi reset traceroute is invalid! expect [0]-[%d]. (logic_id=%d)", DS_MAX_LOGIC_ID,
+                 logic_id);
         return -EINVAL;
     }
 
@@ -1532,8 +1529,8 @@ int dsmi_get_xsfp_reset_info(int logic_id, struct xsfp_reset_info *reset_info)
         return (-EINVAL);
     }
 
-    DSMI_SET_TRANS_DATA(trans_data, DS_GET_XSFP_RESET_INFO, (char *)(&logic_id), sizeof(logic_id),
-        (char*)reset_info, &size_out);
+    DSMI_SET_TRANS_DATA(trans_data, DS_GET_XSFP_RESET_INFO, (char *)(&logic_id), sizeof(logic_id), (char *)reset_info,
+                        &size_out);
     ret = dsmi_network_transmission_channel(logic_id, &trans_data);
     if (ret != 0) {
         roce_err("Dsmi get xsfp reset info fail. (ret=%d; logic_id=%d)", ret, logic_id);
@@ -1545,24 +1542,24 @@ int dsmi_get_xsfp_reset_info(int logic_id, struct xsfp_reset_info *reset_info)
     }
     return trans_data.result;
 }
- 
+
 int dsmi_set_xsfp_reset_info(int logic_id, struct xsfp_reset_info *reset_info)
 {
     struct ds_trans_data trans_data = {0};
     unsigned int size_in, size_out = 0;
     int ret;
- 
+
     if (logic_id > DS_MAX_LOGIC_ID || logic_id < 0) {
         roce_err("Logic id is invalid, expect [0]-[%d]. (logic_id=%d)", DS_MAX_LOGIC_ID, logic_id);
         return (-EINVAL);
     }
- 
+
     ret = hccn_check_usr_identify();
     if (ret != 0) {
         roce_err("Check usr identify failed. (ret=%d; logic_id=%d)", ret, logic_id);
         return ret;
     }
- 
+
     size_in = sizeof(struct xsfp_reset_info);
     DSMI_SET_TRANS_DATA(trans_data, DS_SET_XSFP_RESET_INFO, (char *)reset_info, size_in, NULL, &size_out);
     ret = dsmi_network_transmission_channel(logic_id, &trans_data);
@@ -1570,11 +1567,11 @@ int dsmi_set_xsfp_reset_info(int logic_id, struct xsfp_reset_info *reset_info)
         roce_err("Dsmi set xsfp reset info fail. (ret=%d; logic_id=%d)", ret, logic_id);
         return ret;
     }
- 
+
     if (trans_data.result != 0) {
         roce_err("Dsmi set xsfp reset info result fail. (result=%d)", trans_data.result);
     }
-    
+
     return trans_data.result;
 }
 
@@ -1583,14 +1580,14 @@ int dsmi_set_host_info(int logic_id, struct ds_host_info *host_info)
     int ret;
     unsigned int size_out = 0;
     struct ds_trans_data trans_data = {0};
- 
+
     if ((logic_id > DS_MAX_LOGIC_ID) || (logic_id < 0) || (host_info == NULL)) {
         roce_err("Logic id invalid or host_info NULL (logic_id=%d; host_info=%d;)", logic_id, (host_info == NULL));
         return -EINVAL;
     }
 
-    DSMI_SET_TRANS_DATA(trans_data, DS_SET_HOST_INFO,
-        (char*)host_info, HOST_INFO_SIZE_MAX + HOST_NAME_SIZE_MAX, NULL, &size_out);
+    DSMI_SET_TRANS_DATA(trans_data, DS_SET_HOST_INFO, (char *)host_info, HOST_INFO_SIZE_MAX + HOST_NAME_SIZE_MAX, NULL,
+                        &size_out);
 
     ret = dsmi_network_transmission_channel(logic_id, &trans_data);
     if (ret) {
@@ -1601,14 +1598,14 @@ int dsmi_set_host_info(int logic_id, struct ds_host_info *host_info)
     if (trans_data.result != 0) {
         roce_err("Set host info fail. (trans_data.result=%d; logic_id:%d)", trans_data.result, logic_id);
     }
- 
+
     return trans_data.result;
 }
 
 static int check_roce_port_ippair(struct ds_roce_port_ippair *ippair)
 {
     int roce_port;
-    struct in6_addr zero_addr = { 0 };
+    struct in6_addr zero_addr = {0};
 
     if (memcmp(&zero_addr, &ippair->sip.ipv6, sizeof(struct in6_addr)) == 0 ||
         memcmp(&zero_addr, &ippair->dip.ipv6, sizeof(struct in6_addr)) == 0) {
@@ -1628,24 +1625,23 @@ static int check_roce_port_ippair(struct ds_roce_port_ippair *ippair)
     }
 
     if (ippair->sip_family != ippair->dip_family) {
-        roce_err("Address familys isn't same.(src=%d; dst=%d)",
-            ippair->sip_family, ippair->dip_family);
+        roce_err("Address familys isn't same.(src=%d; dst=%d)", ippair->sip_family, ippair->dip_family);
         return -EINVAL;
     }
 
     return 0;
 }
 
-static int dsmi_update_roce_port_ippair(int logic_id, int port_id,
-    struct ds_roce_port_ippair *ippair, enum ds_ippair_op_type op)
+static int dsmi_update_roce_port_ippair(int logic_id, int port_id, struct ds_roce_port_ippair *ippair,
+                                        enum ds_ippair_op_type op)
 {
     int ret;
     unsigned int size;
     char *op_name[] = {"set", "del"};
-    char sip[INET6_ADDRSTRLEN] = { 0 };
-    char dip[INET6_ADDRSTRLEN] = { 0 };
-    struct ds_trans_data trans_data = { 0 };
-    struct ds_update_ippair update_ippair = { 0 };
+    char sip[INET6_ADDRSTRLEN] = {0};
+    char dip[INET6_ADDRSTRLEN] = {0};
+    struct ds_trans_data trans_data = {0};
+    struct ds_update_ippair update_ippair = {0};
 
     DSMI_CHECK_PTR_VALID_RETURN_VAL(ippair, -EINVAL);
 
@@ -1672,19 +1668,19 @@ static int dsmi_update_roce_port_ippair(int logic_id, int port_id,
     (void)inet_ntop(ippair->dip_family, &ippair->dip.ipv6, dip, INET6_ADDRSTRLEN);
 
     size = 0;
-    DSMI_SET_TRANS_DATA(trans_data, DS_UPDATE_ROCE_PORT_IPPAIR, (char*)(void*)&update_ippair,
-        sizeof(struct ds_update_ippair), NULL, &size);
+    DSMI_SET_TRANS_DATA(trans_data, DS_UPDATE_ROCE_PORT_IPPAIR, (char *)(void *)&update_ippair,
+                        sizeof(struct ds_update_ippair), NULL, &size);
 
     ret = dsmi_network_transmission_channel(logic_id, &trans_data);
     if (ret != 0) {
-        roce_err("Dsmi %s roce port fail.(ret=%d; logic_id=%d; port=%d; roce_port=%d; sip=%s; dip=%s)",
-            op_name[op], ret, logic_id, port_id, ippair->roce_port, sip, dip);
+        roce_err("Dsmi %s roce port fail.(ret=%d; logic_id=%d; port=%d; roce_port=%d; sip=%s; dip=%s)", op_name[op],
+                 ret, logic_id, port_id, ippair->roce_port, sip, dip);
         return ret;
     }
 
     if (trans_data.result != 0) {
-        roce_err("Dsmi %s roce port fail.(result=%d; logic_id=%d; port=%d; roce_port=%d; sip=%s; dip=%s)",
-            op_name[op], trans_data.result, logic_id, port_id, ippair->roce_port, sip, dip);
+        roce_err("Dsmi %s roce port fail.(result=%d; logic_id=%d; port=%d; roce_port=%d; sip=%s; dip=%s)", op_name[op],
+                 trans_data.result, logic_id, port_id, ippair->roce_port, sip, dip);
     }
 
     return trans_data.result;
@@ -1704,7 +1700,7 @@ int dsmi_clear_roce_port_ippair(int logic_id, int port_id)
 {
     int ret;
     unsigned int size;
-    struct ds_trans_data trans_data = { 0 };
+    struct ds_trans_data trans_data = {0};
 
     if ((logic_id > DS_MAX_LOGIC_ID) || (logic_id < 0) || (port_id > MAX_PORT_ID) || (port_id < 0)) {
         roce_err("Logic id or port id is invalid.(logic_id=%d; port_id=%d).", logic_id, port_id);
@@ -1737,7 +1733,7 @@ int dsmi_get_roce_port_ippair(int logic_id, int port_id, struct ds_ippair_list *
 {
     int ret;
     unsigned int size;
-    struct ds_trans_data trans_data = { 0 };
+    struct ds_trans_data trans_data = {0};
     int list_count;
 
     DSMI_CHECK_PTR_VALID_RETURN_VAL(list, -EINVAL);
@@ -1749,19 +1745,19 @@ int dsmi_get_roce_port_ippair(int logic_id, int port_id, struct ds_ippair_list *
     }
 
     size = sizeof(struct ds_ippair_list) + sizeof(struct ds_roce_port_ippair) * list->count;
-    DSMI_SET_TRANS_DATA(trans_data, DS_GET_ROCE_PORT_IPPAIR, (char*)(&list_count),
-        sizeof(list_count), (char*)(void*)list, &size);
+    DSMI_SET_TRANS_DATA(trans_data, DS_GET_ROCE_PORT_IPPAIR, (char *)(&list_count), sizeof(list_count),
+                        (char *)(void *)list, &size);
 
     ret = dsmi_network_transmission_channel(logic_id, &trans_data);
     if (ret) {
-        roce_err("Dsmi get roce port fail.(ret=%d; logic_id=%d; port=%d; count=%d)",
-            ret, logic_id, port_id, list->count);
+        roce_err("Dsmi get roce port fail.(ret=%d; logic_id=%d; port=%d; count=%d)", ret, logic_id, port_id,
+                 list->count);
         return ret;
     }
 
     if (trans_data.result != 0) {
-        roce_err("Get roce port fail.(result=%d; logic_id=%d; port=%d; count=%d)",
-            trans_data.result, logic_id, port_id, list->count);
+        roce_err("Get roce port fail.(result=%d; logic_id=%d; port=%d; count=%d)", trans_data.result, logic_id, port_id,
+                 list->count);
     }
 
     return trans_data.result;
@@ -1778,8 +1774,7 @@ int dsmi_get_downgrade_lane_info(int logic_id, struct downgrade_lane_info *info)
         return (-EINVAL);
     }
 
-    DSMI_SET_TRANS_DATA(trans_data, DS_GET_DOWNGRADE_LANE_INFO, (char *)(info), size_out,
-        (char*)info, &size_out);
+    DSMI_SET_TRANS_DATA(trans_data, DS_GET_DOWNGRADE_LANE_INFO, (char *)(info), size_out, (char *)info, &size_out);
     ret = dsmi_network_transmission_channel(logic_id, &trans_data);
     if (ret != 0) {
         roce_err("Dsmi get downgrade info fail. (ret=%d; logic_id=%d)", ret, logic_id);
@@ -1791,25 +1786,25 @@ int dsmi_get_downgrade_lane_info(int logic_id, struct downgrade_lane_info *info)
     }
     return trans_data.result;
 }
- 
+
 /* 设置降lane的全局开关 */
 int dsmi_set_downgrade_lane_info(int logic_id, struct downgrade_lane_info *info)
 {
     struct ds_trans_data trans_data = {0};
     unsigned int size_in, size_out = 0;
     int ret;
- 
+
     if (logic_id > DS_MAX_LOGIC_ID || logic_id < 0) {
         roce_err("Logic id is invalid. (logic_id=%d)", logic_id);
         return (-EINVAL);
     }
- 
+
     ret = hccn_check_usr_identify();
     if (ret != 0) {
         roce_err("Check usr identify failed. (ret=%d; logic_id=%d)", ret, logic_id);
         return ret;
     }
- 
+
     size_in = sizeof(struct downgrade_lane_info);
     DSMI_SET_TRANS_DATA(trans_data, DS_SET_DOWNGRADE_LANE_INFO, (char *)info, size_in, NULL, &size_out);
     ret = dsmi_network_transmission_channel(logic_id, &trans_data);
@@ -1817,18 +1812,18 @@ int dsmi_set_downgrade_lane_info(int logic_id, struct downgrade_lane_info *info)
         roce_err("Dsmi set downgrade info fail. (ret=%d; logic_id=%d)", ret, logic_id);
         return ret;
     }
- 
+
     if (trans_data.result != 0) {
         roce_err("Dsmi set downgrade info result fail. (result=%d)", trans_data.result);
     }
-    
+
     return trans_data.result;
 }
 
 int dsmi_get_pfc_duration_info(int logic_id, struct pfc_duration_info *info)
 {
     int ret;
-	struct ds_trans_data trans_data = {0};
+    struct ds_trans_data trans_data = {0};
     unsigned int size_out;
 
     if (logic_id > DS_MAX_LOGIC_ID || logic_id < 0) {
@@ -1841,7 +1836,7 @@ int dsmi_get_pfc_duration_info(int logic_id, struct pfc_duration_info *info)
     }
 
     size_out = sizeof(struct pfc_duration_info);
-    DSMI_SET_TRANS_DATA(trans_data, DS_GET_PFC_D_INFO, NULL, 0, (char*)info, &size_out);
+    DSMI_SET_TRANS_DATA(trans_data, DS_GET_PFC_D_INFO, NULL, 0, (char *)info, &size_out);
 
     ret = dsmi_network_transmission_channel(logic_id, &trans_data);
     if (ret) {
@@ -1857,7 +1852,7 @@ int dsmi_get_pfc_duration_info(int logic_id, struct pfc_duration_info *info)
 
 int dsmi_clear_pfc_duration(int logic_id, int mode)
 {
-	struct ds_trans_data trans_data = {0};
+    struct ds_trans_data trans_data = {0};
     int ret;
     int out_buf = 0;
     int size_out = 0;
@@ -1870,7 +1865,7 @@ int dsmi_clear_pfc_duration(int logic_id, int mode)
         return -EINVAL;
     }
 
-    DSMI_SET_TRANS_DATA(trans_data, DS_CLEAR_PFC_DURATION, (char*) &mode, sizeof(int), NULL, &size_out);
+    DSMI_SET_TRANS_DATA(trans_data, DS_CLEAR_PFC_DURATION, (char *)&mode, sizeof(int), NULL, &size_out);
 
     ret = dsmi_network_transmission_channel(logic_id, &trans_data);
     if (ret) {
@@ -1890,26 +1885,26 @@ int dsmi_get_tc_stat(int logic_id, struct ds_tc_stat_data *stat)
     int ret;
     struct ds_trans_data trans_data = {0};
     unsigned int size;
-    
+
     if ((logic_id > DS_MAX_LOGIC_ID) || (logic_id < DS_MIN_LOGIC_ID)) {
         roce_err("Logic id is invalid. (logic_id:%d)", logic_id);
         return -EINVAL;
     }
     DSMI_CHECK_PTR_VALID_RETURN_VAL(stat, -EINVAL);
-    
+
     size = sizeof(struct ds_tc_stat_data);
-    DSMI_SET_TRANS_DATA(trans_data, DS_GET_TC_STAT, (char *)(&logic_id), sizeof(logic_id), (char*)stat, &size);
- 
+    DSMI_SET_TRANS_DATA(trans_data, DS_GET_TC_STAT, (char *)(&logic_id), sizeof(logic_id), (char *)stat, &size);
+
     ret = dsmi_network_transmission_channel(logic_id, &trans_data);
     if (ret) {
         roce_err("Dsmi get stat fail. (ret=%d logic_id=%d)", ret, logic_id);
         return ret;
     }
- 
+
     if (trans_data.result != 0) {
         roce_err("Dsmi get stat fail. (result=%d logic_id=%d)", trans_data.result, logic_id);
     }
- 
+
     return trans_data.result;
 }
 
@@ -1918,12 +1913,12 @@ int dsmi_clear_tc_stat(int logic_id)
     int ret;
     struct ds_trans_data trans_data = {0};
     unsigned int size;
-    
+
     if ((logic_id > DS_MAX_LOGIC_ID) || (logic_id < 0)) {
         roce_err("Logic id is invalid. (logic_id:%d;)", logic_id);
         return -EINVAL;
     }
-    
+
     size = 0;
     DSMI_SET_TRANS_DATA(trans_data, DS_CLEAR_TC_PACKET_STATISTICS, (char *)(&logic_id), sizeof(logic_id), NULL, &size);
     ret = dsmi_network_transmission_channel(logic_id, &trans_data);
@@ -1931,11 +1926,11 @@ int dsmi_clear_tc_stat(int logic_id)
         roce_err("Dsmi clear tc stat fail. (ret=%d logic_id=%d)", ret, logic_id);
         return ret;
     }
- 
+
     if (trans_data.result != 0) {
         roce_err("Dsmi clear tc stat fail. (result=%d logic_id=%d)", trans_data.result, logic_id);
     }
- 
+
     return trans_data.result;
 }
 
@@ -1944,26 +1939,25 @@ int dsmi_get_serdes_info_steady(int logic_id, struct ds_serdes_info *serdes_info
     int ret = 0;
     struct ds_trans_data trans_data = {0};
     unsigned int size_out = sizeof(struct ds_serdes_info);
- 
+
     if ((logic_id > DS_MAX_LOGIC_ID) || (logic_id < 0) || (serdes_info == NULL)) {
         roce_err("Logic id or serdes_info is invalid. (logic_id=%d)", logic_id);
         return -EINVAL;
     }
- 
+
     DSMI_SET_TRANS_DATA(trans_data, DS_GET_SERDES_INFO_STEADY, (char *)(&logic_id), sizeof(logic_id),
-        (char*)serdes_info, &size_out);
- 
+                        (char *)serdes_info, &size_out);
+
     ret = dsmi_network_transmission_channel(logic_id, &trans_data);
     if (ret) {
         roce_err("Dsmi get hilink info steady fail. (ret=%d; logic_id=%d)", ret, logic_id);
         return ret;
     }
- 
+
     if (trans_data.result != 0) {
-        roce_err("Dsmi get hilink info steady result failed. (result=%d; logic_id=%d)",
-            trans_data.result, logic_id);
+        roce_err("Dsmi get hilink info steady result failed. (result=%d; logic_id=%d)", trans_data.result, logic_id);
     }
- 
+
     return trans_data.result;
 }
 
@@ -1972,14 +1966,14 @@ int dsmi_get_serdes_info_flash(int logic_id, struct ds_serdes_info *serdes_info)
     int ret = 0;
     struct ds_trans_data trans_data = {0};
     unsigned int size_out = sizeof(struct ds_serdes_info);
- 
+
     if ((logic_id > DS_MAX_LOGIC_ID) || (logic_id < 0) || (serdes_info == NULL)) {
         roce_err("Logic id or serdes_info is invalid. (logic_id=%d)", logic_id);
         return -EINVAL;
     }
 
     DSMI_SET_TRANS_DATA(trans_data, DS_GET_SERDES_INFO_FLASH, (char *)(&logic_id), sizeof(logic_id),
-        (char*)serdes_info, &size_out);
+                        (char *)serdes_info, &size_out);
 
     ret = dsmi_network_transmission_channel(logic_id, &trans_data);
     if (ret) {
@@ -1999,85 +1993,84 @@ int dsmi_get_qpn_list(int logic_id, int port_id, struct ds_qpn_list *list)
     int ret;
     struct ds_trans_data trans_data = {0};
     unsigned int size_out;
- 
+
     if ((logic_id > DS_MAX_LOGIC_ID) || (logic_id < 0) || (port_id > MAX_PORT_ID) || (port_id < 0)) {
         roce_err("Logic id or port id is invalid. (logic_id=%d; port_id=%d)", logic_id, port_id);
         return -EINVAL;
     }
     DSMI_CHECK_PTR_VALID_RETURN_VAL(list, -EINVAL);
-    
+
     size_out = sizeof(struct ds_qpn_list);
-    DSMI_SET_TRANS_DATA(trans_data, DS_GET_QPN_LIST, NULL, 0, (char*)list, &size_out);
- 
+    DSMI_SET_TRANS_DATA(trans_data, DS_GET_QPN_LIST, NULL, 0, (char *)list, &size_out);
+
     ret = dsmi_network_transmission_channel(logic_id, &trans_data);
     if (ret != 0) {
         roce_err("Dsmi channel get qpn list failed. (ret=%d; logic_id=%d; port_id=%d)", ret, logic_id, port_id);
         return ret;
     }
- 
+
     if (trans_data.result != 0) {
         roce_err("Dsmi channel get qpn list failed. (result=%d)", trans_data.result);
     }
- 
+
     return trans_data.result;
 }
- 
+
 int dsmi_get_qp_context(int logic_id, int port_id, unsigned int qpn, char *context)
 {
     int ret;
     struct ds_trans_data trans_data = {0};
     unsigned int size_out = INFO_PAYLOAD_LEN;
- 
+
     if ((logic_id > DS_MAX_LOGIC_ID) || (logic_id < 0) || (port_id > MAX_PORT_ID) || (port_id < 0)) {
         roce_err("Logic id or port id is invalid. (logic_id=%d; port_id=%d)", logic_id, port_id);
         return -EINVAL;
     }
     DSMI_CHECK_PTR_VALID_RETURN_VAL(context, -EINVAL);
-    
+
     DSMI_SET_TRANS_DATA(trans_data, DS_GET_QP_CONTEXT, (char *)&qpn, sizeof(unsigned int), context, &size_out);
- 
+
     ret = dsmi_network_transmission_channel(logic_id, &trans_data);
     if (ret != 0) {
         roce_err("Dsmi channel get qp context failed. (ret=%d; logic_id=%d; port_id=%d)", ret, logic_id, port_id);
         return ret;
     }
- 
+
     if (trans_data.result != 0) {
         roce_err("Dsmi channel get qp context failed. (result=%d)", trans_data.result);
     }
- 
+
     return trans_data.result;
 }
- 
+
 static int is_ipv6_v4_mapped(const struct in6_addr *address)
 {
     return IN6_IS_ADDR_V4MAPPED(address);
 }
- 
+
 static unsigned short reverse_8_bits(unsigned short value)
 {
     int offset_8 = 8;
     unsigned char high = (value >> 8) & 0xFF;
     unsigned char low = value & 0xFF;
- 
+
     return (low << offset_8) | high;
 }
- 
+
 static int dgid_to_ip(char *ip, int ip_address_len, unsigned int *qpc, int is_ipv4_flag)
 {
     int ret;
-    int dgid_offset = 7;      // dgid偏移地址
-    
+    int dgid_offset = 7; // dgid偏移地址
+
     int offset_1 = 1;
     int offset_2 = 2;
     int offset_3 = 3;
     int offset_8 = 8;
     int offset_16 = 16;
     int offset_24 = 24;
- 
+
     if (is_ipv4_flag) {
-        ret = sprintf_s(ip, ip_address_len, "%u.%u.%u.%u",
-                        *(qpc + dgid_offset + offset_3) & 0xFF,
+        ret = sprintf_s(ip, ip_address_len, "%u.%u.%u.%u", *(qpc + dgid_offset + offset_3) & 0xFF,
                         (*(qpc + dgid_offset + offset_3) >> offset_8) & 0xFF,
                         (*(qpc + dgid_offset + offset_3) >> offset_16) & 0xFF,
                         (*(qpc + dgid_offset + offset_3) >> offset_24) & 0xFF);
@@ -2086,8 +2079,7 @@ static int dgid_to_ip(char *ip, int ip_address_len, unsigned int *qpc, int is_ip
             return -ENOMEM;
         }
     } else {
-        ret = sprintf_s(ip, ip_address_len, "%x:%x:%x:%x:%x:%x:%x:%x",
-                        reverse_8_bits(*(qpc + dgid_offset) & 0xFFFF),
+        ret = sprintf_s(ip, ip_address_len, "%x:%x:%x:%x:%x:%x:%x:%x", reverse_8_bits(*(qpc + dgid_offset) & 0xFFFF),
                         reverse_8_bits((*(qpc + dgid_offset) >> offset_16) & 0xFFFF),
                         reverse_8_bits(*(qpc + dgid_offset + offset_1) & 0xFFFF),
                         reverse_8_bits((*(qpc + dgid_offset + offset_1) >> offset_16) & 0xFFFF),
@@ -2100,25 +2092,25 @@ static int dgid_to_ip(char *ip, int ip_address_len, unsigned int *qpc, int is_ip
             return -ENOMEM;
         }
     }
- 
+
     return 0;
 }
- 
+
 static int dsmi_parse_qp_info(unsigned int qpn, char *context, struct ds_qp_info *qp_info)
 {
     int ret;
     unsigned int *qpc;
-    int dgid_offset = 7;                                       // dgid偏移地址
+    int dgid_offset = 7; // dgid偏移地址
     char ip[IP_ADDRESS_LEN] = {0};
     qpc = (unsigned int *)context;
-   
-    unsigned char status = (*(qpc + 14) >> 29) & 0x07;         // byte_60_qpst bit 29-31
-    unsigned char type = (*(qpc + 19) >> 24) & 0x01;           // byte_80_xrc_qp_type bit 24
-    unsigned short src_port = (*(qpc + 12) >> 16) & 0xFFFF;    // byte_52_udpspn bit 16-31
-    unsigned int dst_qpn = *(qpc + 13) & 0xFFFFFF;             // byte_56_dqpn bit 0-23
-    unsigned int send_psn = (*(qpc + 42) >> 8) & 0xFFFFFF;     // byte_172_sq_cur_psn bit 8-31
-    unsigned int recv_psn = (*(qpc + 26) >> 8) & 0xFFFFFF;     // byte_108_rap_psn bit 8-31
- 
+
+    unsigned char status = (*(qpc + 14) >> 29) & 0x07;      // byte_60_qpst bit 29-31
+    unsigned char type = (*(qpc + 19) >> 24) & 0x01;        // byte_80_xrc_qp_type bit 24
+    unsigned short src_port = (*(qpc + 12) >> 16) & 0xFFFF; // byte_52_udpspn bit 16-31
+    unsigned int dst_qpn = *(qpc + 13) & 0xFFFFFF;          // byte_56_dqpn bit 0-23
+    unsigned int send_psn = (*(qpc + 42) >> 8) & 0xFFFFFF;  // byte_172_sq_cur_psn bit 8-31
+    unsigned int recv_psn = (*(qpc + 26) >> 8) & 0xFFFFFF;  // byte_108_rap_psn bit 8-31
+
     if (is_ipv6_v4_mapped((struct in6_addr *)(qpc + dgid_offset))) {
         ret = dgid_to_ip(&ip, sizeof(ip), qpc, 1);
         if (ret != 0) {
@@ -2132,7 +2124,7 @@ static int dsmi_parse_qp_info(unsigned int qpn, char *context, struct ds_qp_info
             return -ENOMEM;
         }
     }
-    
+
     qp_info->src_qpn = qpn;
     qp_info->status = status;
     qp_info->type = type;
@@ -2140,35 +2132,35 @@ static int dsmi_parse_qp_info(unsigned int qpn, char *context, struct ds_qp_info
     qp_info->dst_qpn = dst_qpn;
     qp_info->send_psn = send_psn;
     qp_info->recv_psn = recv_psn;
- 
-    ret = memcpy_s(qp_info->ip, IP_ADDRESS_LEN, ip, strlen(ip));
+
+    ret = memcpy_s(qp_info->ip, IP_ADDRESS_LEN, ip, strlen(ip) + 1);
     if (ret != 0) {
         roce_err("Dsmi memcpy_s ip addrress of qp info failed. (ret=%d)\n", ret);
         return -ENOMEM;
     }
- 
+
     return 0;
 }
- 
+
 int dsmi_get_qp_info(int logic_id, int port_id, unsigned int qpn, struct ds_qp_info *qp_info)
 {
     int ret;
     char context[INFO_PAYLOAD_LEN] = {0};
- 
+
     ret = dsmi_get_qp_context(logic_id, port_id, qpn, &context);
     if (ret != 0) {
         roce_err("Dsmi get qp context failed. (ret=%d; logic_id=%d; port_id=%d)", ret, logic_id, port_id);
         return dsmi_analysis_dsmi_ret_to_uda(ret);
     }
- 
+
     context[INFO_PAYLOAD_LEN - 1] = '\0';
- 
+
     ret = dsmi_parse_qp_info(qpn, context, qp_info);
     if (ret != 0) {
         roce_err("Dsmi parse qp info failed. (ret=%d; logic_id=%d; port_id=%d)", ret, logic_id, port_id);
         return ret;
     }
- 
+
     return 0;
 }
 
@@ -2198,11 +2190,11 @@ int dsmi_set_roce_cw_bad_cnt_thd(int logic_id, unsigned int cw_bad_cnt_thd)
         roce_err("Dsmi set roce cw_bad_cnt_thd failed. (ret=%d; logic_id=%d)", ret, logic_id);
         return ret;
     }
- 
+
     if (trans_data.result != 0) {
         roce_err("Dsmi set roce cw_bad_cnt_thd failed. (result=%d)", trans_data.result);
     }
-    
+
     return trans_data.result;
 }
 
@@ -2216,8 +2208,8 @@ int dsmi_get_roce_cw_bad_cnt_thd(int logic_id, struct ds_cw_bad_cnt_thd *info)
         roce_err("Logic id is invalid, expect [0]-[%d]. (logic_id=%d)", DS_MAX_LOGIC_ID, logic_id);
         return -EINVAL;
     }
-    DSMI_SET_TRANS_DATA(trans_data, DS_GET_ROCE_CW_BAD_CNT_THD, (char *)(&logic_id),
-                        sizeof(logic_id), (char*)info, &size_out);
+    DSMI_SET_TRANS_DATA(trans_data, DS_GET_ROCE_CW_BAD_CNT_THD, (char *)(&logic_id), sizeof(logic_id), (char *)info,
+                        &size_out);
     ret = dsmi_network_transmission_channel(logic_id, &trans_data);
     if (ret != 0) {
         roce_err("Dsmi get roce cw_bad_cnt_thd failed. (ret=%d; logic_id=%d)", ret, logic_id);
@@ -2241,7 +2233,7 @@ int dsmi_set_device_offline_nic_down_flag(int logic_id, int enable_flag)
         return -EINVAL;
     }
     DSMI_SET_TRANS_DATA(trans_data, DS_SET_DEVICE_OFFLINE_NET_DOWN, (char *)(&enable_flag), sizeof(int), NULL,
-        &size_out);
+                        &size_out);
     ret = dsmi_network_transmission_channel(logic_id, &trans_data);
     if (ret != 0) {
         roce_err("Dsmi set device offline net down flag failed. (ret=%d; logic_id=%d)", ret, logic_id);

@@ -152,7 +152,7 @@ static int dsmi_parse_qp_info(unsigned int qpn, char *context, struct ds_qp_info
     qp_info->send_psn = send_psn;
     qp_info->recv_psn = recv_psn;
 
-    ret = memcpy_s(qp_info->ip, IP_ADDRESS_LEN, ip, strlen(ip));
+    ret = memcpy_s(qp_info->ip, IP_ADDRESS_LEN, ip, strlen(ip) + 1);
     if (ret != 0) {
         roce_err("Dsmi memcpy_s ip address of qp info failed. (ret=%d)\n", ret);
         return -ENOMEM;
