@@ -13,7 +13,7 @@
 
 ## Question 3
 
-- **Problem**: During the first installation, after downloading the source code and executing `build.sh --pkg --soc=ascend910b`, an error appears indicating that the Linux `/lib/modules/xxx/build` directory does not exist. For example:
+- **Problem**: During the first installation, after downloading the source code and executing `bash build.sh --pkg --soc=ascend910b`, an error appears indicating that the Linux `/lib/modules/xxx/build` directory does not exist. For example:
 
 ```
 /lib/modules/5.10.0-60.18.0.50.r865_35.hce2.aarch64/build: No Such file or directory.
@@ -28,8 +28,8 @@
 2. If the kernel version to be used differs from the current kernel version, add `-k $patch` in the build command to specify the kernel version path. Note that before recompiling, clear the cache first.
 
 ```bash
-build.sh --make_clean
-build.sh --pkg --soc=ascend910b -k $patch
+bash build.sh --make_clean
+bash build.sh --pkg --soc=ascend910b -k $patch
 ```
 
 ## Question 4
@@ -83,7 +83,7 @@ cat /etc/os-release
 
 - **Problem**: During the compilation environment preparation stage, `apt install -y linux-headers-$(uname -r)` installation failed. Will this affect driver package source code compilation?
 - **Possible Cause**: No linux-headers matching the current kernel.
-- **Solution**: If other versions of linux-headers are already installed on the environment, compilation is possible without reinstalling matching linux-headers. Refer to `build.sh --help` for assistance and add the `-k` parameter to specify the kernel header file path, as shown below:
+- **Solution**: If other versions of linux-headers are already installed on the environment, compilation is possible without reinstalling matching linux-headers. Refer to `bash build.sh --help` for assistance and add the `-k` parameter to specify the kernel header file path, as shown below:
 
 ```bash
 -k Set kernel source path, default "/lib/modules/$(uname -r)/build"

@@ -13,7 +13,7 @@
 
 ## 问题三
 
-- 问题描述：环境首次安装，下载源码后执行`build.sh --pkg --soc=ascend910b`时出现报错，提示linux的/lib/modules/xxx/build目录不存在。例如：
+- 问题描述：环境首次安装，下载源码后执行`bash build.sh --pkg --soc=ascend910b`时出现报错，提示linux的/lib/modules/xxx/build目录不存在。例如：
 
 ```
 /lib/modules/5.10.0-60.18.0.50.r865_35.hce2.aarch64/build: No Such file or directory.
@@ -28,8 +28,8 @@
 2、如果需要使用的内核版本与当前内核版本不同，可以在build命令中添加`-k $patch`指定内核版本路径（注意，重新编译前，需要先清除缓存）。
 
 ```bash
-build.sh --make_clean
-build.sh --pkg --soc=ascend910b -k $patch
+bash build.sh --make_clean
+bash build.sh --pkg --soc=ascend910b -k $patch
 ```
 
 ## 问题四
@@ -83,7 +83,7 @@ cat /etc/os-release
 
 - 问题描述：编译环境准备阶段，`apt install -y linux-headers-$(uname -r)`安装失败，会影响driver包源码编译吗？
 - 可能原因：没有和当前内核匹配的linux-headers。
-- 解决方法：如果环境上已经安装了其他版本的linux-headers，不重新安装匹配的linux-headers也可以编译；请参考`build.sh --help`帮助，增加-k参数指定内核头文件路径，如下所示：
+- 解决方法：如果环境上已经安装了其他版本的linux-headers，不重新安装匹配的linux-headers也可以编译；请参考`bash build.sh --help`帮助，增加-k参数指定内核头文件路径，如下所示：
 
 ```bash
 -k Set kernel source path, default "/lib/modules/$(uname -r)/build"
