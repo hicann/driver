@@ -46,6 +46,8 @@ from .version_info import (
     VersionInfo, VersionXml, VersionFormatNotMatch, is_multi_version, VersionInfoFile
 )
 
+BOOL_VALUES = ('t', 'true', 'y', 'yes')
+
 EnvDict = Dict[str, str]
 
 FileInfo = Dict[str, str]
@@ -189,9 +191,8 @@ def parse_package_info(package_info_ele: Optional[ET.Element]) -> Dict:
             'expand_asterisk', 'parallel', 'parallel_limit', 'package_check', 'check_features',
             'use_move', 'gen_version_info'
         )
-        bool_values = ('t', 'true', 'y', 'yes')
         if ele.tag in bool_attrs:
-            if ele.text.lower() in bool_values:
+            if ele.text.lower() in BOOL_VALUES:
                 yield ele.tag, True
             else:
                 yield ele.tag, False
@@ -230,13 +231,8 @@ def load_itf_version_conf(itf_conf: str,
 
 
 def make_loaded_block_element(root_ele: ET.Element,
-                              dst_path: str = None) -> LoadedBlockElement:
-    if not dst_path:
-        new_dst_path = ''
-    else:
-        new_dst_path = dst_path
-
-    return LoadedBlockElement(root_ele, False, new_dst_path, set(), set(), set(), {})
+                              dst_path: str = '') -> LoadedBlockElement:
+    return LoadedBlockElement(root_ele, False, dst_path or '', set(), set(), set(), {})
 
 
 def parse_install_version_info(attr_info: Dict[str, str]) -> Tuple[bool, Dict]:
@@ -1003,11 +999,6 @@ def parse_block_config(loaded_block: LoadedBlockElement,
         [result.file_info for result in file_info_results if result.file_info],
         generate_infos,
     )
-
-
-def make_loaded_block_element(root_ele: ET.Element,
-                              dst_path: str = '') -> LoadedBlockElement:
-    return LoadedBlockElement(root_ele, False, dst_path, set(), set(), set(), {})
 
 
 def parse_block_element(block_ele: ET.Element,

@@ -310,7 +310,7 @@ def do_copy(target_conf=None,
             target_conf.get('value')
         )
     else:
-        CommLog.cilog_error(THIS_FILE_NAME, "copy_type %s is not support for src_target %s!", copy_type, src_target)
+        CommLog.cilog_error("copy_type %s is not support for src_target %s!", copy_type, src_target)
         return FAIL
 
     target_name = get_target_name(target_conf)
@@ -346,8 +346,8 @@ def do_copy(target_conf=None,
         status = subprocess.run(['/bin/bash', '-c', cmd], stdout=subprocess.PIPE,
                                 stderr=subprocess.PIPE, universal_newlines=True, shell=False)
         if status.returncode != SUCCESS:
-            CommLog.cilog_error(THIS_FILE_NAME, "chmod(%s) failed! %s", cmd, cmd)
-            CommLog.cilog_error(THIS_FILE_NAME, "output: %s, error: %s", status.stdout, status.stderr)
+            CommLog.cilog_error("chmod(%s) failed! %s", cmd, cmd)
+            CommLog.cilog_error("output: %s, error: %s", status.stdout, status.stderr)
             return FAIL
 
     return SUCCESS
