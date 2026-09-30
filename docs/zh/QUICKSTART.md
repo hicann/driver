@@ -180,7 +180,7 @@ b. ascend950支持在灵衢计算系统超节点架构的ARM环境编译；进�
 
 ## 1. 修改驱动代码
 
-在`driver/src/ascend_hal/dmc/dsmi/dsmi_common/dsmi_common_interface.c`文件中新增一个dsmi接口，代码如下：
+在`src/ascend_hal/dmc/dsmi/dsmi_common/dsmi_common_interface.c`文件中新增一个dsmi接口，代码如下：
 
 ```
 int dsmi_get_host_device_connect_type(int device_id, unsigned int *connect_type)
@@ -203,7 +203,7 @@ int dsmi_get_host_device_connect_type(int device_id, unsigned int *connect_type)
 }
 ```
 
-同时在`driver/pkg_inc/dsmi_common_interface.h`文件中新增接口声明。
+同时在`pkg_inc/dsmi_common_interface.h`文件中新增接口声明。
 
 ```
 /**
@@ -217,7 +217,7 @@ int dsmi_get_host_device_connect_type(int device_id, unsigned int *connect_type)
 int dsmi_get_host_device_connect_type(int device_id, unsigned int *connect_type);
 ```
 
-在`driver/src/custom/dev_prod/user/dcmi/dcmi_interface/src/dcmi_basic_info_intf.c`文件中新增一个dcmi接口，代码如下：
+在`src/custom/dev_prod/user/dcmi/dcmi_interface/src/dcmi_basic_info_intf.c`文件中新增一个dcmi接口，代码如下：
 
 ```
 int dcmi_get_host_device_connect_type(int device_id, unsigned int *connect_type)

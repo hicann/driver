@@ -180,7 +180,7 @@ The purpose of this stage is to become familiar with driver development by addin
 
 ## 1. Modify Driver Code
 
-Add a new dsmi interface in the `driver/src/ascend_hal/dmc/dsmi/dsmi_common/dsmi_common_interface.c` file with the following code:
+Add a new dsmi interface in the `src/ascend_hal/dmc/dsmi/dsmi_common/dsmi_common_interface.c` file with the following code:
 
 ```
 int dsmi_get_host_device_connect_type(int device_id, unsigned int *connect_type)
@@ -203,7 +203,7 @@ int dsmi_get_host_device_connect_type(int device_id, unsigned int *connect_type)
 }
 ```
 
-Also add the interface declaration in the `driver/pkg_inc/dsmi_common_interface.h` file.
+Also add the interface declaration in the `pkg_inc/dsmi_common_interface.h` file.
 
 ```
 /**
@@ -217,7 +217,7 @@ Also add the interface declaration in the `driver/pkg_inc/dsmi_common_interface.
 int dsmi_get_host_device_connect_type(int device_id, unsigned int *connect_type);
 ```
 
-Add a new dcmi interface in the `driver/src/custom/dev_prod/user/dcmi/dcmi_interface/src/dcmi_basic_info_intf.c` file with the following code:
+Add a new dcmi interface in the `src/custom/dev_prod/user/dcmi/dcmi_interface/src/dcmi_basic_info_intf.c` file with the following code:
 
 ```
 int dcmi_get_host_device_connect_type(int device_id, unsigned int *connect_type)
