@@ -217,7 +217,7 @@ int dcmiv2_get_device_proc_mem_info(int dev_id, struct dcmi_proc_mem_info *proc_
         return DCMI_ERR_CODE_NOT_SUPPORT;
     }
 
-    err = dcmi_get_npu_proc_mem_info(card_id, device_id, proc_info, proc_num);
+    err = dcmi_get_npu_proc_mem_info(card_id, device_id, proc_info, proc_num, DCMI_PROC_MEM_INFO_MAX_NUM);
     if (err != DCMI_OK) {
         gplog(LOG_ERR, "dcmi_get_npu_proc_mem_info failed. (ret=%d)", err);
     }

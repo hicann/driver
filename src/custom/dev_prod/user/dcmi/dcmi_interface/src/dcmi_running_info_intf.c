@@ -7,7 +7,7 @@
  * INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
  * See LICENSE in the root of the software repository for the full text of the License.
  */
- 
+
 #include <stdio.h>
 #include <time.h>
 #include <limits.h>
@@ -16,7 +16,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
- 
+
 #include "securec.h"
 #include "dsmi_common_interface.h"
 #include "dcmi_interface_api.h"
@@ -285,7 +285,7 @@ int dcmi_get_device_voltage(int card_id, int device_id, unsigned int *voltage)
 }
 
 int dcmi_get_device_ecc_info(int card_id, int device_id, enum dcmi_device_type input_type,
-    struct dcmi_ecc_info *device_ecc_info)
+                             struct dcmi_ecc_info *device_ecc_info)
 {
     int err;
     enum dcmi_unit_type device_type = NPU_TYPE;
@@ -449,7 +449,7 @@ int dcmi_get_device_memory_info_v3(int card_id, int device_id, struct dcmi_get_m
         return dcmi_get_npu_device_memory_info_v3(card_id, device_id, memory_info);
 #ifndef _WIN32
     } else if (device_type == CPU_TYPE) {
-        struct dcmi_memory_info pdevice_memory_info = { 0 };
+        struct dcmi_memory_info pdevice_memory_info = {0};
         err = dcmi_cpu_get_memory_info(card_id, &pdevice_memory_info);
         if (err == DCMI_OK) {
             memory_info->memory_size = pdevice_memory_info.memory_size;
@@ -523,7 +523,7 @@ int dcmi_get_device_multi_utilization_rate(int card_id, int device_id, struct dc
 }
 
 int dcmi_get_device_sensor_info(int card_id, int device_id, enum dcmi_manager_sensor_id sensor_id,
-    union dcmi_sensor_info *sensor_info)
+                                union dcmi_sensor_info *sensor_info)
 {
     int err;
     enum dcmi_unit_type device_type = NPU_TYPE;
@@ -770,7 +770,7 @@ int dcmi_get_device_resource_info(int card_id, int device_id, struct dcmi_proc_m
         return err;
     }
     bool check_result = !(dcmi_board_type_is_card() || dcmi_board_type_is_station() || dcmi_board_type_is_hilens() ||
-        dcmi_board_type_is_server() || dcmi_board_type_is_model());
+                          dcmi_board_type_is_server() || dcmi_board_type_is_model());
     if (check_result) {
         return DCMI_ERR_CODE_NOT_SUPPORT;
     }
@@ -780,7 +780,7 @@ int dcmi_get_device_resource_info(int card_id, int device_id, struct dcmi_proc_m
         return DCMI_ERR_CODE_NOT_SUPPORT;
     }
 
-    err = dcmi_get_npu_proc_mem_info(card_id, device_id, proc_info, proc_num);
+    err = dcmi_get_npu_proc_mem_info(card_id, device_id, proc_info, proc_num, DCMI_PROC_MEM_INFO_MAX_NUM);
     if (err != DCMI_OK) {
         gplog(LOG_ERR, "dcmi_get_npu_proc_mem_info failed. err is %d.", err);
     }
@@ -848,8 +848,8 @@ int dcmi_get_card_customized_info(int card_id, char *info, int len)
         return DCMI_ERR_CODE_INVALID_PARAMETER;
     }
 
-    bool check_support_result =
-        (dcmi_board_chip_type_is_ascend_310p() || (dcmi_board_chip_type_is_ascend_310() && dcmi_board_type_is_card()));
+    bool check_support_result = (dcmi_board_chip_type_is_ascend_310p() ||
+                                 (dcmi_board_chip_type_is_ascend_310() && dcmi_board_type_is_card()));
     if (!check_support_result) {
         return DCMI_ERR_CODE_NOT_SUPPORT;
     }
@@ -886,7 +886,7 @@ int dcmi_get_customized_info_api(int card_id, char *data_info, int *len)
         return DCMI_ERR_CODE_INVALID_PARAMETER;
     }
 
-    err =  dcmi_get_card_customized_info(card_id, info, sizeof(info));
+    err = dcmi_get_card_customized_info(card_id, info, sizeof(info));
     if (err != DCMI_OK) {
         if (err != DCMI_ERR_CODE_NOT_SUPPORT) {
             gplog(LOG_ERR, "dcmi_get_card_customized_info failde err is %d.", err);
@@ -1069,7 +1069,7 @@ int dcmi_get_multi_die_policy(enum dcmi_multi_die_policy *policy)
 {
 #ifndef _WIN32
     int ret;
- 
+
     if (!dcmi_board_chip_type_is_ascend_910_93()) {
         gplog(LOG_OP, "This product does not support this api.");
         return DCMI_ERR_CODE_NOT_SUPPORT;
@@ -1079,13 +1079,13 @@ int dcmi_get_multi_die_policy(enum dcmi_multi_die_policy *policy)
         gplog(LOG_ERR, "parameter is NULL.");
         return DCMI_ERR_CODE_INVALID_PARAMETER;
     }
- 
+
     ret = dsmi_get_multi_die_policy((unsigned int *)policy);
     if (ret != DSMI_OK) {
         gplog(LOG_ERR, "call dsmi_get_multi_die_policy failed. err is %d", ret);
         return dcmi_convert_error_code(ret);
     }
- 
+
     return DCMI_OK;
 #else
     return DCMI_OK;
@@ -1100,10 +1100,10 @@ int dcmi_set_multi_die_policy(enum dcmi_multi_die_policy policy)
 
     if (!(dcmi_is_in_phy_privileged_docker_root() || dcmi_is_in_phy_machine_root())) {
         gplog(LOG_ERR,
-            "Operation not permitted, only root user on physical machine or privilegd docker can call this api.");
+              "Operation not permitted, only root user on physical machine or privilegd docker can call this api.");
         return DCMI_ERR_CODE_OPER_NOT_PERMITTED;
     }
- 
+
     if (!dcmi_board_chip_type_is_ascend_910_93()) {
         gplog(LOG_OP, "This product does not support this api.");
         return DCMI_ERR_CODE_NOT_SUPPORT;
@@ -1239,7 +1239,7 @@ int dcmi_get_nve_level(int card_id, int device_id, int *nve_level)
 }
 
 int dcmi_get_device_gateway(int card_id, int device_id, enum dcmi_port_type input_type, int port_id,
-    struct dcmi_ip_addr *gateway)
+                            struct dcmi_ip_addr *gateway)
 {
     int err;
     enum dcmi_unit_type device_type = NPU_TYPE;
@@ -1253,8 +1253,7 @@ int dcmi_get_device_gateway(int card_id, int device_id, enum dcmi_port_type inpu
         gplog(LOG_ERR, "input_type is invalid. input_type=%d", input_type);
         return DCMI_ERR_CODE_INVALID_PARAMETER;
     }
-    if (dcmi_board_chip_type_is_ascend_310b() == TRUE ||
-        dcmi_board_chip_type_is_ascend_910b_300i_a2() == TRUE ||
+    if (dcmi_board_chip_type_is_ascend_310b() == TRUE || dcmi_board_chip_type_is_ascend_910b_300i_a2() == TRUE ||
         dcmi_board_chip_type_is_ascend_950()) {
         gplog(LOG_OP, "This device does not support get device gateway.");
         return DCMI_ERR_CODE_NOT_SUPPORT;
@@ -1277,7 +1276,7 @@ int dcmi_get_device_gateway(int card_id, int device_id, enum dcmi_port_type inpu
 }
 
 int dcmi_get_device_ip(int card_id, int device_id, enum dcmi_port_type input_type, int port_id, struct dcmi_ip_addr *ip,
-    struct dcmi_ip_addr *mask)
+                       struct dcmi_ip_addr *mask)
 {
     int err;
     enum dcmi_unit_type device_type = NPU_TYPE;
@@ -1295,8 +1294,8 @@ int dcmi_get_device_ip(int card_id, int device_id, enum dcmi_port_type input_typ
         return DCMI_ERR_CODE_INVALID_PARAMETER;
     }
 
-    if (dcmi_board_chip_type_is_ascend_310b() == TRUE ||
-        dcmi_board_chip_type_is_ascend_910b_300i_a2() == TRUE || dcmi_board_chip_type_is_ascend_950() == TRUE) {
+    if (dcmi_board_chip_type_is_ascend_310b() == TRUE || dcmi_board_chip_type_is_ascend_910b_300i_a2() == TRUE ||
+        dcmi_board_chip_type_is_ascend_950() == TRUE) {
         gplog(LOG_OP, "This device does not support get device ip.");
         return DCMI_ERR_CODE_NOT_SUPPORT;
     }
@@ -1353,7 +1352,7 @@ int dcmi_get_device_share_config_recover_mode(unsigned int *enable_flag)
     if (err != DCMI_OK) {
         return err;
     }
-    
+
     if (enable_flag == NULL) {
         gplog(LOG_ERR, "enable_flag is NULL");
         return DCMI_ERR_CODE_INVALID_PARAMETER;
@@ -1382,7 +1381,7 @@ int dcmi_get_multi_die_policy_config_recover_mode(unsigned int *enable_flag)
     if (err != DCMI_OK) {
         return err;
     }
-    
+
     if (enable_flag == NULL) {
         gplog(LOG_ERR, "enable_flag is NULL");
         return DCMI_ERR_CODE_INVALID_PARAMETER;
@@ -1433,7 +1432,7 @@ int dcmi_get_device_cpu_num_config(int card_id, int device_id, unsigned char *bu
 }
 
 int dcmi_get_capability_group_info(int card_id, int device_id, int ts_id, int group_id,
-    struct dcmi_capability_group_info *group_info, int group_count)
+                                   struct dcmi_capability_group_info *group_info, int group_count)
 {
     int err;
     enum dcmi_unit_type device_type = INVALID_TYPE;
@@ -1469,7 +1468,7 @@ int dcmi_get_capability_group_info(int card_id, int device_id, int ts_id, int gr
         err = dcmi_npu_get_capability_group_info(card_id, device_id, ts_id, group_id, group_info, group_count);
         if (err != DCMI_OK) {
             gplog(LOG_ERR, "get capability group failed. card_id=%d, device_id=%d, ts_id=%d, group_id=%d, err=%d",
-                card_id, device_id, ts_id, group_id, err);
+                  card_id, device_id, ts_id, group_id, err);
             return err;
         }
 
@@ -1513,8 +1512,8 @@ int dcmi_get_capability_group_aicore_usage(int card_id, int device_id, int group
     if ((device_type == NPU_TYPE) && (dcmi_check_capability_group_support_type() == DCMI_OK)) {
         err = dcmi_npu_get_capability_group_aicore_usage(card_id, device_id, group_id, rate);
         if (err != DCMI_OK) {
-            gplog(LOG_ERR, "get capability aicore usage failed. card_id=%d, device_id=%d, group_id=%d, err=%d",
-                card_id, device_id, group_id, err);
+            gplog(LOG_ERR, "get capability aicore usage failed. card_id=%d, device_id=%d, group_id=%d, err=%d", card_id,
+                  device_id, group_id, err);
             return err;
         }
 
