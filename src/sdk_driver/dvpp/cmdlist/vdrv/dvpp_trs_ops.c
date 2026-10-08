@@ -15,6 +15,7 @@
 
 #include "ka_base_pub.h"
 #include "ka_task_pub.h"
+#include "ka_barrier_pub.h"
 #include "securec.h"
 #include "ts_agent_dvpp.h"
 #include "comm_kernel_interface.h"
@@ -78,6 +79,7 @@ static int32_t dvpp_trs_sqe_update(uint32_t devid, uint32_t tsid, int32_t pid, v
     dvpp_share_blk_type blk_type;
     dvpp_sqe_args *sqe_args = NULL;
     dvpp_share_blk *blk = NULL;
+    dvpp_share_mem_pool *pool = NULL;
 
     if (sqe == NULL) {
         DVPP_CMDLIST_LOG_ERROR("sqe passed from outside is null.\n");
@@ -99,21 +101,24 @@ static int32_t dvpp_trs_sqe_update(uint32_t devid, uint32_t tsid, int32_t pid, v
     }
 
     // 初始化共享内存池
-    if (g_share_mem_pool[devid] == NULL) {
+    pool = ka_smp_load_acquire(&g_share_mem_pool[devid]);
+    if (pool == NULL) {
         ka_task_spin_lock(&g_share_mem_pool_lock[devid]);
         if (g_share_mem_pool[devid] == NULL) {
-            g_share_mem_pool[devid] = dvpp_init_share_mem_pool(devid, sqe_args);
-            if (g_share_mem_pool[devid] == NULL) {
+            dvpp_share_mem_pool *new_pool = dvpp_init_share_mem_pool(devid, sqe_args);
+            if (new_pool == NULL) {
                 ka_task_spin_unlock(&g_share_mem_pool_lock[devid]);
                 return -1;
             }
+            ka_smp_store_release(&g_share_mem_pool[devid], new_pool);
         }
+        pool = g_share_mem_pool[devid];
         ka_task_spin_unlock(&g_share_mem_pool_lock[devid]);
     }
 
     // 基于模块从共享内存池取出内存块
     // 用户态有反压机制，确保走到这里一定可以申请到内存块
-    blk = dvpp_get_share_mem_blk_from_pool(blk_type, mod_id, g_share_mem_pool[devid]);
+    blk = dvpp_get_share_mem_blk_from_pool(blk_type, mod_id, pool);
     if (blk == NULL) {
         DVPP_CMDLIST_LOG_ERROR("get share memory block from pool fail.\n");
         return -1;
@@ -140,7 +145,7 @@ static int32_t dvpp_trs_sqe_update(uint32_t devid, uint32_t tsid, int32_t pid, v
     }
 
     // 这里保存offset，因为在物理机上基地址不一样
-    sqe_args->args_addr = (uintptr_t)(blk) - (uintptr_t)(g_share_mem_pool[devid]);
+    sqe_args->args_addr = (uintptr_t)(blk) - (uintptr_t)(pool);
 
     return 0;
 }

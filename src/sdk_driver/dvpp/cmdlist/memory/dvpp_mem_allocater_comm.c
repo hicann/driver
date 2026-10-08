@@ -14,6 +14,7 @@
 #include "dvpp_mem_allocater_comm.h"
 
 #include "ka_task_pub.h"
+#include "ka_barrier_pub.h"
 #include "mem_allocater.h"
 #include "dvpp_cmdlist_log.h"
 
@@ -52,7 +53,7 @@ void *alloc_node(enum dvpp_sqe_type mod_type, enum mem_node_type node_type, uint
     }
 
     // 内存池已经初始化过，直接返回池中节点
-    if (mod_mem_pool->is_inited == 1) {
+    if (ka_smp_load_acquire(&mod_mem_pool->is_inited) == 1) {
         return alloc_node_from_pool(mod_mem_pool);
     }
 

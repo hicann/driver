@@ -17,31 +17,31 @@
 #include "securec.h"
 #include "dvpp_cmdlist_log.h"
 
-void create_mem_pool(struct mem_pool_info** mem_pool, ka_mutex_t* mtx)
+void create_mem_pool(struct mem_pool_info **mem_pool, ka_mutex_t *mtx)
 {
     if (*mem_pool != NULL) {
         return;
     }
     ka_task_mutex_lock(mtx); // mtx为全局锁，避免pool重复创建
     if (*mem_pool == NULL) {
-        struct mem_pool_info* mp = (struct mem_pool_info*)ka_mm_vmalloc(sizeof(struct mem_pool_info));
+        struct mem_pool_info *mp = (struct mem_pool_info *)ka_mm_vmalloc(sizeof(struct mem_pool_info));
         if (mp == NULL) {
             ka_task_mutex_unlock(mtx);
             return;
         }
         (void)memset_s(mp, sizeof(struct mem_pool_info), 0, sizeof(struct mem_pool_info));
         ka_barrier(); // 防止编译器优化
-        ka_mb(); // 防止CPU乱序执行
+        ka_mb();      // 防止CPU乱序执行
         *mem_pool = mp;
     }
     ka_task_mutex_unlock(mtx);
 }
 
-int32_t init_mem_allocater(init func, struct mem_pool_info* mem_pool, uint32_t node_num,
-    uint32_t node_size, ka_mutex_t* mtx)
+int32_t init_mem_allocater(init func, struct mem_pool_info *mem_pool, uint32_t node_num, uint32_t node_size,
+                           ka_mutex_t *mtx)
 {
     int32_t ret = 0;
-    if (mem_pool->is_inited == 1) {
+    if (ka_smp_load_acquire(&mem_pool->is_inited) == 1) {
         return ret;
     }
     ka_task_mutex_lock(mtx); // mtx为全局锁，避免pool重复初始化
@@ -54,8 +54,8 @@ int32_t init_mem_allocater(init func, struct mem_pool_info* mem_pool, uint32_t n
         mem_pool->mem_size = mem_pool->mem_node_num * node_size;
         mem_pool->base_vaddr = NULL;
 
-        DVPP_CMDLIST_LOG_DEBUG("init mem_pool, mem_node_num %u, node_size %u\n",
-            mem_pool->mem_node_num, mem_pool->node_size);
+        DVPP_CMDLIST_LOG_DEBUG("init mem_pool, mem_node_num %u, node_size %u\n", mem_pool->mem_node_num,
+                               mem_pool->node_size);
         // 分配地址和初始化链表
         ret = (*func)(mem_pool);
         if (ret == 0) {
@@ -63,7 +63,7 @@ int32_t init_mem_allocater(init func, struct mem_pool_info* mem_pool, uint32_t n
             ka_task_mutex_init(&mem_pool->mtx);
             ka_task_sema_init(&mem_pool->sem, mem_pool->mem_node_num);
             ka_barrier(); // 防止编译器优化，将is_inited先赋值1
-            ka_mb(); // 防止CPU乱序执行，将is_inited先赋值1
+            ka_mb();      // 防止CPU乱序执行，将is_inited先赋值1
             mem_pool->is_inited = 1;
         }
     }
@@ -72,7 +72,7 @@ int32_t init_mem_allocater(init func, struct mem_pool_info* mem_pool, uint32_t n
     return ret;
 }
 
-static void deinit_mem_allocater(deinit func, struct mem_pool_info* mem_pool)
+static void deinit_mem_allocater(deinit func, struct mem_pool_info *mem_pool)
 {
     if (mem_pool->is_inited == 1) {
         // 销毁内存池子
@@ -81,13 +81,13 @@ static void deinit_mem_allocater(deinit func, struct mem_pool_info* mem_pool)
     }
 }
 
-void destroy_mem_pool(deinit func, struct mem_pool_info** mem_pool, ka_mutex_t* mtx)
+void destroy_mem_pool(deinit func, struct mem_pool_info **mem_pool, ka_mutex_t *mtx)
 {
     if (*mem_pool == NULL) {
         return;
     }
     ka_task_mutex_lock(mtx); // mtx为全局锁，避免pool重复销毁，pool使用时可以不用锁保护
-                     // 由容器运行时不能删除已绑定的虚拟设备，因此pool使用时不会被销毁
+                             // 由容器运行时不能删除已绑定的虚拟设备，因此pool使用时不会被销毁
     if (*mem_pool != NULL) {
         deinit_mem_allocater(func, *mem_pool);
         ka_mm_vfree(*mem_pool);
@@ -96,9 +96,9 @@ void destroy_mem_pool(deinit func, struct mem_pool_info** mem_pool, ka_mutex_t* 
     ka_task_mutex_unlock(mtx);
 }
 
-struct mem_node* alloc_node_from_pool(struct mem_pool_info* mem_pool)
+struct mem_node *alloc_node_from_pool(struct mem_pool_info *mem_pool)
 {
-    struct mem_node* pos;
+    struct mem_node *pos;
 
     // 参数校验
     if (mem_pool == NULL) {
@@ -117,7 +117,8 @@ struct mem_node* alloc_node_from_pool(struct mem_pool_info* mem_pool)
 
     // 从链表中获取一个node节点
     pos = NULL;
-    ka_list_for_each_entry(pos, &mem_pool->node_list.list, list) {
+    ka_list_for_each_entry(pos, &mem_pool->node_list.list, list)
+    {
         if (pos->vaddr != NULL) {
             ka_list_del_init(&pos->list);
             break;
@@ -129,7 +130,7 @@ struct mem_node* alloc_node_from_pool(struct mem_pool_info* mem_pool)
     return pos;
 }
 
-void free_node_to_pool(struct mem_node* node, struct mem_pool_info* mem_pool)
+void free_node_to_pool(struct mem_node *node, struct mem_pool_info *mem_pool)
 {
     // 参数校验
     if ((node == NULL) || (node->vaddr == NULL) || (mem_pool == NULL)) {
