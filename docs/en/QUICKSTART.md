@@ -31,7 +31,7 @@ graph LR
 
 # <h2 id="environment-deployment-and-compilation-build">I. Environment Deployment and Compilation Build</h2>
 
-## 1. Compilation Environment Preparation
+## Compilation Environment Preparation
 
 Driver supports source code compilation. Before source code compilation, complete the relevant environment preparation according to the following steps.
 
@@ -64,7 +64,7 @@ yum install -y gcc gcc-c++ g++ cmake make libffi libffi-devel binutils binutils-
 apt install -y tar net-tools linux-headers-$(uname -r) gcc g++ cmake make libffi-dev libssl-dev pkg-config patch
 ```
 
-## 2. Source Code Download
+## Source Code Download
 
 Execute the following command to download the Driver repository source code:
 
@@ -72,7 +72,7 @@ Execute the following command to download the Driver repository source code:
 git clone https://gitcode.com/cann/driver.git
 ```
 
-## 3. Source Code Compilation and Deployment
+## Source Code Compilation and Deployment
 
 Compilation depends on open-source third-party libraries and Driver open-source binary libraries. After starting compilation, they are automatically downloaded. Ensure network connectivity.
 Recommended OS versions are Linux v5.4, Linux v5.10, or Linux v6.8.
@@ -130,11 +130,11 @@ After installation completes, the Driver software package compiled by the user r
 If you need to install the firmware package, obtain the firmware package for the matched hardware product from the [Ascend official website](https://www.hiascend.com/hardware/firmware-drivers/commercial) and install it according to the matched version [Installation Guide](https://hiascend.com/document/redirect/CannCommunityInstSoftware). After selecting the installation scenario, see the "Installing NPU Driver and Firmware" section.
 </p>
 
-## 4. Other Functions
+## Other Functions
 
 For more compilation parameters, view them through `bash build.sh -h`.
 
-## 5. Software Package Uninstallation
+## Software Package Uninstallation
 
 Uninstall according to the matched version [Uninstallation Guide](https://hiascend.com/document/redirect/CannCommunityInstSoftware). After selecting the installation guide, see the "Uninstallation" section.
 
@@ -144,7 +144,7 @@ During development, if you encounter program debugging problems, first check the
 
 The default logging level for application logs and system logs is "ERROR". If "ERROR" level logs are insufficient for problem location, set a more detailed log level (such as "DEBUG") for in-depth analysis.
 
-## 1. Log Viewing
+## Log Viewing
 
 - **View application logs**: Refer to the matched version [Log Reference](https://hiascend.com/document/redirect/CANNCommunitylogreflevel). Get detailed instructions in the "Viewing Application Logs" section.
 
@@ -168,7 +168,7 @@ The default logging level for application logs and system logs is "ERROR". If "E
 
 - **View system logs**: Refer to the matched version [Log Reference](https://hiascend.com/document/redirect/CANNCommunitylogreflevel). Get detailed instructions in the "Viewing System Logs" section.
 
-## 2. Log Settings
+## Log Settings
 
 - **Application log level settings**: Refer to the [Log Reference](https://hiascend.com/document/redirect/CANNCommunitylogreflevel). Get configuration methods in the "Setting Application Log Level" section.
 
@@ -178,7 +178,7 @@ The default logging level for application logs and system logs is "ERROR". If "E
 
 The purpose of this stage is to become familiar with driver development by adding new interfaces in the driver code. Here, adding a DCMI interface is used as an example.
 
-## 1. Modify Driver Code
+## Modify Driver Code
 
 Add a new dsmi interface in the `src/ascend_hal/dmc/dsmi/dsmi_common/dsmi_common_interface.c` file with the following code:
 
@@ -244,10 +244,10 @@ int dcmi_get_host_device_connect_type(int device_id, unsigned int *connect_type)
     }
 ```
 
-## 2. Compile and Update Driver Package
+## Compile and Update Driver Package
 
 Refer to steps 1-2 of the [Environment Deployment and Compilation Build](#environment-deployment-and-compilation-build) section to recompile and install the driver package.
 
-## 3. Verification
+## Verification
 
-## 4. Execution Results
+## Execution Results

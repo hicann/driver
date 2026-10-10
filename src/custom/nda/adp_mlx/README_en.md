@@ -71,7 +71,7 @@ output/lib/libadp_mlx.so
 
 ## Usage
 
-### 1. Install the driver library
+### Install the driver library
 
 Copy the build output to the `ibv_extend` driver search path (typically `/usr/local/lib64` or `/usr/lib64`):
 
@@ -80,7 +80,7 @@ cp output/lib/libadp_mlx.so /usr/local/lib64/
 ldconfig
 ```
 
-### 2. Configure ibv_extend driver loading list
+### Configure ibv_extend driver loading list
 
 **Option A: Environment variable**
 

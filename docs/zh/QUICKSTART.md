@@ -31,7 +31,7 @@ User-->环境准备-->开源仓代码下载-->驱动开发-->编译及部署-->�
 
 # <h2 id="环境部署及编译构建">一、环境部署及编译构建</h2>
 
-## 1.编译环境准备
+## 编译环境准备
 
 Driver支持源码编译，进行源码编译前，请根据如下步骤完成相关环境准备。
 
@@ -64,7 +64,7 @@ yum install -y gcc gcc-c++ g++ cmake make libffi libffi-devel binutils binutils-
 apt install -y tar net-tools linux-headers-$(uname -r) gcc g++ cmake make libffi-dev libssl-dev pkg-config patch
 ```
 
-## 2.源码下载
+## 源码下载
 
 执行如下命令，下载Driver仓源码：
 
@@ -72,7 +72,7 @@ apt install -y tar net-tools linux-headers-$(uname -r) gcc g++ cmake make libffi
 git clone https://gitcode.com/cann/driver.git
 ```
 
-## 3.源码编译及部署
+## 源码编译及部署
 
 编译依赖开源第三方库和Driver开源二进制库，启动编译后会自动下载，请保持网络畅通。
 推荐OS版本使用linux v5.4、linux v5.10或linux v6.8。
@@ -130,11 +130,11 @@ b. ascend950支持在灵衢计算系统超节点架构的ARM环境编译；进�
 如需要安装固件包，从[昇腾官网](https://www.hiascend.com/hardware/firmware-drivers/commercial)获取配套硬件产品的固件包，并按照配套版本的[安装指南](https://hiascend.com/document/redirect/CannCommunityInstSoftware)安装（选择安装场景后，参见“安装NPU驱动和固件”章节）。
 </p>
 
-## 4.其余功能
+## 其余功能
 
 更多编译参数可以通过`bash build.sh -h`查看。
 
-## 5.软件包卸载
+## 软件包卸载
 
 按照配套版本的[卸载指导](https://hiascend.com/document/redirect/CannCommunityInstSoftware)卸载（选择安装指南后，参见“卸载”章节）。
 
@@ -144,7 +144,7 @@ b. ascend950支持在灵衢计算系统超节点架构的ARM环境编译；进�
 
 应用类日志和系统类日志默认记录级别为"ERROR"，若"ERROR"级别日志不足以支持问题定位，可设置更详细的日志级别（如"DEBUG"），以进行深入分析。
 
-## 1.日志查看
+## 日志查看
 
 - **查看应用类日志**：请查看配套版本的[日志参考](https://hiascend.com/document/redirect/CANNCommunitylogreflevel)，在“查看应用类日志”章节中获取详细说明。
 
@@ -168,7 +168,7 @@ b. ascend950支持在灵衢计算系统超节点架构的ARM环境编译；进�
 
 - **查看系统类日志**：请参考配套版本的[日志参考](https://hiascend.com/document/redirect/CANNCommunitylogreflevel)，在“查看系统类日志”章节中获取详细说明。
 
-## 2.日志设置
+## 日志设置
 
 - **应用类日志级别设置**：请参考[日志参考](https://hiascend.com/document/redirect/CANNCommunitylogreflevel)，在“设置应用类日志级别”章节中获取配置方法。
 
@@ -178,7 +178,7 @@ b. ascend950支持在灵衢计算系统超节点架构的ARM环境编译；进�
 
 本阶段目的是通过在驱动代码中新增接口方式，熟悉驱动开发。这里以新增DCMI接口为例。
 
-## 1. 修改驱动代码
+## 修改驱动代码
 
 在`src/ascend_hal/dmc/dsmi/dsmi_common/dsmi_common_interface.c`文件中新增一个dsmi接口，代码如下：
 
@@ -244,10 +244,10 @@ int dcmi_get_host_device_connect_type(int device_id, unsigned int *connect_type)
     }
 ```
 
-## 2. 编译与更新驱动包
+## 编译与更新驱动包
 
 参考[环境部署及编译构建](#环境部署及编译构建)章节1~2步骤，重新编译以及安装驱动包
 
-## 3. 验证
+## 验证
 
-## 4. 执行结果
+## 执行结果

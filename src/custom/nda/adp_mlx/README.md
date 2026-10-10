@@ -71,7 +71,7 @@ output/lib/libadp_mlx.so
 
 ## 使用方法
 
-### 1. 安装驱动库
+### 安装驱动库
 
 将编译产物复制到 `ibv_extend` 的驱动搜索路径（通常为 `/usr/local/lib64` 或 `/usr/lib64`）：
 
@@ -80,7 +80,7 @@ cp output/lib/libadp_mlx.so /usr/local/lib64/
 ldconfig
 ```
 
-### 2. 配置 ibv_extend 驱动加载列表
+### 配置 ibv_extend 驱动加载列表
 
 **方式一：环境变量**
 
